@@ -3,16 +3,17 @@ declare class LiquidTank {
     tileEntity: any;
     limit: number;
     data: any;
-    getLiquidStored: () => string;
-    getLimit: () => number;
-    getAmount: (liquid?: string) => number;
-    setAmount: (liquid: string, amount: number) => void;
-    getRelativeAmount: () => number;
-    addLiquid: (liquid: string, amount: number) => number;
-    getLiquid: (liquid: string | number, amount?: number) => number;
-    isFull: () => boolean;
-    isEmpty: () => boolean;
-    updateUiScale: (scale: any, container: any) => void;
+    getLiquidStored(): string;
+    getLimit(): number;
+    getAmount(liquid?: string): number;
+    setAmount(liquid: string, amount: number): void;
+    getRelativeAmount(): number;
+    addLiquid(liquid: string, amount: number): number;
+    getLiquid(amount: number): number;
+    getLiquid(liquid: string, amount: number): number;
+    isFull(): boolean;
+    isEmpty(): boolean;
+    updateUiScale(scale: any, container: any): void;
 }
 declare namespace LiquidLib {
     const itemData: {};
