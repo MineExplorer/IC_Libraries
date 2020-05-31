@@ -12,8 +12,8 @@ declare namespace ChargeItemRegistry {
     function getEnergyStored(item: any, energyType?: string): number;
     function getMaxCharge(itemid: number, energyType?: string): number;
     function setEnergyStored(item: any, amount: number): void;
-    function getEnergyFrom(item: any, energyType: string, amount: number, transf: number, level: number, getFromAll: boolean): number;
-    function getEnergyFrom(item: any, energyType: string, amount: number, level: number, getFromAll: boolean): number;
+    function getEnergyFrom(item: any, energyType: string, amount: number, transf: number, level: number, getFromAll?: boolean): number;
+    function getEnergyFrom(item: any, energyType: string, amount: number, level: number, getFromAll?: boolean): number;
     function addEnergyTo(item: any, energyType: string, amount: number, transf: number, level: number): number;
     function addEnergyTo(item: any, energyType: string, amount: number, level: number): number;
     function transferEnergy(api: any, field: any, result: any): void;
