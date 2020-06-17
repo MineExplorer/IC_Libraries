@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"target": "ES5",
+		"lib": ["ESNext"],
+		"outFile": "../../library/vector.js",
+		"allowJs": false,
+		"downlevelIteration": true,
+		"strict": false,
+		"skipLibCheck": true,
+		"declaration": false
+	},
+	"exclude": [],
+	"include": [
+		"vector.ts"
+	],
+	"files": [
+		"../../global.d.ts"
+	]
+}
