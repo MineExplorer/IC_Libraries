@@ -1,0 +1,24 @@
+{
+	"compilerOptions": {
+		"target": "ES5",
+		"lib": ["ESNext"],
+		"outFile": "../../library/energy-net.js",
+		"allowJs": true,
+		"checkJs": false,
+		"downlevelIteration": true,
+		"strict": false,
+		"skipLibCheck": true,
+		"declaration": true
+	},
+	"exclude": [],
+	"include": [
+		"header.js",
+		"EnergyRegistry.js",
+		"EnergyType.js",
+		"TileEntityRegistry.js",
+		"EnergyNet.js"
+	],
+	"files": [
+		"../../global.d.ts"
+	]
+}
