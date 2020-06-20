@@ -16,6 +16,7 @@
 		"EnergyRegistry.js",
 		"EnergyType.js",
 		"TileEntityRegistry.js",
+		"EnergyNetBuilder.js",
 		"EnergyNet.js"
 	],
 	"files": [

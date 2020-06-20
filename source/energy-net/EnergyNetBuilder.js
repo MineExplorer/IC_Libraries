@@ -1,4 +1,3 @@
-
 var EnergyNetBuilder = {
 	energyNets: [],
 	addEnergyNet: function(net) {
