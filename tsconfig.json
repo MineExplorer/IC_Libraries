@@ -1,0 +1,20 @@
+{
+	"compilerOptions": {
+		"target": "ES5",
+		"lib": ["ESNext"],
+		"outDir": "./declarations/",
+		"allowJs": true,
+		"downlevelIteration": true,
+		"strict": false,
+		"skipLibCheck": true,
+		"declaration": true
+	},
+	"exclude": [],
+	"include": [
+		"./library/**/*",
+		
+	],
+	"files": [
+		"./global.d.ts"
+	]
+}

@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"target": "ES5",
+		"lib": ["ESNext"],
+		"outFile": "../../library/VanillaRecipe.js",
+		"allowJs": false,
+		"downlevelIteration": true,
+		"strict": false,
+		"skipLibCheck": true,
+		"declaration": true
+	},
+	"exclude": [],
+	"include": [
+		"VanillaRecipe.ts"
+	],
+	"files": [
+		"../../global.d.ts"
+	]
+}
