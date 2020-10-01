@@ -17,24 +17,14 @@ declare namespace VanillaRecipe {
             count?: number;
         }[];
         result: {
-            item: string;
-            data?: number;
-            count?: number;
-        };
-    };
-    type FurnaceRecipeFormat = {
-        type?: string;
-        tags?: string[];
-        input: {
-            item: string;
-            data?: number;
-            count?: number;
-        };
-        output: {
-            item: string;
-            data?: number;
-            count?: number;
-        };
+            item: string,
+            data?: number,
+            count?: number
+        } | {
+            item: string,
+            data?: number,
+            count?: number
+        }[];
     };
     export function setResourcePath(path: string): void;
     export function getFileName(recipeName: string): string;
@@ -43,7 +33,7 @@ declare namespace VanillaRecipe {
     export function getNumericID(stringID: string): number;
     export function convertToVanillaID(stringID: string): string;
     export function generateJSONRecipe(name: string, obj: any): void;
-    export function addCraftingRecipe(name: string, obj: RecipeFormat): void;
+    export function addWorkbenchRecipeFromJSON(obj: RecipeFormat): void;
+    export function addCraftingRecipe(name: string, obj: RecipeFormat, addToWorkbench?: boolean): void;
     export function addStonecutterRecipe(name: string, obj: RecipeFormat): void;
-    export function addFurnaceRecipe(name: string, obj: FurnaceRecipeFormat): void;
 }

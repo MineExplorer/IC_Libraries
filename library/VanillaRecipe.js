@@ -1,6 +1,6 @@
 LIBRARY({
     name: "VanillaRecipe",
-    version: 1,
+    version: 2,
     shared: false,
     api: "CoreEngine"
 });
@@ -10,6 +10,7 @@ var VanillaRecipe;
     var resource_path;
     function setResourcePath(path) {
         resource_path = path + "/definitions/recipe/";
+        FileTools.mkdir(resource_path);
         resetRecipes();
     }
     VanillaRecipe.setResourcePath = setResourcePath;
@@ -43,10 +44,12 @@ var VanillaRecipe;
         return 0;
     }
     VanillaRecipe.getNumericID = getNumericID;
+    var __isValid__ = true;
     function convertToVanillaID(stringID) {
         var newID = "";
         if (!getNumericID(stringID)) {
-            Logger.Log("Invalid vanilla recipe entry id " + stringID, "ERROR");
+            Logger.Log("ID " + stringID + " is invalid", "ERROR");
+            __isValid__ = false;
             return null;
         }
         stringID = stringID.replace(":", "_");
@@ -75,21 +78,60 @@ var VanillaRecipe;
         FileTools.WriteJSON(getFilePath(name), obj, true);
     }
     VanillaRecipe.generateJSONRecipe = generateJSONRecipe;
-    function addCraftingRecipe(name, obj) {
+    function addWorkbenchRecipeFromJSON(obj) {
+        if (Array.isArray(obj.result)) {
+            Logger.Log("Recipes with multiple output are not supported in modded workbench", "ERROR");
+            return;
+        }
+        var result = {
+            id: getNumericID(obj.result.item),
+            count: obj.result.count || 1,
+            data: obj.result.data || 0
+        };
+        if (obj.key) {
+            var ingredients = [];
+            for (var key in obj.key) {
+                ingredients.push(key);
+                var item = obj.key[key];
+                ingredients.push(getNumericID(item.item), item.data || -1);
+            }
+            Recipes.addShaped(result, obj.pattern, ingredients);
+        }
+        else {
+            var ingredients = [];
+            obj.ingredients.forEach(function (item) {
+                ingredients.push({ id: getNumericID(item.item), data: item.data || 0 });
+            });
+            Recipes.addShapeless(result, ingredients);
+        }
+    }
+    VanillaRecipe.addWorkbenchRecipeFromJSON = addWorkbenchRecipeFromJSON;
+    function addCraftingRecipe(name, obj, addToWorkbench) {
+        if (addToWorkbench)
+            addWorkbenchRecipeFromJSON(obj);
         obj.type = "crafting_" + obj.type;
         if (!obj.tags)
             obj.tags = ["crafting_table"];
+        __isValid__ = true;
         var items = obj.key || obj.ingredients;
         for (var i in items) {
-            var item = convertToVanillaID(items[i].item);
-            items[i].item = item;
-            if (!item)
-                return;
+            items[i].item = convertToVanillaID(items[i].item);
         }
-        obj.result.item = convertToVanillaID(obj.result.item);
-        if (!obj.result.item)
-            return;
-        generateJSONRecipe(name, obj);
+        if (Array.isArray(obj.result)) {
+            for (var i in obj.result) {
+                var itemStack = obj.result[i];
+                itemStack.item = convertToVanillaID(itemStack.item);
+            }
+        }
+        else {
+            obj.result.item = convertToVanillaID(obj.result.item);
+        }
+        if (__isValid__) {
+            generateJSONRecipe(name, obj);
+        }
+        else {
+            Logger.Log("Failed to add JSON recipe: " + name, "ERROR");
+        }
     }
     VanillaRecipe.addCraftingRecipe = addCraftingRecipe;
     function addStonecutterRecipe(name, obj) {
@@ -99,16 +141,5 @@ var VanillaRecipe;
         addCraftingRecipe(name, obj);
     }
     VanillaRecipe.addStonecutterRecipe = addStonecutterRecipe;
-    function addFurnaceRecipe(name, obj) {
-        obj.type = "furnace_recipe";
-        if (!obj.tags)
-            obj.tags = ["furnace"];
-        obj.input.item = convertToVanillaID(obj.input.item);
-        obj.output.item = convertToVanillaID(obj.output.item);
-        if (obj.input.item && obj.output.item) {
-            generateJSONRecipe(name, obj);
-        }
-    }
-    VanillaRecipe.addFurnaceRecipe = addFurnaceRecipe;
 })(VanillaRecipe || (VanillaRecipe = {}));
 EXPORT("VanillaRecipe", VanillaRecipe);
