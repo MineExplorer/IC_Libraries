@@ -1,6 +1,6 @@
 LIBRARY({
 	name: "TileRender",
-	version: 18,
+	version: 19,
 	shared: true,
 	api: "CoreEngine"
 });
@@ -20,6 +20,33 @@ let TileRenderer = {
 		}
 		render.addEntry(model);
 		return render;
+	},
+
+	setStaticModel: function(id, data, boxes) {
+		let model = this.createBlockModel(id, data, boxes);
+		BlockRenderer.setStaticICRender(id, data, model);
+	},
+
+	setStaticModelWithRotation: function(id, boxes) {
+		for (let data = 0; data < 4; data++) {
+			let newBoxes = [];
+			for (let i in boxes) {
+				newBoxes.push(this.getRotatedBoxVertexes(boxes[i], data));
+			}
+			this.setStaticModel(id, data, newBoxes);
+		}
+	},
+
+	getRotatedBoxVertexes(box, rotation) {
+		if (rotation == 0) return box;
+		if (rotation == 2) {
+			return [box[2], box[1], box[0], box[5], box[4], box[3]]; // rotate 90°
+		}
+		let newBox = [1 - box[3], box[1], 1 - box[5], 1 - box[0], box[4], 1 - box[2]]; // rotate 180°
+		if (rotation == 3) {
+			newBox = [newBox[2], newBox[1], newBox[0], newBox[5], newBox[4], newBox[3]]; // rotate 270°
+		}
+		return newBox;
 	},
 
 	setCollisionShape: function(id, data, boxes){
@@ -61,11 +88,11 @@ let TileRenderer = {
 		}
 	},
 
-	// deprecated
+	 /** @deprecated use setStandardModel instead*/
 	setStandartModel: function(id, texture, data) {
 		this.setStandardModel(id, data || 0, texture)
 	},
-	
+
 	registerRenderModel: function(id, data, texture) {
 		let render = new ICRender.Model();
 		let model = BlockRenderer.createTexturedBlock(texture);
@@ -89,12 +116,12 @@ let TileRenderer = {
 		}
 	},
 
-	// deprecated
+	/** @deprecated use registerModelWithRotation instead*/
 	registerRotationModel: function(id, data, texture) {
 		this.registerModelWithRotation(id, data, texture);
 	},
 	
-	// deprecated
+	/** @deprecated use registerModelWithRotation instead*/
 	registerFullRotationModel: function(id, data, texture) {
 		if (texture.length == 2) {
 			for(let i = 0; i < 6; i++) {
@@ -147,6 +174,7 @@ let TileRenderer = {
 		});
 	},
 
+	/** @deprecated */
 	setRotationPlaceFunction: function(id, hasVertical, placeSound) {
 		Block.registerPlaceFunction(id, function(coords, item, block) {
 			let place = World.canTileBeReplaced(block.id, block.data) ? coords : coords.relative;
@@ -225,7 +253,7 @@ let TileRenderer = {
         return render;
     },
 
-	// deprecated and not supported
+	// deprecated and not supported methods
 	// use render types instead
 	setPlantModel: function(){},
 	setCropModel: function(){},
