@@ -8,8 +8,9 @@ declare namespace TileRenderer {
     function setStaticModelWithRotation(id: number, boxes: BoxVertexes[]): void;
     function getRotatedBoxVertexes(rotation: number, box: BoxVertexes): BoxVertexes;
     function setStandardModel(id: number, data: number, texture: [string, number][]): void;
+    function setStandardModelWithRotation(id: number, data: number, texture: [string, number][], hasVertical?: boolean): void;
     /** @deprecated use setStandardModel instead*/
-    function setStandardModel(id: number, data: number, texture: [string, number][]): void;
+    function setStandartModel(id: number, texture: [string, number][], data?: number): void;
     function registerRenderModel(id: number, data: number, texture: [string, number][]): void;
     function registerModelWithRotation(id: number, data: number, texture: [string, number][], hasVertical?: boolean): void;
     /** @deprecated use registerModelWithRotation instead*/

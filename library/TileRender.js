@@ -255,8 +255,8 @@ let TileRenderer = {
 
 	// deprecated and not supported methods
 	// use render types instead
-	setPlantModel: function(){},
-	setCropModel: function(){},
+	setPlantModel: function() {},
+	setCropModel: function() {},
 	// use BaseBlocks library instead
 	setSlabShape: function() {},
 	setSlabPlaceFunction: function() {}
