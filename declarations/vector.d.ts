@@ -1,8 +1,11 @@
-/// <reference path="./core-engine.d.ts"/>
-
 declare class Vector3 implements Vector {
-    static UP: Vector3;
-    static DOWN: Vector3;
+    static readonly UP: Vector3;
+    static readonly DOWN: Vector3;
+    static readonly NORTH: Vector3;
+    static readonly SOUTH: Vector3;
+    static readonly EAST: Vector3;
+    static readonly WEST: Vector3;
+    static getDirection(side: number): Vector3;
     x: number;
     y: number;
     z: number;

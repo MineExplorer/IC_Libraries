@@ -1,6 +1,6 @@
 LIBRARY({
     name: "Vector",
-    version: 2,
+    version: 3,
     shared: false,
     api: "AdaptedScript"
 });
@@ -18,6 +18,17 @@ var Vector3 = /** @class */ (function () {
             this.z = v.z;
         }
     }
+    Vector3.getDirection = function (side) {
+        switch (side) {
+            case 0: return this.UP;
+            case 1: return this.DOWN;
+            case 2: return this.NORTH;
+            case 3: return this.SOUTH;
+            case 4: return this.EAST;
+            case 5: return this.WEST;
+            default: Logger.Log("Invalid block side: " + side, "ERROR");
+        }
+    };
     Vector3.prototype.copy = function (dst) {
         if (dst) {
             return dst.set(this);
@@ -122,6 +133,10 @@ var Vector3 = /** @class */ (function () {
     };
     Vector3.UP = new Vector3(0, 1, 0);
     Vector3.DOWN = new Vector3(0, -1, 0);
+    Vector3.NORTH = new Vector3(0, 0, -1);
+    Vector3.SOUTH = new Vector3(0, 0, 1);
+    Vector3.EAST = new Vector3(-1, 0, 0);
+    Vector3.WEST = new Vector3(1, 0, 0);
     return Vector3;
 }());
 EXPORT("Vector3", Vector3);

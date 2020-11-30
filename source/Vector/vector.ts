@@ -1,18 +1,36 @@
 LIBRARY({
 	name: "Vector",
-	version: 2,
+	version: 3,
 	shared: false,
 	api: "AdaptedScript"
 });
 
 class Vector3 implements Vector {
-	static UP: Vector3 = new Vector3(0, 1, 0);
-	static DOWN: Vector3 = new Vector3(0, -1, 0);
-	x: number
-	y: number
-	z: number
-	constructor(vx: number, vy: number, vz: number)
-	constructor(vx: Vector)
+	static readonly UP: Vector3 = new Vector3(0, 1, 0);
+	static readonly DOWN: Vector3 = new Vector3(0, -1, 0);
+	static readonly NORTH: Vector3 = new Vector3(0, 0, -1);
+	static readonly SOUTH: Vector3 = new Vector3(0, 0, 1);
+	static readonly EAST: Vector3 = new Vector3(-1, 0, 0);
+	static readonly WEST: Vector3 = new Vector3(1, 0, 0);
+
+	static getDirection(side: number): Vector3 {
+		switch(side) {
+			case 0: return this.UP;
+			case 1: return this.DOWN;
+			case 2: return this.NORTH;
+			case 3: return this.SOUTH;
+			case 4: return this.EAST;
+			case 5: return this.WEST;
+			default: Logger.Log("Invalid block side: " + side, "ERROR");
+		}
+	}
+
+	x: number;
+	y: number;
+	z: number;
+
+	constructor(vx: number, vy: number, vz: number);
+	constructor(vx: Vector);
 	constructor(vx: any, vy?: number, vz?: number) {
 		if (typeof(vx) == "number") {
 			this.x = vx;
@@ -34,8 +52,8 @@ class Vector3 implements Vector {
         return new Vector3(this);
     }
 	
-	set(vx: number, vy: number, vz: number): Vector3
-	set(vx: Vector): Vector3
+	set(vx: number, vy: number, vz: number): Vector3;
+	set(vx: Vector): Vector3;
 	set(vx: any, vy?: number, vz?: number) {
 		if (typeof(vx) == "number") {
 			this.x = vx;
@@ -47,8 +65,8 @@ class Vector3 implements Vector {
 		return this.set(v.x, v.y, v.z);
     }
 
-    add(vx: number, vy: number, vz: number): Vector3
-    add(vx: Vector): Vector3
+    add(vx: number, vy: number, vz: number): Vector3;
+    add(vx: Vector): Vector3;
     add(vx: any, vy?: number, vz?: number) {
 		if (typeof(vx) == "number") {
 			this.x += vx;
@@ -64,8 +82,8 @@ class Vector3 implements Vector {
         return this.add(v.x * scale, v.y * scale, v.z * scale);
     }
 
-    sub(vx: number, vy: number, vz: number): Vector3
-    sub(vx: Vector): Vector3
+    sub(vx: number, vy: number, vz: number): Vector3;
+    sub(vx: Vector): Vector3;
     sub(vx: any, vy?: number, vz?: number) {
 		if (typeof(vx) == "number") {
 			this.x -= vx;
@@ -77,8 +95,8 @@ class Vector3 implements Vector {
 		return this.sub(v.x, v.y, v.z);
     }
 
-    cross(vx: number, vy: number, vz: number): Vector3
-    cross(vx: Vector): Vector3
+    cross(vx: number, vy: number, vz: number): Vector3;
+    cross(vx: Vector): Vector3;
     cross(vx: any, vy?: number, vz?: number) {
 		if (typeof(vx) == "number") {
 			return this.set(this.y * vz - this.z * vy, this.z * vx - this.x * vz, this.x * vy - this.y * vx);
@@ -87,8 +105,8 @@ class Vector3 implements Vector {
 		return this.cross(v.x, v.y, v.z);
     }
 	
-	dot(vx: number, vy: number, vz: number): Vector3
-	dot(vx: any): Vector3
+	dot(vx: number, vy: number, vz: number): Vector3;
+	dot(vx: any): Vector3;
 	dot(vx: any, vy?: number, vz?: number) {
 		if (typeof(vx) == "number") {
 			return this.x * vx + this.y * vy + this.z * vz;
@@ -120,8 +138,8 @@ class Vector3 implements Vector {
         return this;
     }
 
-    distanceSquared(vx: number, vy: number, vz: number): number
-    distanceSquared(vx: Vector): number
+    distanceSquared(vx: number, vy: number, vz: number): number;
+    distanceSquared(vx: Vector): number;
     distanceSquared(vx: any, vy?: number, vz?: number) {
 		if (typeof(vx) == "number") {
 			var dx = vx - this.x;
@@ -133,8 +151,8 @@ class Vector3 implements Vector {
 		return this.distanceSquared(v.x, v.y, v.z);
     }
 	
-	distance(vx: number, vy: number, vz: number): number
-	distance(vx: Vector): number
+	distance(vx: number, vy: number, vz: number): number;
+	distance(vx: Vector): number;
 	distance(vx: any, vy?: number, vz?: number) {
 		if (typeof(vx) == "number") {
 			return Math.sqrt(this.distanceSquared(vx, vy, vz));
