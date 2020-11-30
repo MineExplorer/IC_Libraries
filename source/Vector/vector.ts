@@ -6,8 +6,8 @@ LIBRARY({
 });
 
 class Vector3 implements Vector {
-	static readonly UP: Vector3 = new Vector3(0, 1, 0);
 	static readonly DOWN: Vector3 = new Vector3(0, -1, 0);
+	static readonly UP: Vector3 = new Vector3(0, 1, 0);
 	static readonly NORTH: Vector3 = new Vector3(0, 0, -1);
 	static readonly SOUTH: Vector3 = new Vector3(0, 0, 1);
 	static readonly EAST: Vector3 = new Vector3(-1, 0, 0);
@@ -15,8 +15,8 @@ class Vector3 implements Vector {
 
 	static getDirection(side: number): Vector3 {
 		switch(side) {
-			case 0: return this.UP;
-			case 1: return this.DOWN;
+			case 0: return this.DOWN;
+			case 1: return this.UP;
 			case 2: return this.NORTH;
 			case 3: return this.SOUTH;
 			case 4: return this.EAST;
