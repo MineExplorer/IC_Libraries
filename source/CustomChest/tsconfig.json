@@ -11,11 +11,11 @@
 	},
 	"exclude": [],
 	"include": [
-		"../../declarations/core-engine.d.ts"
-	],
-	"files": [
 		"ChestAPi.js",
 		"ChestTileEntity.js",
 		"export.js"
+	],
+	"files": [
+		"../../declarations/core-engine.d.ts"
 	]
 }

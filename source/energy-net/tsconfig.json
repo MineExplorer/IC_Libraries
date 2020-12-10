@@ -20,6 +20,6 @@
 		"EnergyNet.js"
 	],
 	"files": [
-		"../../global.d.ts"
+		"../../declarations/core-engine.d.ts"
 	]
 }
