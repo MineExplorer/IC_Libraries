@@ -1,0 +1,23 @@
+{
+	"compilerOptions": {
+		"target": "ES5",
+		"lib": ["ESNext"],
+		"outFile": "../../library/SoundLib.js",
+		"allowJs": false,
+		"downlevelIteration": true,
+		"strict": false,
+		"skipLibCheck": true,
+		"declaration": false
+	},
+	"exclude": [],
+	"include": [
+		"header.ts",
+		"SoundManager.ts",
+		"Sound.ts",
+		"AudioSource.ts",
+		"export.ts",
+	],
+	"files": [
+		"../../global.d.ts"
+	]
+}
