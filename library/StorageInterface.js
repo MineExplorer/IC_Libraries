@@ -257,7 +257,7 @@ var StorageInterface;
         if (slot.id == 0 || slot.id == item.id && slot.data == item.data) {
             var maxStack = Item.getMaxStack(item.id);
             var add = Math.min(maxStack - slot.count, item.count);
-            if (count > add)
+            if (count < add)
                 add = count;
             if (add > 0) {
                 slot.id = item.id;

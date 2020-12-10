@@ -83,7 +83,7 @@ namespace StorageInterface {
 		if (slot.id == 0 || slot.id == item.id && slot.data == item.data) {
 			let maxStack = Item.getMaxStack(item.id);
 			let add = Math.min(maxStack - slot.count, item.count);
-			if (count > add) add = count;
+			if (count < add) add = count;
 			if (add > 0) {
 				slot.id = item.id;
 				slot.count += add;
