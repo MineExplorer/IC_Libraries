@@ -7,6 +7,10 @@ namespace StorageInterface {
 
 	export var data: {[key: number]: StorageDescriptor} = {};
 
+	export function getData(id: number) {
+		return data[id];
+	}
+
 	export var directionsBySide = [
 		{x: 0, y: -1, z: 0}, // down
 		{x: 0, y: 1, z: 0}, // up
@@ -39,6 +43,7 @@ namespace StorageInterface {
 		});
 	}
 
+	/** Creates new interface instance for TileEntity or Container */
 	export function newStorage(storage: TileEntity | Container): Storage {
 		if ("container" in storage) {
 			return new TileEntityInterface(storage);
@@ -49,30 +54,26 @@ namespace StorageInterface {
 		return new NativeContainerInterface(storage as any);
 	}
 
+	/** Registers interface for block container */
 	export function createInterface(id: number, descriptor: StorageDescriptor): void {
-		let tilePrototype = TileEntity.getPrototype(id);
-		if (tilePrototype) {
-			if (descriptor.slots) {
-				for (let name in descriptor.slots) {
-					if (name.includes('^')) {
-						let slotData = descriptor.slots[name];
-						let str = name.split('^');
-						let index = str[1].split('-');
-						for (let i = parseInt(index[0]); i <= parseInt(index[1]); i++) {
-							descriptor.slots[str[0] + i] = slotData;
-						}
-						delete descriptor.slots[name];
+		if (descriptor.slots) {
+			for (let name in descriptor.slots) {
+				if (name.includes('^')) {
+					let slotData = descriptor.slots[name];
+					let str = name.split('^');
+					let index = str[1].split('-');
+					for (let i = parseInt(index[0]); i <= parseInt(index[1]); i++) {
+						descriptor.slots[str[0] + i] = slotData;
 					}
+					delete descriptor.slots[name];
 				}
 			}
-			else {
-				descriptor.slots = {};
-			}
-
-			data[id] = descriptor;
-		} else {
-			Logger.Log("Failed to create storage interface: cannot find tile entity prototype for id "+id, "ERROR");
 		}
+		else {
+			descriptor.slots = {};
+		}
+
+		data[id] = descriptor;
 	}
 
 	/** Trasfers item to slot
@@ -82,16 +83,17 @@ namespace StorageInterface {
 	export function addItemToSlot(item: ItemInstance, slot: ItemInstance, count: number = 64): number {
 		if (slot.id == 0 || slot.id == item.id && slot.data == item.data) {
 			let maxStack = Item.getMaxStack(item.id);
-			let add = Math.min(maxStack - slot.count, item.count);
+			let add = Math.min(item.count, maxStack - slot.count);
 			if (count < add) add = count;
 			if (add > 0) {
 				slot.id = item.id;
-				slot.count += add;
 				slot.data = item.data;
 				if (item.extra) slot.extra = item.extra;
+				slot.count += add;
 				item.count -= add;
 				if (item.count == 0) {
 					item.id = item.data = 0;
+					item.extra = null;
 				}
 				return add;
 			}
@@ -99,7 +101,7 @@ namespace StorageInterface {
 		return 0;
 	}
 
-	/** @returns Storage for container in the world */
+	/** Returns storage interface for container in the world */
 	export function getStorage(region: BlockSource, x: number, y: number, z: number): Nullable<Storage> {
 		let nativeTileEntity = region.getBlockEntity(x, y, z);
 		if (nativeTileEntity && nativeTileEntity.getSize() > 0) {
@@ -112,7 +114,7 @@ namespace StorageInterface {
 		return null;
 	}
 
-	/** @returns Storage for TileEntity in the world if it has liquid storage */
+	/** Returns storage interface for TileEntity with liquid storage */
 	export function getLiquidStorage(region: BlockSource, x: number, y: number, z: number): Nullable<TileEntityInterface> {
 		let tileEntity = World.getTileEntity(x, y, z, region);
 		if (tileEntity && tileEntity.liquidStorage) {
@@ -121,23 +123,29 @@ namespace StorageInterface {
 		return null;
 	}
 
-	/** @returns Storage for neighbour container on specified side */
+	/** Returns storage interface for neighbour container on specified side */
 	export function getNeighbourStorage(region: BlockSource, coords: Vector, side: number): Nullable<Storage> {
 		let dir = getRelativeCoords(coords, side);
 		return getStorage(region, dir.x, dir.y, dir.z);
 	}
 
-	/** @returns Storage for neighbour TileEntity on specified side if it has liquid storage */
+	/** Returns storage interface for neighbour TileEntity with liquid storage on specified side */
 	export function getNeighbourLiquidStorage(region: BlockSource, coords: Vector, side: number): Nullable<TileEntityInterface> {
 		let dir = getRelativeCoords(coords, side);
 		return getLiquidStorage(region, dir.x, dir.y, dir.z);
 	}
 
 	/**
-	 * @returns object containing neigbour containers where keys are block side numbers
-	 * @side side to get container, use -1 to get from all sides
+	 * Returns object containing neigbour containers where keys are block side numbers
+	 * @coords position from which check neighbour blocks
 	*/
-	export function getNearestContainers(coords: Vector, side: number, region: BlockSource): ContainersMap {
+	export function getNearestContainers(coords: Vector, region: BlockSource): ContainersMap;
+	export function getNearestContainers(coords: Vector, region: any): ContainersMap {
+		let side = -1;
+		if (typeof region == "number") { // reverse compatibility
+			region = null;
+			side = region;
+		}
 		let containers = {};
 		for (let i = 0; i < 6; i++) {
 			if (side >= 0 && i != side) continue;
@@ -151,10 +159,16 @@ namespace StorageInterface {
 	}
 
 	/**
-	 * @returns object containing neigbour liquid storages where keys are block side numbers
-	 * @side side to get storage, use -1 to get from all sides
+	 * Returns object containing neigbour liquid storages where keys are block side numbers
+	 * @coords position from which check neighbour blocks
 	*/
-	export function getNearestLiquidStorages(coords: Vector, side: number, region: BlockSource): StoragesMap {
+	export function getNearestLiquidStorages(coords: Vector, region: BlockSource): StoragesMap;
+	export function getNearestLiquidStorages(coords: Vector, region: any): StoragesMap {
+		let side = -1;
+		if (typeof region == "number") { // reverse compatibility
+			region = null;
+			side = region;
+		}
 		let storages = {};
 		for (let i = 0; i < 6; i++) {
 			if (side >= 0 && side != i) continue;
@@ -165,22 +179,20 @@ namespace StorageInterface {
 	}
 
 	/**
-	 * @returns array of slot indexes for vanilla container or array of slot names for mod container
+	 * Returns array of slot indexes for vanilla container or array of slot names for mod container
 	*/
 	export function getContainerSlots(container: Container): string[] | number[] {
-		let slots = [];
 		if ("slots" in container) {
-			for (let name in container.slots) {
-				slots.push(name);
-			}
+			return Object.keys(container.slots);
 		}
 		else {
+			let slots = [];
 			let size = container.getSize();
 			for (let i = 0; i < size; i++) {
 				slots.push(i);
 			}
+			return slots;
 		}
-		return slots;
 	}
 
 	/** Puts items to containers */
