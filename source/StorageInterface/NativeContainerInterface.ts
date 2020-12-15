@@ -13,7 +13,7 @@ implements Storage {
 		return this.container.getSlot(index);
 	}
 
-	setSlot(index: number, id: number, count: number, data: number, extra?: ItemExtraData): void {
+	setSlot(index: number, id: number, count: number, data: number, extra: ItemExtraData = null): void {
 		this.container.setSlot(index, id, count, data, extra);
 	}
 

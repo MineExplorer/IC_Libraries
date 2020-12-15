@@ -15,6 +15,7 @@ var NativeContainerInterface = /** @class */ (function () {
         return this.container.getSlot(index);
     };
     NativeContainerInterface.prototype.setSlot = function (index, id, count, data, extra) {
+        if (extra === void 0) { extra = null; }
         this.container.setSlot(index, id, count, data, extra);
     };
     NativeContainerInterface.prototype.getContainerSlots = function () {
@@ -110,6 +111,7 @@ var TileEntityInterface = /** @class */ (function () {
         return this.container.getSlot(name);
     };
     TileEntityInterface.prototype.setSlot = function (name, id, count, data, extra) {
+        if (extra === void 0) { extra = null; }
         this.container.setSlot(name, id, count, data, extra);
     };
     TileEntityInterface.prototype.getSlotData = function (name) {
@@ -191,7 +193,7 @@ var TileEntityInterface = /** @class */ (function () {
         var maxStack = this.getSlotMaxStack(name);
         var added = StorageInterface.addItemToSlot(item, slot, Math.min(maxCount, maxStack));
         if (added > 0) {
-            this.setSlot(name, slot.id, slot.count, slot.data, slot.extra || null);
+            this.setSlot(name, slot.id, slot.count, slot.data, slot.extra);
         }
         return added;
     };

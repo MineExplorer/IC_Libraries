@@ -24,7 +24,7 @@ implements Storage {
 		return this.container.getSlot(name);
 	}
 
-	setSlot(name: string, id: number, count: number, data: number, extra?: ItemExtraData): void {
+	setSlot(name: string, id: number, count: number, data: number, extra: ItemExtraData = null): void {
 		this.container.setSlot(name, id, count, data, extra);
 	}
 
@@ -108,7 +108,7 @@ implements Storage {
 		let maxStack = this.getSlotMaxStack(name);
 		let added = StorageInterface.addItemToSlot(item, slot, Math.min(maxCount, maxStack));
 		if (added > 0) {
-			this.setSlot(name, slot.id, slot.count, slot.data, slot.extra || null);
+			this.setSlot(name, slot.id, slot.count, slot.data, slot.extra);
 		}
 		return added;
 	}
