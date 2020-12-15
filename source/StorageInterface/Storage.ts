@@ -21,10 +21,10 @@ interface Storage extends StorageDescriptor {
 	setSlot(name: string | number, id: number, count: number, data: number, extra?: ItemExtraData): void,
 	getContainerSlots(): string[] | number[],
 	getInputSlots(side?: number): string[] | number[],
+	getOutputSlots(side?: number): string[] | number[],
 	getReceivingItemCount(item: ItemInstance, side?: number): number,
 	addItemToSlot(name: string | number, item: ItemInstance, maxCount?: number): number,
 	addItem(item: ItemInstance, side?: number, maxCount?: number): number,
-	getOutputSlots(side?: number): string[] | number[],
 	clearContainer(): void;
 }
 

@@ -108,7 +108,7 @@ implements Storage {
 		let maxStack = this.getSlotMaxStack(name);
 		let added = StorageInterface.addItemToSlot(item, slot, Math.min(maxCount, maxStack));
 		if (added > 0) {
-			this.setSlot(name, slot.id, slot.count, slot.data, slot.extra);
+			this.setSlot(name, slot.id, slot.count, slot.data, slot.extra || null);
 		}
 		return added;
 	}
