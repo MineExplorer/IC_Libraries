@@ -12,12 +12,12 @@
 	},
 	"exclude": [],
 	"include": [
-		"header.js",
-		"EnergyRegistry.js",
-		"EnergyType.js",
-		"TileEntityRegistry.js",
-		"EnergyNetBuilder.js",
-		"EnergyNet.js"
+		"header.ts",
+		"EnergyRegistry.ts",
+		"EnergyType.ts",
+		"TileEntityRegistry.ts",
+		"EnergyNetBuilder.ts",
+		"EnergyNet.ts"
 	],
 	"files": [
 		"../../global.d.ts"
