@@ -50,7 +50,7 @@ namespace ChargeItemRegistry {
 
 		Item.setMaxDamage(id, 27);
 		if (!notInCreative) {
-			addToCreative(id, 1, capacity);
+			addToCreative(id, capacity);
 		}
 	}
 
@@ -69,8 +69,11 @@ namespace ChargeItemRegistry {
 		registerItem(id, energyType, capacity, transferLimit, tier, itemType? true : false, !addToCreative);
 	}
 
-	export function addToCreative(id: number, data: number, energy: number) {
-		Item.addToCreative(id, 1, data, new ItemExtraData().putInt("energy", energy));
+	export function addToCreative(id: number, energy: number) {
+		let data = getItemData(id);
+		if (data) {
+			Item.addToCreative(id, 1, getDisplayData(energy, data.maxCharge), new ItemExtraData().putInt("energy", energy));
+		}
 	}
 
 	export function registerChargeFunction(id: number, func: IElectricItem["onCharge"]) {
@@ -107,6 +110,11 @@ namespace ChargeItemRegistry {
 		}
 		return data.maxCharge;
 	}
+
+	export function getDisplayData(energy: number, maxCharge: number) {
+		return Math.round((maxCharge - energy) / maxCharge * 26 + 1);
+	}
+
 	export function getEnergyStored(item: ItemInstance, energyType?: string): number {
 		let data = getItemData(item.id);
 		if (!data || energyType && data.energy != energyType) {
@@ -131,7 +139,7 @@ namespace ChargeItemRegistry {
 
 		if (!item.extra) item.extra = new ItemExtraData();
 		item.extra.putInt("energy", amount);
-		item.data = Math.round((data.maxCharge - amount)/data.maxCharge*26 + 1);
+		item.data = getDisplayData(amount, data.maxCharge);
 	}
 
 	export function getEnergyFrom(item: ItemInstance, energyType: string, amount: number, tier: number, getAll?: boolean): number {
