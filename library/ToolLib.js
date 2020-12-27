@@ -13,7 +13,7 @@ By using the library you automatically agree to these rules.
 
 LIBRARY({
 	name: "ToolLib",
-	version: 22,
+	version: 23,
 	shared: true,
 	api: "CoreEngine"
 });
@@ -23,7 +23,7 @@ LIBRARY({
 * ToolType.*name* = {...}
 */
 
-var ToolType = {
+let ToolType = {
 	sword: {
 		isWeapon: true,
 		enchantType: Native.EnchantType.weapon,
@@ -32,61 +32,64 @@ var ToolType = {
 		calcDestroyTime: function(item, coords, block, params, destroyTime, enchant) {
 			if (block.id == 30) return 0.08;
 			if (block.id == 35) return 0.05;
-			var material = ToolAPI.getBlockMaterialName(block.id);
+			let material = ToolAPI.getBlockMaterialName(block.id);
 			if (material == "fibre" || material == "plant") {
-				return params.base/1.5;
+				return params.base / 1.5;
 			}
 			return destroyTime;
 		}
 	},
-	
+
 	shovel: {
 		enchantType: Native.EnchantType.shovel,
 		damage: 2,
 		blockTypes: ["dirt"],
-		useItem: function(coords, item, block) {
-			if (block.id == 2 && coords.side == 1) { 
-				World.setBlock(coords.x, coords.y, coords.z, 198);
+		useItem: function(coords, item, block, player) {
+			if (block.id == 2 && coords.side == 1) {
+				let region = BlockSource.getDefaultForActor(player);
+				region.setBlock(coords.x, coords.y, coords.z, 198);
 				World.playSound(coords.x + .5, coords.y + 1, coords.z + .5, "step.grass", 0.5, 0.8);
 				ToolLib.breakCarriedTool(1);
 			}
 		}
 	},
-	
+
 	pickaxe: {
 		enchantType: Native.EnchantType.pickaxe,
 		damage: 2,
 		blockTypes: ["stone"],
 	},
-	
+
 	axe: {
 		enchantType: Native.EnchantType.axe,
 		damage: 3,
 		blockTypes: ["wood"],
-		useItem: function(coords, item, block) {
+		useItem: function(coords, item, block, player) {
+			let region = BlockSource.getDefaultForActor(player);
 			if (block.id == 17) {
 				if (block.data == 0) logID = VanillaTileID.stripped_oak_log;
 				if (block.data == 1) logID = VanillaTileID.stripped_spruce_log;
 				if (block.data == 2) logID = VanillaTileID.stripped_birch_log;
 				if (block.data == 3) logID = VanillaTileID.stripped_jungle_log;
-				World.setBlock(coords.x, coords.y, coords.z, logID, 0);
-				ToolLib.breakCarriedTool(1);
+				region.setBlock(coords.x, coords.y, coords.z, logID, 0);
+				ToolLib.breakCarriedTool(1, player);
 			}
 			else if (block.id == 162) {
 				if (block.data == 0) logID = VanillaTileID.stripped_acacia_log;
 				else logID = VanillaTileID.stripped_dark_oak_log;
-				World.setBlock(coords.x, coords.y, coords.z, logID, 0);
-				ToolLib.breakCarriedTool(1);
+				region.setBlock(coords.x, coords.y, coords.z, logID, 0);
+				ToolLib.breakCarriedTool(1, player);
 			}
 		}
 	},
-	
+
 	hoe: {
-		useItem: function(coords, item, block) {
-			if ((block.id == 2 || block.id == 3) && coords.side == 1) { 
-				World.setBlock(coords.x, coords.y, coords.z, 60);
+		useItem: function(coords, item, block, player) {
+			if ((block.id == 2 || block.id == 3) && coords.side == 1) {
+				let region = BlockSource.getDefaultForActor(player);
+				region.setBlock(coords.x, coords.y, coords.z, 60);
 				World.playSound(coords.x + .5, coords.y + 1, coords.z + .5, "step.gravel", 1, 0.8);
-				ToolLib.breakCarriedTool(1);
+				ToolLib.breakCarriedTool(1, player);
 			}
 		}
 	}
@@ -98,16 +101,16 @@ function randomInt(min, max) {
 
 // data for ToolLib.getBlockDrop
 // drop from some plants are not added
-var noDropBlocks = [26, 30, 31, 32, 51, 59, 92, 99, 100, 104, 105, 106, 115, 127, 132, 141, 142, 144, 161, 175, 199, 244, 385, 386, 388, 389, 390, 391, 392, 462];
+let noDropBlocks = [26, 30, 31, 32, 51, 59, 92, 99, 100, 104, 105, 106, 115, 127, 132, 141, 142, 144, 161, 175, 199, 244, 385, 386, 388, 389, 390, 391, 392, 462];
 
-var ToolLib = {
+let ToolLib = {
 	setTool: function(id, toolMaterial, toolType, brokenId) {
 		Item.setToolRender(id, true);
 		if (typeof toolMaterial == "string") {
 			toolMaterial = ToolAPI.toolMaterials[toolMaterial];
 		}
-		var toolData = {brokenId: brokenId || 0};
-		for (var i in toolType) {
+		let toolData = {brokenId: brokenId || 0};
+		for (let i in toolType) {
 			toolData[i] = toolType[i];
 		}
 		if (!toolMaterial.durability) {
@@ -127,42 +130,46 @@ var ToolLib = {
 		}
 		if (toolType.destroyBlock) {
 			Callback.addCallback("DestroyBlock", function(coords, block, player) {
-				var item = Player.getCarriedItem();
+				let item = Entity.getCarriedItem(player);
 				if (item.id == id) {
-					toolData.destroyBlock(coords, coords.side, item, block);
+					toolData.destroyBlock(coords, coords.side, item, block, player);
 				}
 			});
 		}
+		// client side only
 		if (toolType.continueDestroyBlock) {
 			Callback.addCallback("DestroyBlockContinue", function(coords, block, progress) {
-				var item = Player.getCarriedItem();
+				let item = Player.getCarriedItem();
 				if (item.id == id) {
 					toolData.continueDestroyBlock(item, coords, block, progress);
 				}
 			});
 		}
 	},
-	
-	breakCarriedTool: function(damage) {
-		var item = Player.getCarriedItem();
-		var enchant = ToolAPI.getEnchantExtraData(item.extra);
+
+	breakCarriedTool: function(damage, player) {
+		if (!player) player = Player.get();
+		let item = Entity.getCarriedItem(player);
+		let enchant = ToolAPI.getEnchantExtraData(item.extra);
 		if (Math.random() < 1 / (enchant.unbreaking + 1)) {
 			item.data += damage;
 		}
 		if (item.data >= Item.getMaxDamage(item.id)) {
-			var tool = ToolAPI.getToolData(item.id);
+			let tool = ToolAPI.getToolData(item.id);
 			item.id = tool ? tool.brokenId : 0;
 			item.count = 1;
 			item.data = 0;
 		}
-		Player.setCarriedItem(item.id, item.count, item.data, item.extra);
+		Entity.setCarriedItem(player, item.id, item.count, item.data, item.extra);
 	},
-	
-	getBlockDrop: function(coords, id, data, level, enchant) {
-		enchant = enchant || ToolAPI.getEnchantExtraData();
-		var dropFunc = Block.dropFunctions[id];
+
+	getBlockDrop: function(coords, id, data, level, enchant, item, region) {
+		if (!enchant) enchant = ToolAPI.getEnchantExtraData();
+		let dropFunc = Block.dropFunctions[id];
 		if (dropFunc) {
-			return dropFunc(coords, id, data, level, enchant);
+			if (!item) item = {id: 0, count: 0, data: 0};
+			if (!region) region = BlockSource.getDefaultForActor(Player.get());
+			return dropFunc(coords, id, data, level, enchant, item, region);
 		}
 
 		if (id == 3 || id == 5 || id == 6 || id == 12 || id == 19 || id == 35 || id == 85 || id == 158 || id == 171) return [[id, 1, data]];
@@ -209,10 +216,10 @@ var ToolLib = {
 		if (id == 447 || id == 448) return [[476, 1, 0]];
 		if (id == 467) return [[-212, 1, data]]; // wood
 		if (noDropBlocks.indexOf(id) != -1) return [];
-		
+
 		return [[Block.convertBlockToItemId(id), 1, 0]];
 	},
-	
+
 	isBlock: function(id) {
 		return IDRegistry.getIdInfo(id).startsWith("block");
 	},
@@ -221,14 +228,15 @@ var ToolLib = {
 		return IDRegistry.getIdInfo(id).startsWith("item");
 	},
 
-	addBlockDropOnExplosion: function(nameID) {
-		var numericID = BlockID[nameID];
-		Block.registerPopResourcesFunctionForID(numericID, function(coords, block, f, i) {
+	addBlockDropOnExplosion: function(id) {
+		Block.registerPopResourcesFunction(id, function(coords, block, region) {
 			if (Math.random() < 0.25) {
-				var dropFunc = Block.getDropFunction(block.id);
-				var drop = dropFunc(coords, block.id, block.data, 127, {});
-				for (var i in drop) {
-					World.drop(coords.x + .5, coords.y + .5, coords.z + .5, drop[i][0], drop[i][1], drop[i][2]);
+				let dropFunc = Block.getDropFunction(block.id);
+				let enchant = ToolAPI.getEnchantExtraData();
+				let item = {id: 0, count: 0, data: 0};
+				let drop = dropFunc(coords, block.id, block.data, 127, enchant, item, region);
+				for (let i in drop) {
+					region.spawnDroppedItem(coords.x + .5, coords.y + .5, coords.z + .5, drop[i][0], drop[i][1], drop[i][2], drop[i][3] || null);
 				}
 			}
 		});
@@ -239,7 +247,7 @@ var ToolLib = {
 ToolAPI.setTool = ToolLib.setTool;
 ToolAPI.breakCarriedTool = ToolLib.breakCarriedTool;
 
-var MiningLevel = {
+let MiningLevel = {
 	STONE: 1,
 	IRON: 2,
 	DIAMOND: 3,
