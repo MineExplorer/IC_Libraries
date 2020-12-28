@@ -11,7 +11,7 @@ interface StorageDescriptor {
 	addLiquid?(liquid: string, amount: number): number,
 	getLiquid?(liquid: string, amount: number): number,
 	getLiquidStored?(storageName: string): string,
-	getLiquidStorage?(storageName: string): string
+	getLiquidStorage?(storageName: string): any
 }
 
 interface Storage extends StorageDescriptor {

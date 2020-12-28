@@ -7,7 +7,7 @@
 		"downlevelIteration": false,
 		"strict": false,
 		"skipLibCheck": true,
-		"declaration": false
+		"declaration": true
 	},
 	"exclude": [],
 	"include": [

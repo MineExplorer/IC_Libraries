@@ -175,7 +175,7 @@ implements Storage {
 		return this.getLiquidStorage(storageName).getLiquidStored();
 	}
 
-	getLiquidStorage(storageName?: string) {
+	getLiquidStorage(storageName?: string): any {
 		return this.tileEntity.liquidStorage;
 	}
 }
