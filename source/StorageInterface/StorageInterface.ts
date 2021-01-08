@@ -27,24 +27,27 @@ namespace StorageInterface {
 
 	export function setSlotMaxStackPolicy(container: ItemContainer, slotName: string, maxCount: number): void {
 		container.setSlotAddTransferPolicy(slotName, function(container, name, id, amount, data) {
-			return Math.max(0, Math.min(amount, maxCount - container.getSlot(name).count));
+			let maxStack = Math.min(maxCount, Item.getMaxStack(id));
+			return Math.max(0, Math.min(amount, maxStack - container.getSlot(name).count));
 		});
 	}
 
 	export function setSlotValidatePolicy(container: ItemContainer, slotName: string, func: (name: string, id: number, amount: number, data: number, extra: ItemExtraData, container: ItemContainer, playerUid: number) => boolean): void {
 		container.setSlotAddTransferPolicy(slotName, function(container, name, id, amount, data, extra, playerUid) {
+			amount = Math.min(amount, Item.getMaxStack(id) - container.getSlot(name).count);
 			return func(name, id, amount, data, extra, container, playerUid) ? amount : 0;
 		});
 	}
 
 	export function setGlobalValidatePolicy(container: ItemContainer, func: (name: string, id: number, amount: number, data: number, extra: ItemExtraData, container: ItemContainer, playerUid: number) => boolean): void {
 		container.setGlobalAddTransferPolicy(function(container, name, id, amount, data, extra, playerUid) {
+			amount = Math.min(amount, Item.getMaxStack(id) - container.getSlot(name).count);
 			return func(name, id, amount, data, extra, container, playerUid) ? amount : 0;
 		});
 	}
 
 	/** Creates new interface instance for TileEntity or Container */
-	export function newStorage(storage: TileEntity | Container): Storage {
+	export function getInterface(storage: TileEntity | Container): Storage {
 		if ("container" in storage) {
 			return new TileEntityInterface(storage);
 		}
@@ -212,7 +215,7 @@ namespace StorageInterface {
 	 * @maxCount max count of item to transfer (optional)
 	*/
 	export function putItemToContainer(item: ItemInstance, container: TileEntity | Container, side?: number, maxCount?: number): number {
-		let storage = newStorage(container);
+		let storage = getInterface(container);
 		return storage.addItem(item, side, maxCount);
 	}
 
@@ -225,8 +228,8 @@ namespace StorageInterface {
 	 * @oneStack if true, will extract only 1 item
 	*/
 	export function extractItemsFromContainer(inputContainer: TileEntity | Container, outputContainer: TileEntity | Container, inputSide: number, maxCount?: number, oneStack?: boolean): number {
-		let inputStorage = newStorage(inputContainer);
-		let outputStorage = newStorage(outputContainer);
+		let inputStorage = getInterface(inputContainer);
+		let outputStorage = getInterface(outputContainer);
 		return extractItemsFromStorage(inputStorage, outputStorage, inputSide, maxCount, oneStack);
 	}
 
@@ -300,7 +303,7 @@ namespace StorageInterface {
 	export function checkHoppers(tile: TileEntity): void {
 		if (World.getThreadTime()%8 > 0) return;
 		let region = tile.blockSource;
-		let storage = StorageInterface.newStorage(tile);
+		let storage = StorageInterface.getInterface(tile);
 
 		// input
 		for (let side = 1; side < 6; side++) {

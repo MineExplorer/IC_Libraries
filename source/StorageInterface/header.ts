@@ -1,6 +1,6 @@
 LIBRARY({
 	name: "StorageInterface",
-	version: 9,
+	version: 10,
 	shared: true,
 	api: "CoreEngine"
 });
