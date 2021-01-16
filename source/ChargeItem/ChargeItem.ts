@@ -6,8 +6,6 @@ LIBRARY({
 });
 
 interface IElectricItem {
-	/** If true, consumes when gives energy, otherwise can be recharged many times */
-	isFlash?: boolean,
 	/** Type of energy stored in item */
 	energy: string,
 	/** If true, energy can be extracted from item */
@@ -29,12 +27,11 @@ interface IElectricItem {
 namespace ChargeItemRegistry {
 	export let chargeData: {[key: number]: IElectricItem} = {};
 
-    export function registerItem(id: number, itemData: IElectricItem, notInCreative?: boolean): void;
-    export function registerItem(id: number, energyType: string, capacity: number, transferLimit: number, tier: number, canProvideEnergy?: boolean, notInCreative?: boolean): void;
-    export function registerItem(id: number, energyType: string | IElectricItem, capacity?: any, transferLimit?: number, tier?: number, canProvideEnergy?: boolean, notInCreative?: boolean): void {
+    export function registerItem(id: number, itemData: IElectricItem, inCreative?: boolean): void;
+    export function registerItem(id: number, energyType: string, capacity: number, transferLimit: number, tier?: number, canProvideEnergy?: boolean, inCreative?: boolean): void;
+    export function registerItem(id: number, energyType: string | IElectricItem, capacity?: any, transferLimit?: number, tier?: number, canProvideEnergy?: boolean, inCreative?: boolean): void {
 		if (typeof energyType == "string") {
 			chargeData[id] = {
-				isFlash: false,
 				canProvideEnergy: canProvideEnergy,
 				energy: energyType,
 				tier: tier || 0,
@@ -43,22 +40,21 @@ namespace ChargeItemRegistry {
 			}
 		} else {
 			let itemData = energyType;
-			notInCreative = capacity;
-			capacity = itemData.maxCharge;
 			chargeData[id] = itemData;
+			inCreative = capacity;
+			capacity = itemData.maxCharge;
 		}
 
 		Item.setMaxDamage(id, 27);
-		if (!notInCreative) {
+		if (inCreative ?? true) {
 			addToCreative(id, capacity);
 		}
 	}
 
-    export function registerFlashItem(id: number, energyType: string, amount: number, tier: number): void {
+    export function registerFlashItem(id: number, energyType: string, amount: number, tier: number = 0): void {
 		chargeData[id] = {
-			isFlash: true,
 			canProvideEnergy: true,
-			tier: tier || 0,
+			tier: tier,
 			energy: energyType,
 			amount: amount
 		};
@@ -90,12 +86,12 @@ namespace ChargeItemRegistry {
 
 	export function isFlashStorage(id: number): boolean {
 		let data = getItemData(id);
-		return (data && data.isFlash);
+		return (data && !!data.amount);
 	}
 
 	export function isValidItem(id: number, energyType: string, tier: number): boolean {
 		let data = getItemData(id);
-		return (data && !data.isFlash && data.energy == energyType && data.tier <= tier);
+		return (data && !data.amount && data.energy == energyType && data.tier <= tier);
 	}
 
 	export function isValidStorage(id: number, energyType: string, tier: number): boolean {
@@ -121,7 +117,7 @@ namespace ChargeItemRegistry {
 			return 0;
 		}
 
-		if (data.isFlash) {
+		if (data.amount) {
 			return data.amount;
 		}
 
@@ -148,7 +144,7 @@ namespace ChargeItemRegistry {
 			return 0;
 		}
 
-		if (data.isFlash) {
+		if (data.amount) {
 			if (amount < 1) {
 				return 0;
 			}
