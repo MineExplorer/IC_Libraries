@@ -13,7 +13,7 @@ class EnergyNet extends EnergyNode {
 	wireId: number;
 	canSpreadEnergy: boolean;
 	removed: boolean = false;
-	
+
 	store: number = 0;
 	transfered: number = 0;
 	voltage: number = 0;
@@ -21,27 +21,25 @@ class EnergyNet extends EnergyNode {
 	lastTransfered: number = 0;
 	lastVoltage: number = 0;
 
-	constructor(energyType: EnergyType, maxPacketSize: number = 2e9, overloadFunc?: Function) {
-		super(null, energyType);
-		this.maxPacketSize = maxPacketSize || 2e9;
+	constructor(energyType: EnergyType, maxPacketSize?: number, overloadFunc?: Function) {
+		super(energyType, maxPacketSize);
+		this.maxPacketSize = maxPacketSize;
 		this.onOverload = overloadFunc || function() {};
 
 		this.canSpreadEnergy = true;
 		this.netId = GLOBAL_WEB_ID++;
 		this.wireMap = {};
 		this.connectedNets = {};
-		
+
 		this.energyNodes = [];
 	}
-	
-	
 
 	addEnergy(amount: number, voltage: number, source: EnergyNode, explored: {}) {
 		if (explored[this.netId]) {
 			return 0;
 		}
 		explored[this.netId] = true;
-		
+
 		let inVoltage = voltage;
 		if (voltage > this.maxPacketSize) {
 			voltage = this.maxPacketSize;
@@ -62,7 +60,7 @@ class EnergyNet extends EnergyNode {
 				amount -= node.receiveEnergy(this.energyName, amount, voltage);
 			}
 		}
-		
+
 		for (let i in this.connectedNets) {
 			if (amount <= 0) break;
 			let net = this.connectedNets[i];
@@ -70,7 +68,7 @@ class EnergyNet extends EnergyNode {
 				amount -= net.addEnergy(amount, voltage, source, explored);
 			}
 		}
-		
+
 		if (inAmount > amount) {
 			if (inVoltage > voltage) {
 				this.onOverload(inVoltage);
@@ -80,7 +78,7 @@ class EnergyNet extends EnergyNode {
 		}
 		return inAmount - amount;
 	}
-	
+
 	addToBuffer(amount: number, voltage: number = amount) {
 		this.store += amount;
 		this.voltage = Math.max(this.voltage, voltage);

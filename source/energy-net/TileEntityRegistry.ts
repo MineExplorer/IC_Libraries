@@ -1,12 +1,13 @@
 interface EnergyTile extends TileEntity {
-	x: number;
-	y: number;
-	z: number;
-	__energyTypes?: {};
-	__energyNodes?: {};
-	energyTick(type: string, src: EnergyNode): void; // called for each energy type
+	energyTypes?: {};
+	energyNodes?: {};
+	/**
+	 * called for each energy type
+	 * @param type energy type name
+	 * @param src EnergyNode
+	 */
+	energyTick(type: string, src: EnergyNode): void;
 	energyReceive(type: string, amount: number, voltage: number): number;
-	isEnergySource(type: string): boolean;
 	canReceiveEnergy(side: number, type: string): boolean;
 	canExtractEnergy(side: number, type: string): boolean;
 	canConductEnergy(type: string, side?: number): boolean;
@@ -18,7 +19,6 @@ namespace TileEntityRegistry {
 		if (!Prototype.__energyLibInit) {
 			setupInitialParams(Prototype);
 		}
-		
 		Prototype.__energyTypes[energyType.name] = energyType;
 	}
 
@@ -65,14 +65,11 @@ namespace TileEntityRegistry {
 			Prototype.canExtractEnergy = function() {
 				return false;
 			}
-			Prototype.isEnergySource = function() {
-				return false;
-			}
 		}
 
 		Prototype.init = function() {
-			this.energyNode = new EnergyNode(this);
 			for (let name in this.__energyTypes) {
+				this.energyNode = new EnergyNode(this, this.__energyTypes[name]);
 				if (this.isEnergySource(name) || this.canConductEnergy(name)) {
 					let node = this.getEnergyNode(name);
 					if (!node) {
@@ -96,15 +93,8 @@ namespace TileEntityRegistry {
 		Prototype.tick = function() {
 			this.__tick();
 			for (let name in this.__energyTypes) {
-				if (this.isEnergySource(name) || this.canConductEnergy(name)) {
-					let node = this.getEnergyNode(name);
-					if (!node) {
-						node = EnergyNetBuilder.createNode(this.tileEntity, this.__energyTypes[name]);
-						this.setEnergyNode(name, node);
-					}
-					this.currentNet = net;
-				}
-				this.tileEntity.energyTick(name, this);
+				let node = this.__energyNodes[name];
+				node.tick();
 			}
 		}
 	}
@@ -115,18 +105,6 @@ namespace TileEntityRegistry {
 
 	export function isMachine(id: number): boolean {
 		return machineIDs[id] ? true : false;
-	}
-
-	export function addMacineAccessAtCoords(x: number, y: number, z: number, machine: EnergyTile) {
-		quickCoordAccess[x + ":" + y + ":" + z] = machine;
-	}
-
-	export function removeMachineAccessAtCoords(x: number, y: number, z: number): void {
-		delete quickCoordAccess[x + ":" + y + ":" + z];
-	}
-
-	export function accessMachineAtCoords(x: number, y: number, z: number): EnergyTile {
-		return quickCoordAccess[x + ":" + y + ":" + z];
 	}
 
 	export function executeForAllInNet(net: EnergyNet, func: Function): void {

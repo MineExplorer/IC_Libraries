@@ -7,7 +7,7 @@ class EnergyType {
 		this.name = name;
 		this.value = 1;
 		this.wireData = {};
-	}	
+	}
 
 	registerWire(id: number, maxValue: number, overloadFunc?: Function, canConnectFunc?: Function) {
 		this.wireData[id] = maxValue;
@@ -20,7 +20,7 @@ class EnergyType {
 			}
 		}
 		EnergyRegistry.wireData[id] = wireData;
-		
+
 		Block.registerPlaceFunction(id, function(coords, item, block) {
 			let place = coords.relative;
 			if (World.getBlockID(place.x, place.y, place.z) == 0) {

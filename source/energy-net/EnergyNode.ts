@@ -2,35 +2,34 @@ class EnergyNode {
 	id: number;
 	energyType: EnergyType;
 	energyName: string;
-	tileEntity: EnergyTile;
-	connections: {
-		[key: number]: EnergyNode;
-	};
-	connectionsCount: number = 0;
-	receivers: EnergyNode[];
+	dimension: number;
+	maxPacketSize: number;
+	connections: EnergyNode[] = [];
+	receivers: EnergyNode[] = [];
 
-	constructor(parent: EnergyTile, energyType: EnergyType) {
+	energy_received: number = 0;
+	last_energy_received: number = 0;
+	voltage: number = 0;
+	last_voltage: number = 0;
+
+	constructor(energyType: EnergyType, maxPacketSize: number = 2e9) {
 		this.energyType = energyType;
 		this.energyName = energyType.name;
-		this.tileEntity = parent;
-		this.connections = {};
-		this.receivers = [];
-	}
-
-	getParent(): EnergyTile {
-		return this.tileEntity;
+		this.maxPacketSize = maxPacketSize;
 	}
 
 	addConnection(node: EnergyNode) {
-		if (!this.connections[node.id]) {
-			this.connections[node.id] = node;
-			this.connectionsCount++;
+		if (this.connections.indexOf(node) == -1) {
+			this.connections.push(node);
+			node.addConnection(this);
 		}
 	}
 
 	removeConnection(node: EnergyNode) {
-		delete this.connections[node.id];
-		this.connectionsCount--;
+		let index = this.connections.indexOf(node);
+		if (index != -1) {
+			this.connections.splice(index, 1);
+		}
 	}
 
 	addReceiver(node: EnergyNode) {
@@ -48,14 +47,26 @@ class EnergyNode {
 	}
 
 	receiveEnergy(type: string, amount: number, voltage: number): number {
-		return this.tileEntity.energyReceive(type, amount, voltage);
+		let add = this.tileEntity.energyReceive(type, amount, voltage);
+		this.energy_received += add;
+		this.voltage = Math.max(this.voltage, voltage);
+		return add;
 	}
-	
+
 	add(amount: number, voltage: number = amount): number {
-		let add = this.addEnergy(amount, voltage, this, {});
+		let add = this.addPacket(amount, voltage);
 		return amount - add;
 	}
-	
+
+	addPacket(amount: number, voltage: number): number {
+		let packet = new EnergyPacket(amount, voltage, this);
+		return this.sendPacket(packet);
+	}
+
+	sendPacket(packet: EnergyPacket): number {
+
+	}
+
 	addAll(amount: number, voltage: number = amount): void {
 		let net = this.currentNet;
 		if (net.connectionsCount == 1 && net.energyNodes.length == 0) {
@@ -70,39 +81,18 @@ class EnergyNode {
 		}
 	}
 
-	getEnergyTypes(): object {
-		return this.tileEntity.__energyTypes;
-	}
-
-	getEnergyNet(type: string): EnergyNet {
-		return this.energyNets[type];
-	}
-
-	setEnergyNet(type: string, net: EnergyNet): void {
-		this.energyNets[type] = net;
+	canConductEnergy(): boolean {
+		return true;
 	}
 
 	tick(): void {
-		let energyTypes = this.getEnergyTypes();
-		for (var name in energyTypes) {
-			if (this.tileEntity.isEnergySource(name) || this.tileEntity.canConductEnergy(name)) {
-				var net = this.getEnergyNet(name);
-				if (!net || net.removed) {
-					net = EnergyNetBuilder.buildForTile(this.tileEntity, energyTypes[name]);
-					this.setEnergyNet(name, net);
-				}
-				this.currentNet = net;
-			}
-			this.tileEntity.energyTick(name, this);
-		}
+		this.last_energy_received = this.energy_received;
+		this.energy_received = 0;
+		this.last_voltage = this.voltage;
+		this.voltage = 0;
 	}
 
 	destroy(): void {
-		for (let i in this.connectedNets) {
-			this.connectedNets[i].removeEnergyNode(this);
-		}
-		for (let i in this.energyNets) {
-			EnergyNetBuilder.removeNet(this.energyNets[i]);
-		}
+		EnergyNetBuilder.removeNode(this);
 	}
 }

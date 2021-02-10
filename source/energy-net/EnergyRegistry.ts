@@ -19,12 +19,12 @@ namespace EnergyRegistry {
 			alert("WARNING: duplicate energy types for name: " + name + "!");
 			Logger.Log("duplicate energy types for name: " + name + "!", "ERROR");
 		}
-		
+
 		var energyType = new EnergyType(name);
 		energyType.value = value || 1;
 
 		energyTypes[name] = energyType;
-		
+
 		return energyType;
 	}
 
@@ -44,7 +44,7 @@ namespace EnergyRegistry {
 	export function getValueRatio(name1: string, name2: string): number {
 		var type1 = getEnergyType(name1);
 		var type2 = getEnergyType(name2);
-		
+
 		if (type1 && type2) {
 			return type1.value / type2.value;
 		}
@@ -53,11 +53,11 @@ namespace EnergyRegistry {
 			return -1;
 		}
 	}
-	
+
 	export function getWireData(blockID: number): WireData {
 		return wireData[blockID];
 	}
-	
+
 	export function isWire(blockID: number, type?: string): boolean {
 		var wireData = getWireData(blockID);
 		if (wireData) {
@@ -65,7 +65,7 @@ namespace EnergyRegistry {
 		}
 		return false;
 	}
-	
+
 	export function onWirePlaced(x: number, y: number, z: number): void {
 		var block = World.getBlock(x, y, z);
 		var wireData = getWireData(block.id);
@@ -78,7 +78,7 @@ namespace EnergyRegistry {
 				return;
 			}
 		}
-		
+
 		EnergyNetBuilder.buildForWire(x, y, z, block.id);
 	}
 

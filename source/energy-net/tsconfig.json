@@ -15,6 +15,9 @@
 		"header.ts",
 		"EnergyRegistry.ts",
 		"EnergyType.ts",
+		"EnergyPacket.ts",
+		"EnergyNode.ts",
+		"TileEnergyNode.ts",
 		"TileEntityRegistry.ts",
 		"EnergyNetBuilder.ts",
 		"EnergyNet.ts"

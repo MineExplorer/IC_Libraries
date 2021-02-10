@@ -5,11 +5,17 @@ namespace EnergyNetBuilder {
 		energyNets.push(net);
 	}
 
+	export function removeNode(node: EnergyNode): void {
+		for (let i in node.connections) {
+			node.connections[i].removeConnection(node);
+		}
+	}
+
 	export function removeNet(net: EnergyNet): void {
 		for(let node of net.energyNodes) {
-			delete node.connectedNets[net.netId];
+			delete node.energyNodes[net.netId];
 		};
-		
+
 		for (let i in net.connectedNets) {
 			net.connectedNets[i].removeConnection(net);
 		}
@@ -43,7 +49,7 @@ namespace EnergyNetBuilder {
 		}
 		return null;
 	}
-	
+
 	export function getNetByBlock(x: number, y: number, z: number, wireId: number): EnergyNet {
 		if (World.getBlockID(x, y, z) == wireId) {
 			return getNetOnCoords(x, y, z);
@@ -55,7 +61,7 @@ namespace EnergyNetBuilder {
 		net1.addConnection(net2);
 		net2.addConnection(net1);
 	}
-	
+
 	export function mergeNets(net1: EnergyNet, net2: EnergyNet): void {
 		for (let key in net2.wireMap) {
 			net1.wireMap[key] = true;
@@ -73,7 +79,7 @@ namespace EnergyNetBuilder {
 		}
 		removeNet(net2);
 	}
-	
+
 	export function buildForTile(tile: EnergyTile, type: EnergyType): EnergyNet {
 		let net = new EnergyNet(type);
 		net.canSpreadEnergy = tile.canConductEnergy(type.name);
@@ -81,7 +87,7 @@ namespace EnergyNetBuilder {
 		buildTileNetReqursive(tile, net);
 		return net;
 	}
-	
+
 	export function buildTileNet(net: EnergyNet, x: number, y: number, z: number, side: number): void {
 		let type = net.energyName;
 		let tile = TileEntityRegistry.accessMachineAtCoords(x, y, z);
@@ -118,7 +124,7 @@ namespace EnergyNetBuilder {
 			}
 		}
 	}
-	
+
 	export function buildTileNetReqursive(tile: EnergyTile, net: EnergyNet) {
 		for (let side = 0; side < 6; side++) {
 			if (tile.canExtractEnergy(side, net.energyName)) {
@@ -127,7 +133,7 @@ namespace EnergyNetBuilder {
 			}
 		}
 	}
-	
+
 	export function buildForWire(x: number, y: number, z: number, id: number): EnergyNet {
 		let wireData = EnergyRegistry.getWireData(id);
 		if (!wireData) return null;
@@ -146,15 +152,15 @@ namespace EnergyNetBuilder {
 		}
 		return null;
 	}
-	
+
 	export function rebuildRecursive(net: EnergyNet, wireId: number, x: number, y: number, z: number, side?: number): void {
 		if (net.removed) return;
-		
+
 		let coordKey = x + ":" + y + ":" + z;
 		if (net.wireMap[coordKey]) {
 			return;
 		}
-		
+
 		let type = net.energyName;
 		let tileEntity = TileEntityRegistry.accessMachineAtCoords(x, y, z);
 		if (tileEntity && tileEntity.__energyTypes[type]) {
@@ -171,7 +177,7 @@ namespace EnergyNetBuilder {
 		else {
 			let otherNet = getNetOnCoords(x, y, z);
 			if (otherNet == net) return;
-			
+
 			let block = World.getBlock(x, y, z);
 			if (wireId == block.id) {
 				if (otherNet) {
@@ -203,7 +209,7 @@ namespace EnergyNetBuilder {
 			}
 		}
 	}
-	
+
 	export function rebuildTileNet(tile: EnergyTile): void {
 		let node = tile.energyNode;
 		let nets = node.energyNets;
@@ -211,13 +217,13 @@ namespace EnergyNetBuilder {
 			EnergyNetBuilder.removeNet(nets[i]);
 			delete nets[i];
 		}
-		
+
 		for (let i in node.connectedNets) {
 			node.connectedNets[i].removeEnergyNode(this);
 		}
 		EnergyNetBuilder.rebuildTileConnections(tile.x, tile.y, tile.z, tile);
 	}
-	
+
 	export function rebuildTileConnections(x: number, y: number, z: number, tile: EnergyTile): void {
 		for (let name in tile.__energyTypes) {
 			for (let side = 0; side < 6; side++) {
@@ -245,7 +251,7 @@ namespace EnergyNetBuilder {
 			energyNets[i].tick();
 		}
 	}
-	
+
 	export function getRelativeCoords(x: number, y: number, z: number, side: number): Vector {
 		let directions = [
 			{x: 0, y: -1, z: 0}, // down
