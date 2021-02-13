@@ -1,15 +1,16 @@
 LIBRARY({
     name: "VanillaRecipe",
-    version: 2,
+    version: 3,
     shared: false,
     api: "CoreEngine"
 });
 var MOD_PREFIX = "mod_";
+var VANILLA_PATH = getMCPEVersion().main == 28 ? "/definitions/recipe/" : "/behavior_packs/vanilla/recipes/";
 var VanillaRecipe;
 (function (VanillaRecipe) {
     var resource_path;
     function setResourcePath(path) {
-        resource_path = path + "/definitions/recipe/";
+        resource_path = path + VANILLA_PATH;
         FileTools.mkdir(resource_path);
         resetRecipes();
     }
@@ -70,7 +71,7 @@ var VanillaRecipe;
     }
     VanillaRecipe.convertToVanillaID = convertToVanillaID;
     function generateBlankFile(recipeName) {
-        var path = __packdir__ + "assets/definitions/recipe/" + getFileName(recipeName);
+        var path = __packdir__ + "assets" + VANILLA_PATH + getFileName(recipeName);
         FileTools.WriteText(path, '{"type": "crafting_shaped", "tags": []}');
     }
     function generateJSONRecipe(name, obj) {
