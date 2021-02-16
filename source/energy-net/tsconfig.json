@@ -17,10 +17,11 @@
 		"EnergyType.ts",
 		"EnergyPacket.ts",
 		"EnergyNode.ts",
-		"TileEnergyNode.ts",
+		"EnergyTileNode.ts",
 		"TileEntityRegistry.ts",
 		"EnergyNetBuilder.ts",
-		"EnergyNet.ts"
+		"EnergyNet.ts",
+		"export.ts"
 	],
 	"files": [
 		"../../global.d.ts"

@@ -1,13 +1,13 @@
 class EnergyPacket {
-	amount: number;
-	voltage: number;
+	energyName: string;
+	size: number;
 	source: EnergyNode;
-	netMap: object = {};
+	passedNodes: object = {};
 
-	constructor(amount: number, voltage: number, source: EnergyNode) {
-		this.amount = amount;
-		this.voltage = voltage;
+	constructor(energyName: string, size: number, source: EnergyNode) {
+		this.energyName = energyName;
+		this.size = size;
 		this.source = source;
-		this.netMap[source.id] = true;
+		this.passedNodes[source.id] = true;
 	}
 }

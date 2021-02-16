@@ -21,15 +21,21 @@ class EnergyType {
 		}
 		EnergyRegistry.wireData[id] = wireData;
 
-		Block.registerPlaceFunction(id, function(coords, item, block) {
+		Block.registerPlaceFunction(id, function(coords, item, block, player) {
+			let region = BlockSource.getDefaultForActor(player);
 			let place = coords.relative;
-			if (World.getBlockID(place.x, place.y, place.z) == 0) {
-				World.setBlock(place.x, place.y, place.z, item.id, item.data);
-				Player.setCarriedItem(item.id, item.count - 1, item.data);
+			if (region.getBlockId(place.x, place.y, place.z) == 0) {
+				region.setBlock(place.x, place.y, place.z, item.id, item.data);
+				Entity.setCarriedItem(player, item.id, item.count - 1, item.data);
 				EnergyRegistry.onWirePlaced(place.x, place.y, place.z);
 			}
 		});
 
 		return wireData;
+	}
+
+	registerCable(id: number, maxValue: number, EnergyNodeType: { new(energyName: string): EnergyNode}) {
+		this.wireData = {type: EnergyNodeType}
+		let node = new EnergyNodeType("Eu");
 	}
 }

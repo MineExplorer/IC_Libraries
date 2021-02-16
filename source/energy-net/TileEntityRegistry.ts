@@ -1,23 +1,19 @@
 interface EnergyTile extends TileEntity {
-	energyTypes?: {};
-	energyNodes?: {};
-	/**
-	 * called for each energy type
-	 * @param type energy type name
-	 * @param src EnergyNode
-	 */
-	energyTick(type: string, src: EnergyNode): void;
+	isEnergyTile: boolean;
+	energyTypes: {};
+	energyNode: EnergyNode;
+	energyTick(type: string, node: EnergyNode): void;
 	energyReceive(type: string, amount: number, voltage: number): number;
 	canReceiveEnergy(side: number, type: string): boolean;
 	canExtractEnergy(side: number, type: string): boolean;
-	canConductEnergy(type: string, side?: number): boolean;
+	canConductEnergy(type: string): boolean;
 }
 
 namespace TileEntityRegistry {
 	// adds energy type for tile entity prototype
 	export function addEnergyType(Prototype: any, energyType: EnergyType): void {
-		if (!Prototype.__energyLibInit) {
-			setupInitialParams(Prototype);
+		if (!Prototype.isEnergyTile) {
+			setupAsEnergyTile(Prototype);
 		}
 		Prototype.__energyTypes[energyType.name] = energyType;
 	}
@@ -33,14 +29,10 @@ namespace TileEntityRegistry {
 		}
 	}
 
-	export function setupInitialParams(Prototype: any): void {
-		Prototype.__energyLibInit = true;
+	export function setupAsEnergyTile(Prototype: any): void {
+		Prototype.isEnergyTile = true;
 
-		Prototype.__energyTypes = {};
-
-		Prototype.__init = Prototype.init || function() {};
-		Prototype.__tick = Prototype.tick || function() {};
-		Prototype.__destroy = Prototype.destroy || function() {};
+		Prototype.energyTypes = {};
 
 		Prototype.energyTick = Prototype.energyTick || function() {};
 
@@ -66,55 +58,29 @@ namespace TileEntityRegistry {
 				return false;
 			}
 		}
-
-		Prototype.init = function() {
-			for (let name in this.__energyTypes) {
-				this.energyNode = new EnergyNode(this, this.__energyTypes[name]);
-				if (this.isEnergySource(name) || this.canConductEnergy(name)) {
-					let node = this.getEnergyNode(name);
-					if (!node) {
-						node = EnergyNetBuilder.createNode(this.tileEntity, this.__energyTypes[name]);
-						this.setEnergyNode(name, node);
-					}
-					this.currentNet = net;
-				}
-			}
-			TileEntityRegistry.addMacineAccessAtCoords(this.x, this.y, this.z, this);
-			EnergyNetBuilder.rebuildTileConnections(this.x, this.y, this.z, this);
-			this.__init();
-		}
-
-		Prototype.destroy = function() {
-			TileEntityRegistry.removeMachineAccessAtCoords(this.x, this.y, this.z);
-			this.energyNode.destroy();
-			this.__destroy();
-		}
-
-		Prototype.tick = function() {
-			this.__tick();
-			for (let name in this.__energyTypes) {
-				let node = this.__energyNodes[name];
-				node.tick();
-			}
-		}
 	}
 
 	/* machine is tile entity, that uses energy */
 	export let machineIDs = {};
-	export let quickCoordAccess = {};
 
 	export function isMachine(id: number): boolean {
 		return machineIDs[id] ? true : false;
 	}
-
-	export function executeForAllInNet(net: EnergyNet, func: Function): void {
-		for (let i in net.energyNodes) {
-			let mech = net.energyNodes[i].getTileEntity();
-			func(mech);
-		}
-	}
 };
 
-Callback.addCallback("LevelLoaded", function() {
-    TileEntityRegistry.quickCoordAccess = {};
+Callback.addCallback("TileEntityCreated", function(tileEntity: TileEntity) {
+    if (tileEntity.isEnergyTile) {
+		let node: EnergyNode;
+		for (let type of tileEntity.energyTypes) {
+			if (!node) node = new EnergyNode(type);
+			else node.addEnergyType(type);
+		}
+		tileEntity.energyNode = node;
+	}
+});
+
+Callback.addCallback("TileEntityRemoved", function(tileEntity: TileEntity) {
+    if (tileEntity.energyNode) {
+		tileEntity.energyNode.destroy();
+	}
 });
