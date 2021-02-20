@@ -128,7 +128,7 @@ namespace EnergyNetBuilder {
 	export function buildTileNetReqursive(tile: EnergyTile, net: EnergyNet) {
 		for (let side = 0; side < 6; side++) {
 			if (tile.canExtractEnergy(side, net.energyName)) {
-				let c = getRelativeCoords(tile.x, tile.y, tile.z, side);
+				let c = World.getRelativeCoords(tile.x, tile.y, tile.z, side);
 				buildTileNet(net, c.x, c.y, c.z, side ^ 1);
 			}
 		}
@@ -203,7 +203,7 @@ namespace EnergyNetBuilder {
 		let wireData = EnergyRegistry.getWireData(wireBlock.id);
 		let coord1 = {x: x, y: y, z: z};
 		for (let side = 0; side < 6; side++) {
-			let coord2 = getRelativeCoords(x, y, z, side);
+			let coord2 = World.getRelativeCoords(x, y, z, side);
 			if (wireData.canConnect(wireBlock, coord1, coord2, side)) {
 				rebuildRecursive(net, wireBlock.id, coord2.x, coord2.y, coord2.z, side ^ 1);
 			}
@@ -228,7 +228,7 @@ namespace EnergyNetBuilder {
 		for (let name in tile.__energyTypes) {
 			for (let side = 0; side < 6; side++) {
 				if (tile.canReceiveEnergy(side, name)) {
-					let c = getRelativeCoords(x, y, z, side);
+					let c = World.getRelativeCoords(x, y, z, side);
 					let tileSource = TileEntityRegistry.accessMachineAtCoords(c.x, c.y, c.z);
 					if (tileSource && tileSource.__energyTypes[name]) {
 						if (tileSource.canExtractEnergy(side ^ 1, name)) {
@@ -250,19 +250,6 @@ namespace EnergyNetBuilder {
 		for (let i in energyNets) {
 			energyNets[i].tick();
 		}
-	}
-
-	export function getRelativeCoords(x: number, y: number, z: number, side: number): Vector {
-		let directions = [
-			{x: 0, y: -1, z: 0}, // down
-			{x: 0, y: 1, z: 0}, // up
-			{x: 0, y: 0, z: -1}, // east
-			{x: 0, y: 0, z: 1}, // west
-			{x: -1, y: 0, z: 0}, // south
-			{x: 1, y: 0, z: 0} // north
-		]
-		let dir = directions[side];
-		return {x: x + dir.x, y: y + dir.y, z: z + dir.z};
 	}
 }
 

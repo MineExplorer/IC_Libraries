@@ -71,7 +71,7 @@ namespace EnergyRegistry {
 		var wireData = getWireData(block.id);
 		var coord1 = {x: x, y: y, z: z};
 		for (var side = 0; side < 6; side++) {
-			var coord2 = EnergyNetBuilder.getRelativeCoords(x, y, z, side);
+			var coord2 = World.getRelativeCoords(x, y, z, side);
 			var net = EnergyNetBuilder.getNetByBlock(coord2.x, coord2.y, coord2.z, block.id);
 			if (net && wireData.canConnect(block, coord1, coord2, side)) {
 				EnergyNetBuilder.rebuildRecursive(net, block.id, x, y, z);

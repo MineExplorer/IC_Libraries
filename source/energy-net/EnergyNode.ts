@@ -1,3 +1,5 @@
+let GLOBAL_NODE_ID = 0;
+
 class EnergyNode {
 	id: number;
 	baseEnergy: string;
@@ -19,12 +21,13 @@ class EnergyNode {
 	currentPower: number = 0;
 
 	constructor(energyType: EnergyType, maxPacketSize: number = 2e9) {
+		this.id = GLOBAL_NODE_ID++;
 		this.baseEnergy = energyType.name;
 		this.addEnergyType(energyType);
 		this.maxPacketSize = maxPacketSize;
 	}
 
-	addEnergyType(energyType: EnergyType) {
+	addEnergyType(energyType: EnergyType): void {
 		this.energyTypes[energyType.name] = energyType;
 	}
 
@@ -34,21 +37,21 @@ class EnergyNode {
 		}
 	}
 
-	private removeConnection(node: EnergyNode) {
+	private removeConnection(node: EnergyNode): void {
 		let index = this.connections.indexOf(node);
 		if (index != -1) {
 			this.connections.splice(index, 1);
 		}
 	}
 
-	addReceiver(node: EnergyNode) {
+	addReceiver(node: EnergyNode): void {
 		if (this.receivers.indexOf(node) == -1) {
 			this.receivers.push(node);
 			node.addConnection(this);
 		}
 	}
 
-	removeReceiver(node: EnergyNode) {
+	removeReceiver(node: EnergyNode): void {
 		let index = this.receivers.indexOf(node);
 		if (index != -1) {
 			this.receivers.splice(index, 1);
@@ -108,7 +111,7 @@ class EnergyNode {
 		this.add(amount, power);
 	}
 
-	onOverload(packetSize: number) {}
+	onOverload(packetSize: number): void {}
 
 	canConductEnergy(block: Tile, coord1: Vector, coord2: Vector, side: number): boolean {
 		return true;
@@ -128,10 +131,17 @@ class EnergyNode {
 	}
 
 	destroy(): void {
+		this.removed = true;
+		for (let node of this.connections) {
+			node.removeReceiver(this);
+		}
+		for (let node of this.receivers) {
+			node.removeConnection(this);
+		}
 		EnergyNetBuilder.removeNode(this);
 	}
 
-	toString() {
-		return `[EnergyNode id=${this.id}, type=${this.baseEnergy}, connections=${this.connections.length}, receivers=${this.receivers.length}, energyIn=${this.energyIn}, energyOut=${this.energyOut}, power=${this.energyPower}]";
+	toString(): string {
+		return `[EnergyNode id=${this.id}, type=${this.baseEnergy}, connections=${this.connections.length}, receivers=${this.receivers.length}, energyIn=${this.energyIn}, energyOut=${this.energyOut}, power=${this.energyPower}]`;
 	}
 }
