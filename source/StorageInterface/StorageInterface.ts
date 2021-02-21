@@ -246,7 +246,7 @@ namespace StorageInterface {
 		let slots = outputStorage.getOutputSlots(inputSide ^ 1);
 		for (let name of slots) {
 			let slot = outputStorage.getSlot(name);
-			if (slot.id > 0) {
+			if (slot.id !== 0) {
 				let added = inputStorage.addItem(slot, inputSide, maxCount - count);
 				if (added > 0) {
 					count += added;

@@ -1,6 +1,6 @@
 LIBRARY({
     name: "StorageInterface",
-    version: 10,
+    version: 11,
     shared: true,
     api: "CoreEngine"
 });
@@ -501,7 +501,7 @@ var StorageInterface;
         for (var _i = 0, slots_4 = slots; _i < slots_4.length; _i++) {
             var name = slots_4[_i];
             var slot = outputStorage.getSlot(name);
-            if (slot.id > 0) {
+            if (slot.id !== 0) {
                 var added = inputStorage.addItem(slot, inputSide, maxCount - count);
                 if (added > 0) {
                     count += added;
