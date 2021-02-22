@@ -136,7 +136,7 @@ implements Storage {
 			let slotData = this.slots[name];
 			if (slotData.output) {
 				let item = this.container.getSlot(name);
-				if (item.id > 0 && this.isValidSlotSide(slotData.side, side) && (!slotData.canOutput || slotData.canOutput(item, side, this.tileEntity))) {
+				if (item.id !== 0 && this.isValidSlotSide(slotData.side, side) && (!slotData.canOutput || slotData.canOutput(item, side, this.tileEntity))) {
 					slotNames.push(name);
 				}
 			}
