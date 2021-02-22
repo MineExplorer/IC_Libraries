@@ -1,35 +1,35 @@
 interface EnergyTile extends TileEntity {
 	isEnergyTile: boolean;
 	energyTypes: {};
-	energyNode: EnergyNode;
-	energyTick(type: string, node: EnergyNode): void;
+	energyNode: EnergyTileNode;
+	energyTick(type: string, node: EnergyTileNode): void;
 	energyReceive(type: string, amount: number, voltage: number): number;
 	canReceiveEnergy(side: number, type: string): boolean;
 	canExtractEnergy(side: number, type: string): boolean;
 	canConductEnergy(type: string): boolean;
 }
 
-namespace TileEntityRegistry {
+namespace EnergyTileRegistry {
 	// adds energy type for tile entity prototype
-	export function addEnergyType(Prototype: any, energyType: EnergyType): void {
+	export function addEnergyType(Prototype: EnergyTile, energyType: EnergyType): void {
 		if (!Prototype.isEnergyTile) {
 			setupAsEnergyTile(Prototype);
 		}
-		Prototype.__energyTypes[energyType.name] = energyType;
+		Prototype.energyTypes[energyType.name] = energyType;
 	}
 
 	// same as addEnergyType, but works on already created prototypes, accessing them by id
 	export function addEnergyTypeForId(id: number, energyType: EnergyType): void {
 		let Prototype = TileEntity.getPrototype(id);
 		if (Prototype) {
-			addEnergyType(Prototype, energyType);
+			addEnergyType(Prototype as EnergyTile, energyType);
 		}
 		else {
 			Logger.Log("cannot add energy type no prototype defined for id " + id, "ERROR");
 		}
 	}
 
-	export function setupAsEnergyTile(Prototype: any): void {
+	export function setupAsEnergyTile(Prototype: EnergyTile): void {
 		Prototype.isEnergyTile = true;
 
 		Prototype.energyTypes = {};

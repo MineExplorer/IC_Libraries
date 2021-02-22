@@ -21,16 +21,20 @@ namespace EnergyNet {
 		}
 	}
 
-	export function connectNodes(node1: EnergyNode, node2: EnergyNode): void {
-		node1.addReceiver(node2);
-		node2.addReceiver(node1);
+	export function getNodeOnCoords(region: BlockSource, x: number, y: number, z: number): EnergyNode {
+		let nodes = getNodesByDimension(region.getDimension());
+		let coordKey = x + ":" + y + ":" + z;
+		for (let node of nodes) {
+			if (node.blocksMap[coordKey]) return node;
+		}
+		return null;
 	}
 
-	export function buildGridForTile(te: EnergyTile) {
-		let node = te.energyNode;
-		for (let side = 0; side < 6; side++) {
-			let c = World.getRelativeCoords(te.x, te.y, te.z, side);
-			let node = getNodeOnCoords(c.x, c.y, c.z);
+	function energyNodesTick(): void {
+		for (let dimension in energyNodes) {
+			for (let node of energyNodes[dimension]) {
+				node.tick();
+			}
 		}
 	}
 
@@ -39,10 +43,6 @@ namespace EnergyNet {
 	});
 
 	Callback.addCallback("tick", function() {
-		for (let dimension in energyNodes) {
-			for (let node of energyNodes[dimension]) {
-				node.tick();
-			}
-		}
+		energyNodesTick();
 	});
 }

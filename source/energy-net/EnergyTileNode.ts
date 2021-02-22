@@ -22,11 +22,20 @@ extends EnergyNode {
 		return this.transferEnergy(amount, packet);
 	}
 
-	init() {
-
+	canReceiveEnergy(side: number, type: string): boolean {
+		return this.tileEntity.canReceiveEnergy(side, type);
 	}
 
-	tick() {
+	canExtractEnergy(side: number, type: string): boolean {
+		return this.tileEntity.canExtractEnergy(side, type);
+	}
+
+	init(): void {
+		EnergyGridBuilder.buildGridForTile(this.tileEntity);
+		this.initialized = true;
+	}
+
+	tick(): void {
 		if (!this.initialized) {
 			this.init();
 		}

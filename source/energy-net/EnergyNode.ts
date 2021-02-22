@@ -3,14 +3,13 @@ let GLOBAL_NODE_ID = 0;
 class EnergyNode {
 	id: number;
 	baseEnergy: string;
-	energyTypes: object;
+	energyTypes: object = {};
 	dimension: number;
-	maxPacketSize: number;
+	maxValue: number;
 	initialized: boolean = false;
 	removed: boolean = false;
-	blockID: number;
 	blocksMap: object = {};
-	connections: EnergyNode[] = [];
+	entries: EnergyNode[] = [];
 	receivers: EnergyNode[] = [];
 
 	energyIn: number = 0;
@@ -20,43 +19,85 @@ class EnergyNode {
 	energyPower: number = 0;
 	currentPower: number = 0;
 
-	constructor(energyType: EnergyType, maxPacketSize: number = 2e9) {
+	constructor(energyType: EnergyType, maxValue: number = 2e9) {
 		this.id = GLOBAL_NODE_ID++;
 		this.baseEnergy = energyType.name;
 		this.addEnergyType(energyType);
-		this.maxPacketSize = maxPacketSize;
+		this.maxValue = maxValue;
+		EnergyNet.addEnergyNode(this);
 	}
 
 	addEnergyType(energyType: EnergyType): void {
 		this.energyTypes[energyType.name] = energyType;
 	}
 
-	private addConnection(node: EnergyNode) {
-		if (this.connections.indexOf(node) == -1) {
-			this.connections.push(node);
+	private addEntry(node: EnergyNode): void {
+		if (this.entries.indexOf(node) == -1) {
+			this.entries.push(node);
 		}
 	}
 
-	private removeConnection(node: EnergyNode): void {
-		let index = this.connections.indexOf(node);
+	private removeEntry(node: EnergyNode): void {
+		let index = this.entries.indexOf(node);
 		if (index != -1) {
-			this.connections.splice(index, 1);
+			this.entries.splice(index, 1);
 		}
 	}
 
-	addReceiver(node: EnergyNode): void {
+	/**
+	 * @param node receiver node
+	 * @returns true if link to the node was added, false if it already exists
+	 */
+	private addReceiver(node: EnergyNode): boolean {
 		if (this.receivers.indexOf(node) == -1) {
 			this.receivers.push(node);
-			node.addConnection(this);
+			return true;
 		}
+		return false;
 	}
 
-	removeReceiver(node: EnergyNode): void {
+	/**
+	 * @param node receiver node
+	 * @returns true if link to the node was removed, false if it already removed
+	 */
+	private removeReceiver(node: EnergyNode): boolean {
 		let index = this.receivers.indexOf(node);
 		if (index != -1) {
 			this.receivers.splice(index, 1);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Adds output connection to specified node
+	 * @param node receiver node
+	 */
+	addConnection(node: EnergyNode): void {
+		if (this.addReceiver(node)) {
+			node.addEntry(this);
+		}
+	}
+
+	/**
+	 * Removes output connection to specified node
+	 * @param node receiver node
+	 */
+	removeConnection(node: EnergyNode): void {
+		if (this.removeReceiver(node)) {
+			node.removeEntry(this);
+		}
+	}
+
+	resetConnections(): void {
+		for (let node of this.entries) {
+			node.removeReceiver(this);
+		}
+		this.entries = [];
+		for (let node of this.receivers) {
 			node.removeConnection(this);
 		}
+		this.receivers = [];
 	}
 
 	receiveEnergy(amount: number, packet: EnergyPacket): number {
@@ -81,7 +122,7 @@ class EnergyNode {
 		if (this.receivers.length == 0) return 0;
 
 		let receivedAmount = amount;
-		if (packet.size > this.maxPacketSize) {
+		if (packet.size > this.maxValue) {
 			amount = Math.min(amount, packet.size);
 			this.onOverload(packet.size);
 		}
@@ -113,8 +154,15 @@ class EnergyNode {
 
 	onOverload(packetSize: number): void {}
 
-	canConductEnergy(block: Tile, coord1: Vector, coord2: Vector, side: number): boolean {
+	canConductEnergy(coord1: Vector, coord2: Vector, side: number): boolean {
 		return true;
+	}
+
+	isCompatible(node: EnergyNode): boolean {
+		for (let energyType in this.energyTypes) {
+			if (node.energyTypes[energyType]) return true;
+		}
+		return false;
 	}
 
 	init(): void {
@@ -132,16 +180,11 @@ class EnergyNode {
 
 	destroy(): void {
 		this.removed = true;
-		for (let node of this.connections) {
-			node.removeReceiver(this);
-		}
-		for (let node of this.receivers) {
-			node.removeConnection(this);
-		}
-		EnergyNetBuilder.removeNode(this);
+		this.resetConnections();
+		EnergyNet.removeEnergyNode(this);
 	}
 
 	toString(): string {
-		return `[EnergyNode id=${this.id}, type=${this.baseEnergy}, connections=${this.connections.length}, receivers=${this.receivers.length}, energyIn=${this.energyIn}, energyOut=${this.energyOut}, power=${this.energyPower}]`;
+		return `[EnergyNode id=${this.id}, type=${this.baseEnergy}, entries=${this.entries.length}, receivers=${this.receivers.length}, energyIn=${this.energyIn}, energyOut=${this.energyOut}, power=${this.energyPower}]`;
 	}
 }

@@ -17,9 +17,11 @@
 		"EnergyType.ts",
 		"EnergyPacket.ts",
 		"EnergyNode.ts",
+		"EnergyGrid.ts",
 		"EnergyTileNode.ts",
-		"TileEntityRegistry.ts",
-		"EnergyNetBuilder.ts",
+		"EnergyTileRegistry.ts",
+		"EnergyGridBuilder.ts",
+		"EnergyGridBuilder.ts",
 		"EnergyNet.ts",
 		"export.ts"
 	],
