@@ -4,9 +4,9 @@ interface EnergyTile extends TileEntity {
 	energyNode: EnergyTileNode;
 	energyTick(type: string, node: EnergyTileNode): void;
 	energyReceive(type: string, amount: number, voltage: number): number;
+	isConductor(type: string): boolean;
 	canReceiveEnergy(side: number, type: string): boolean;
 	canExtractEnergy(side: number, type: string): boolean;
-	canConductEnergy(type: string): boolean;
 }
 
 namespace EnergyTileRegistry {
@@ -40,12 +40,12 @@ namespace EnergyTileRegistry {
 			return 0;
 		}
 
-		Prototype.canReceiveEnergy = Prototype.canReceiveEnergy || function() {
-			return true;
+		Prototype.isConductor = Prototype.isConductor || function() {
+			return false;
 		}
 
-		Prototype.canConductEnergy = Prototype.canConductEnergy || function() {
-			return false;
+		Prototype.canReceiveEnergy = Prototype.canReceiveEnergy || function() {
+			return true;
 		}
 
 		if (!Prototype.canExtractEnergy) {
@@ -65,7 +65,7 @@ namespace EnergyTileRegistry {
 	export let machineIDs = {};
 
 	export function isMachine(id: number): boolean {
-		return machineIDs[id] ? true : false;
+		return !!machineIDs[id];
 	}
 };
 

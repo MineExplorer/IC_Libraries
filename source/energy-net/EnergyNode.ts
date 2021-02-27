@@ -108,11 +108,12 @@ class EnergyNode {
 	}
 
 	receiveEnergy(amount: number, packet: EnergyPacket): number {
-		if (packet.passedNodes[this.id]) {
-			return 0;
-		}
-		packet.passedNodes[this.id] = true;
-		return this.transferEnergy(amount, packet);
+		let energyIn = this.transferEnergy(amount, packet);
+        if (energyIn > 0) {
+        	this.currentPower = Math.max(this.currentPower, packet.size);
+        	this.currentIn += energyIn;
+	    }
+        return energyIn;
 	}
 
 	add(amount: number, power: number = amount): number {
@@ -134,24 +135,27 @@ class EnergyNode {
 			this.onOverload(packet.size);
 		}
 
-		let receiversLeft = this.receivers.length;
-		for (let node of this.receivers) {
+		let receiversCount = this.receivers.length;
+		for (let i = 0; i < receiversCount; i++) {
+			let node = this.receivers[i];
 			if (amount <= 0) break;
-			amount -= node.receiveEnergy(Math.ceil(amount / receiversLeft), packet);
-			receiversLeft--;
+			if (packet.validateNode(node.id)) {
+				amount -= node.receiveEnergy(Math.ceil(amount / (receiversCount - i)), packet);
+			}
 		}
 		for (let node of this.receivers) {
 			if (amount <= 0) break;
-			amount -= node.receiveEnergy(amount, packet);
+			if (packet.validateNode(node.id)) {
+				amount -= node.receiveEnergy(amount, packet);
+			}
 		}
 
-		let transferedAmount = receivedAmount - amount;
-		if (transferedAmount > 0) {
-			this.currentPower = Math.max(this.currentPower, packet.size);
-			this.currentIn += transferedAmount;
-			this.currentOut += transferedAmount;
-		}
-		return transferedAmount;
+		let energyOut = receivedAmount - amount;
+        if (energyOut > 0) {
+            this.currentPower = Math.max(this.currentPower, packet.size);
+            this.currentOut += energyOut;
+        }
+        return energyOut;
 	}
 
 	/** @deprecated */
@@ -160,6 +164,10 @@ class EnergyNode {
 	}
 
 	onOverload(packetSize: number): void {}
+
+	isConductor(type: string): boolean {
+		return true;
+	}
 
 	canReceiveEnergy(side: number, type: string): boolean {
 		return true;

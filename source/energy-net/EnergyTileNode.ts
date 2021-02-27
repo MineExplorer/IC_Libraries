@@ -13,13 +13,19 @@ extends EnergyNode {
 	}
 
 	receiveEnergy(amount: number, packet: EnergyPacket): number {
-		if (packet.passedNodes[this.id]) {
-			return 0;
+		let energyIn = this.tileEntity.energyReceive(packet.energyName, amount, packet.size);
+        if (energyIn < amount && this.isConductor(packet.energyName)) {
+			energyIn += this.transferEnergy(amount - energyIn, packet);
 		}
-		packet.passedNodes[this.id] = true;
-		if (!this.tileEntity.isLoaded) return 0;
-		this.tileEntity.energyReceive(packet.energyName, amount, packet.size);
-		return this.transferEnergy(amount, packet);
+        if (energyIn > 0) {
+        	this.currentPower = Math.max(this.currentPower, packet.size);
+        	this.currentIn += energyIn;
+	    }
+        return energyIn;
+	}
+
+	isConductor(type: string): boolean {
+		return this.tileEntity.isConductor(type);
 	}
 
 	canReceiveEnergy(side: number, type: string): boolean {

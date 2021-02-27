@@ -1,4 +1,6 @@
-declare namespace EnergyRegistry {
+/// <reference path="./core-engine.d.ts" />
+
+declare namespace EnergyTypeRegistry {
     type WireData = {
         type: EnergyType;
         value: number;
@@ -30,6 +32,7 @@ declare class EnergyPacket {
     source: EnergyNode;
     passedNodes: object;
     constructor(energyName: string, size: number, source: EnergyNode);
+    validateNode(nodeId: number): boolean;
 }
 declare let GLOBAL_NODE_ID: number;
 declare class EnergyNode {
@@ -83,6 +86,7 @@ declare class EnergyNode {
     /** @deprecated */
     addAll(amount: number, power?: number): void;
     onOverload(packetSize: number): void;
+    isConductor(type: string): boolean;
     canReceiveEnergy(side: number, type: string): boolean;
     canExtractEnergy(side: number, type: string): boolean;
     canConductEnergy(coord1: Vector, coord2: Vector, side: number): boolean;
@@ -106,6 +110,7 @@ declare class EnergyTileNode extends EnergyNode {
     constructor(energyType: EnergyType, parent: EnergyTile);
     getParent(): EnergyTile;
     receiveEnergy(amount: number, packet: EnergyPacket): number;
+    isConductor(type: string): boolean;
     canReceiveEnergy(side: number, type: string): boolean;
     canExtractEnergy(side: number, type: string): boolean;
     init(): void;
@@ -117,9 +122,9 @@ interface EnergyTile extends TileEntity {
     energyNode: EnergyTileNode;
     energyTick(type: string, node: EnergyTileNode): void;
     energyReceive(type: string, amount: number, voltage: number): number;
+    isConductor(type: string): boolean;
     canReceiveEnergy(side: number, type: string): boolean;
     canExtractEnergy(side: number, type: string): boolean;
-    canConductEnergy(type: string): boolean;
 }
 declare namespace EnergyTileRegistry {
     function addEnergyType(Prototype: EnergyTile, energyType: EnergyType): void;
