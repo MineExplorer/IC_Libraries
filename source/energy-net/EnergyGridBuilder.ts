@@ -35,6 +35,14 @@ namespace EnergyGridBuilder {
 		return null;
 	}
 
+	export function rebuildWireGrid(region: BlockSource, x: number, y: number, z: number): void {
+		let node = EnergyNet.getNodeOnCoords(region, x, y, z);
+		if (node) {
+			node.destroy();
+			EnergyGridBuilder.buildWireGrid(region, x, y, z);
+		}
+	}
+
 	export function rebuildForWire(region: BlockSource, x: number, y: number, z: number, wireID: number): EnergyGrid {
 		if (region.getBlockId(x, y, z) == wireID) {
 			return buildWireGrid(region, x, y, z);
