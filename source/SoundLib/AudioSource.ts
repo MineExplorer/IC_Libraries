@@ -1,5 +1,4 @@
-enum SourceType { 
-    PLAYER,
+enum SourceType {
     ENTITY,
     TILEENTITY
 }
@@ -25,7 +24,7 @@ class AudioSource {
         this.sourceType = sourceType;
         if (sourceType == SourceType.ENTITY) {
             this.position = Entity.getPosition(source);
-            this.dimension = Player.getDimension();
+            this.dimension = Entity.getDimension(source);
         }
         if (sourceType = SourceType.TILEENTITY) {
             this.position = {x: source.x + .5, y: source.y + .5, z: source.z + .5};
@@ -68,12 +67,8 @@ class AudioSource {
 
     play() {
         if (!this.isPlaying) {
-            if (this.sourceType == SourceType.PLAYER) {
-                this.streamID = SoundManager.playSound(this.soundName, this.volume, 1);
-            } else {
-                var pos = this.position;
-                this.streamID = SoundManager.playSoundAt(pos.x, pos.y, pos.z, this.soundName, this.volume, 1, this.radius);
-            }
+            var pos = this.position;
+            this.streamID = SoundManager.playSoundAt(pos.x, pos.y, pos.z, this.soundName, this.volume, 1, this.radius);
             if (this.streamID != 0) {
                 this.isPlaying = true;
             }
@@ -100,7 +95,7 @@ class AudioSource {
     }
 
     updateVolume() {
-        if (this.sourceType == SourceType.PLAYER) return;
+        if (this.source == Player.get()) return;
         var s = this.position;
         var p = Player.getPosition();
 		var distance = Math.sqrt(Math.pow(s.x - p.x, 2) + Math.pow(s.y - p.y, 2) + Math.pow(s.z - p.z, 2));
