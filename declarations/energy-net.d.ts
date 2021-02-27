@@ -1,4 +1,4 @@
-declare namespace EnergyTypeRegistry {
+declare namespace EnergyRegistry {
     type WireData = {
         type: EnergyType;
         value: number;
@@ -49,8 +49,10 @@ declare class EnergyNode {
     currentOut: number;
     energyPower: number;
     currentPower: number;
-    constructor(energyType: EnergyType, maxValue?: number);
+    constructor(energyType: EnergyType, dimension: number);
     addEnergyType(energyType: EnergyType): void;
+    addCoords(x: number, y: number, z: number): void;
+    removeCoords(x: number, y: number, z: number): void;
     private addEntry;
     private removeEntry;
     /**
@@ -81,6 +83,8 @@ declare class EnergyNode {
     /** @deprecated */
     addAll(amount: number, power?: number): void;
     onOverload(packetSize: number): void;
+    canReceiveEnergy(side: number, type: string): boolean;
+    canExtractEnergy(side: number, type: string): boolean;
     canConductEnergy(coord1: Vector, coord2: Vector, side: number): boolean;
     isCompatible(node: EnergyNode): boolean;
     init(): void;
@@ -91,10 +95,10 @@ declare class EnergyNode {
 declare class EnergyGrid extends EnergyNode {
     blockID: number;
     region: BlockSource;
-    constructor(energyType: EnergyType, maxValue: number, wireID: number);
+    constructor(energyType: EnergyType, maxValue: number, wireID: number, region: BlockSource);
     isCompatible(node: EnergyNode): boolean;
     mergeGrid(grid: EnergyNode): EnergyNode;
-    rebuildRecursive(x: number, y: number, z: number, side: number): void;
+    rebuildRecursive(x: number, y: number, z: number, side?: number): void;
     rebuildFor6Sides(x: number, y: number, z: number): void;
 }
 declare class EnergyTileNode extends EnergyNode {

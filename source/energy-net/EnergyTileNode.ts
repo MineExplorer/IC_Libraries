@@ -3,9 +3,9 @@ extends EnergyNode {
 	tileEntity: EnergyTile;
 
 	constructor(energyType: EnergyType, parent: EnergyTile) {
-		super(energyType);
+		super(energyType, parent.dimension);
 		this.tileEntity = parent;
-		this.dimension = parent.dimension;
+		this.addCoords(parent.x, parent.y, parent.z);
 	}
 
 	getParent(): EnergyTile {
@@ -36,6 +36,7 @@ extends EnergyNode {
 	}
 
 	tick(): void {
+		if (!this.tileEntity.__initialized || !this.tileEntity.isLoaded) return;
 		if (!this.initialized) {
 			this.init();
 		}

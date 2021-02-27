@@ -3,9 +3,11 @@ extends EnergyNode {
 	blockID: number;
 	region: BlockSource;
 
-	constructor(energyType: EnergyType, maxValue: number, wireID: number) {
-		super(energyType, maxValue);
+	constructor(energyType: EnergyType, maxValue: number, wireID: number, region: BlockSource) {
+		super(energyType, region.getDimension());
+		this.maxValue = maxValue;
 		this.blockID = wireID;
+		this.region = region;
 	}
 
 	isCompatible(node: EnergyNode): boolean {
@@ -29,16 +31,16 @@ extends EnergyNode {
 		return this;
 	}
 
-	rebuildRecursive(x: number, y: number, z: number, side: number) {
+	rebuildRecursive(x: number, y: number, z: number, side?: number) {
 		if (this.removed) return;
 
-		let coordKey = x + ":" + y + ":" + z;
+		let coordKey = x+":"+y+":"+z;
 		if (this.blocksMap[coordKey]) {
 			return;
 		}
 
 		let node = EnergyNet.getNodeOnCoords(this.region, x, y, z);
-		if (node && !this.isCompatible(node))
+		if (node && !this.isCompatible(node)) return;
 		if (node instanceof EnergyTileNode) {
 			if (node.canReceiveEnergy(side, this.baseEnergy)) {
 				this.addConnection(node);

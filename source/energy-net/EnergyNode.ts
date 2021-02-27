@@ -5,7 +5,7 @@ class EnergyNode {
 	baseEnergy: string;
 	energyTypes: object = {};
 	dimension: number;
-	maxValue: number;
+	maxValue: number = 2e9;
 	initialized: boolean = false;
 	removed: boolean = false;
 	blocksMap: object = {};
@@ -19,16 +19,23 @@ class EnergyNode {
 	energyPower: number = 0;
 	currentPower: number = 0;
 
-	constructor(energyType: EnergyType, maxValue: number = 2e9) {
+	constructor(energyType: EnergyType, dimension: number) {
 		this.id = GLOBAL_NODE_ID++;
 		this.baseEnergy = energyType.name;
 		this.addEnergyType(energyType);
-		this.maxValue = maxValue;
-		EnergyNet.addEnergyNode(this);
+		this.dimension = dimension;
 	}
 
 	addEnergyType(energyType: EnergyType): void {
 		this.energyTypes[energyType.name] = energyType;
+	}
+
+	addCoords(x: number, y: number, z: number): void {
+		this.blocksMap[x+":"+y+":"+z] = true;
+	}
+
+	removeCoords(x: number, y: number, z: number): void {
+		delete this.blocksMap[x+":"+y+":"+z];
 	}
 
 	private addEntry(node: EnergyNode): void {
@@ -95,7 +102,7 @@ class EnergyNode {
 		}
 		this.entries = [];
 		for (let node of this.receivers) {
-			node.removeConnection(this);
+			node.removeEntry(this);
 		}
 		this.receivers = [];
 	}
@@ -153,6 +160,14 @@ class EnergyNode {
 	}
 
 	onOverload(packetSize: number): void {}
+
+	canReceiveEnergy(side: number, type: string): boolean {
+		return true;
+	}
+
+	canExtractEnergy(side: number, type: string): boolean {
+		return true;
+	}
 
 	canConductEnergy(coord1: Vector, coord2: Vector, side: number): boolean {
 		return true;

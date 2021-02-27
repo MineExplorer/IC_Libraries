@@ -5,7 +5,7 @@
 		"outFile": "../../library/energy-net.js",
 		"allowJs": true,
 		"checkJs": false,
-		"downlevelIteration": true,
+		"downlevelIteration": false,
 		"strict": false,
 		"skipLibCheck": true,
 		"declaration": true

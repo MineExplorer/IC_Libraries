@@ -11,15 +11,11 @@ namespace EnergyGridBuilder {
 			let c = World.getRelativeCoords(te.x, te.y, te.z, side);
 			let node = EnergyNet.getNodeOnCoords(te.blockSource, c.x, c.y, c.z);
 			if (node && tileNode.isCompatible(node)) {
-				if (node instanceof EnergyTileNode) {
-					if (tileNode.canExtractEnergy(side, energyType) && node.canReceiveEnergy(side ^ 1, energyType)) {
-						tileNode.addConnection(node);
-					}
-					if (tileNode.canReceiveEnergy(side, energyType) && node.canExtractEnergy(side ^ 1, energyType)) {
-						node.addConnection(tileNode);
-					}
-				} else {
-					connectNodes(tileNode, node);
+				if (tileNode.canExtractEnergy(side, energyType) && node.canReceiveEnergy(side ^ 1, energyType)) {
+					tileNode.addConnection(node);
+				}
+				if (tileNode.canReceiveEnergy(side, energyType) && node.canExtractEnergy(side ^ 1, energyType)) {
+					node.addConnection(tileNode);
 				}
 			} else {
 				buildWireGrid(te.blockSource, c.x, c.y, c.z);
@@ -31,9 +27,9 @@ namespace EnergyGridBuilder {
 		let blockID = region.getBlockId(x, y, z);
 		let wire = EnergyRegistry.getWireData(blockID);
 		if (wire) {
-			let grid = new wire.class(wire.type, wire.value, blockID);
-			grid.region = region;
-			grid.rebuildFor6Sides(x, y, z);
+			let grid = new wire.class(wire.type, wire.value, blockID, region);
+			EnergyNet.addEnergyNode(grid);
+			grid.rebuildRecursive(x, y, z);
 			return grid;
 		}
 		return null;
@@ -47,11 +43,11 @@ namespace EnergyGridBuilder {
 	}
 
 	export function onWirePlaced(region: BlockSource, x: number, y: number, z: number): void {
-		let block = World.getBlock(x, y, z);
+		let blockId = region.getBlockId(x, y, z);
 		let coord1 = {x: x, y: y, z: z};
 		for (let side = 0; side < 6; side++) {
 			let coord2 = World.getRelativeCoords(x, y, z, side);
-			if (region.getBlockId(coord2.x, coord2.y, coord2.z) != block.id) continue;
+			if (region.getBlockId(coord2.x, coord2.y, coord2.z) != blockId) continue;
 			let node = EnergyNet.getNodeOnCoords(region, coord2.x, coord2.y, coord2.z);
 			if (node && node instanceof EnergyGrid && node.canConductEnergy(coord2, coord1, side ^ 1)) {
 				node.rebuildRecursive(x, y, z, side ^ 1);
@@ -63,9 +59,9 @@ namespace EnergyGridBuilder {
 	}
 
 	export function onWireDestroyed(region: BlockSource, x: number, y: number, z: number, id: number): void {
-		let net = EnergyNet.getNodeOnCoords(region, x, y, z);
-		if (net) {
-			EnergyNet.removeEnergyNode(net);
+		let node = EnergyNet.getNodeOnCoords(region, x, y, z);
+		if (node) {
+			node.destroy();
 			EnergyGridBuilder.rebuildForWire(region, x-1, y, z, id);
 			EnergyGridBuilder.rebuildForWire(region, x+1, y, z, id);
 			EnergyGridBuilder.rebuildForWire(region, x, y-1, z, id);

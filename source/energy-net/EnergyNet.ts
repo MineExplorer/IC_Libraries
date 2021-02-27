@@ -17,13 +17,13 @@ namespace EnergyNet {
 		let nodes = getNodesByDimension(node.dimension);
 		let index = nodes.indexOf(node);
 		if (index != -1) {
-			nodes.slice(index, 1);
+			nodes.splice(index, 1);
 		}
 	}
 
 	export function getNodeOnCoords(region: BlockSource, x: number, y: number, z: number): EnergyNode {
 		let nodes = getNodesByDimension(region.getDimension());
-		let coordKey = x + ":" + y + ":" + z;
+		let coordKey = x+":"+y+":"+z;
 		for (let node of nodes) {
 			if (node.blocksMap[coordKey]) return node;
 		}
@@ -38,7 +38,7 @@ namespace EnergyNet {
 		}
 	}
 
-	Callback.addCallback("LevelLoaded", function() {
+	Callback.addCallback("LevelLeft", function() {
 		energyNodes = {};
 	});
 

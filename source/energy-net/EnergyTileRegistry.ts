@@ -48,14 +48,15 @@ namespace EnergyTileRegistry {
 			return false;
 		}
 
-		if (Prototype.isEnergySource) {
-			Prototype.canExtractEnergy = Prototype.canExtractEnergy || function() {
-				return true;
-			}
-		}
-		else {
-			Prototype.canExtractEnergy = function() {
-				return false;
+		if (!Prototype.canExtractEnergy) {
+			if (Prototype.isEnergySource) {
+				Prototype.canExtractEnergy = function() {
+					return true;
+				}
+			} else {
+				Prototype.canExtractEnergy = function() {
+					return false;
+				}
 			}
 		}
 	}
@@ -68,14 +69,16 @@ namespace EnergyTileRegistry {
 	}
 };
 
-Callback.addCallback("TileEntityCreated", function(tileEntity: TileEntity) {
+Callback.addCallback("TileEntityAdded", function(tileEntity: TileEntity) {
     if (tileEntity.isEnergyTile) {
 		let node: EnergyNode;
-		for (let type of tileEntity.energyTypes) {
-			if (!node) node = new EnergyNode(type);
+		for (let name in tileEntity.energyTypes) {
+			let type = tileEntity.energyTypes[name];
+			if (!node) node = new EnergyTileNode(type, tileEntity as EnergyTile);
 			else node.addEnergyType(type);
 		}
 		tileEntity.energyNode = node;
+		EnergyNet.addEnergyNode(node);
 	}
 });
 
