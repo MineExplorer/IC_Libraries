@@ -22,6 +22,10 @@ namespace EnergyNet {
 	}
 
 	export function getNodeOnCoords(region: BlockSource, x: number, y: number, z: number): EnergyNode {
+		let tileEntity = TileEntity.getTileEntity(x, y, z, region);
+		if (tileEntity && tileEntity.__initialized && tileEntity.energyNode) {
+			return tileEntity.energyNode;
+		}
 		let nodes = getNodesByDimension(region.getDimension());
 		let coordKey = x+":"+y+":"+z;
 		for (let node of nodes) {
@@ -40,6 +44,7 @@ namespace EnergyNet {
 
 	Callback.addCallback("LevelLeft", function() {
 		energyNodes = {};
+		GLOBAL_NODE_ID = 0;
 	});
 
 	Callback.addCallback("tick", function() {

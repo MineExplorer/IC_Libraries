@@ -5,7 +5,6 @@ extends EnergyNode {
 	constructor(energyType: EnergyType, parent: EnergyTile) {
 		super(energyType, parent.dimension);
 		this.tileEntity = parent;
-		this.addCoords(parent.x, parent.y, parent.z);
 	}
 
 	getParent(): EnergyTile {
