@@ -21,7 +21,7 @@ var __extends = (this && this.__extends) || (function () {
 */
 LIBRARY({
     name: "EnergyNet",
-    version: 7,
+    version: 8,
     shared: true,
     api: "CoreEngine"
 });
@@ -233,11 +233,11 @@ var EnergyNode = /** @class */ (function () {
         return energyIn;
     };
     EnergyNode.prototype.add = function (amount, power) {
-        if (power === void 0) { power = amount; }
         var add = this.addPacket(this.baseEnergy, amount, power);
         return amount - add;
     };
     EnergyNode.prototype.addPacket = function (energyName, amount, size) {
+        if (size === void 0) { size = amount; }
         var packet = new EnergyPacket(energyName, size, this);
         return this.transferEnergy(amount, packet);
     };
@@ -476,18 +476,9 @@ var EnergyTileRegistry;
         Prototype.canReceiveEnergy = Prototype.canReceiveEnergy || function () {
             return true;
         };
-        if (!Prototype.canExtractEnergy) {
-            if (Prototype.isEnergySource) {
-                Prototype.canExtractEnergy = function () {
-                    return true;
-                };
-            }
-            else {
-                Prototype.canExtractEnergy = function () {
-                    return false;
-                };
-            }
-        }
+        Prototype.canExtractEnergy = Prototype.canExtractEnergy || function () {
+            return true;
+        };
     }
     EnergyTileRegistry.setupAsEnergyTile = setupAsEnergyTile;
     /* machine is tile entity, that uses energy */

@@ -1,6 +1,4 @@
-/// <reference path="./core-engine.d.ts" />
-
-declare namespace EnergyTypeRegistry {
+declare namespace EnergyRegistry {
     type WireData = {
         type: EnergyType;
         value: number;
@@ -81,7 +79,7 @@ declare class EnergyNode {
     resetConnections(): void;
     receiveEnergy(amount: number, packet: EnergyPacket): number;
     add(amount: number, power?: number): number;
-    addPacket(energyName: string, amount: number, size: number): number;
+    addPacket(energyName: string, amount: number, size?: number): number;
     transferEnergy(amount: number, packet: EnergyPacket): number;
     /** @deprecated */
     addAll(amount: number, power?: number): void;

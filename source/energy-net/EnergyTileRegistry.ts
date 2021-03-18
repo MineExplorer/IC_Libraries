@@ -48,16 +48,8 @@ namespace EnergyTileRegistry {
 			return true;
 		}
 
-		if (!Prototype.canExtractEnergy) {
-			if (Prototype.isEnergySource) {
-				Prototype.canExtractEnergy = function() {
-					return true;
-				}
-			} else {
-				Prototype.canExtractEnergy = function() {
-					return false;
-				}
-			}
+		Prototype.canExtractEnergy = Prototype.canExtractEnergy || function() {
+			return true;
 		}
 	}
 

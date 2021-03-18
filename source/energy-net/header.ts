@@ -9,7 +9,7 @@
 
 LIBRARY({
 	name: "EnergyNet",
-	version: 7,
+	version: 8,
 	shared: true,
 	api: "CoreEngine"
 });

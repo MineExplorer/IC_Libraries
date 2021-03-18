@@ -116,12 +116,12 @@ class EnergyNode {
         return energyIn;
 	}
 
-	add(amount: number, power: number = amount): number {
+	add(amount: number, power?: number): number {
 		let add = this.addPacket(this.baseEnergy, amount, power);
 		return amount - add;
 	}
 
-	addPacket(energyName: string, amount: number, size: number): number {
+	addPacket(energyName: string, amount: number, size: number = amount): number {
 		let packet = new EnergyPacket(energyName, size, this);
 		return this.transferEnergy(amount, packet);
 	}
