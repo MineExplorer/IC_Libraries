@@ -59,6 +59,12 @@ let TileRenderer = {
 		BlockRenderer.setCustomCollisionShape(id, data, shape);
 	},
 
+	setEmptyCollisionShape: function(id) {
+		let shape = new ICRender.CollisionShape();
+		shape.addEntry().addBox(1, 1, 1, 0, 0, 0);
+		BlockRenderer.setCustomCollisionShape(id, -1, shape);
+	},
+
 	setStandardModel: function(id, data, texture) {
 		let render = new ICRender.Model();
 		let model = BlockRenderer.createTexturedBlock(texture);
@@ -240,12 +246,6 @@ let TileRenderer = {
 
 		BlockRenderer.setStaticICRender(id, data, render);
 		BlockRenderer.setCustomCollisionShape(id, data, shape);
-	},
-
-	setEmptyCollisionShape: function(id) {
-		let shape = new ICRender.CollisionShape();
-		shape.addEntry().addBox(1, 1, 1, 0, 0, 0);
-		BlockRenderer.setCustomCollisionShape(id, -1, shape);
 	},
 
 	getCropModel: function(texture) {
