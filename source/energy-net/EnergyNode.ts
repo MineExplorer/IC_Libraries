@@ -128,7 +128,6 @@ class EnergyNode {
 	}
 
 	transferEnergy(amount: number, packet: EnergyPacket): number {
-		packet.setNodePassed(this.id);
 		if (this.receivers.length == 0) return 0;
 
 		let receivedAmount = amount;
@@ -137,6 +136,7 @@ class EnergyNode {
 			this.onOverload(packet.size);
 		}
 
+		let currentNodeList = {...packet.nodeList};
 		let receiversCount = this.receivers.length;
 		for (let i = 0; i < receiversCount; i++) {
 			let node = this.receivers[i];
@@ -145,6 +145,8 @@ class EnergyNode {
 				amount -= node.receiveEnergy(Math.ceil(amount / (receiversCount - i)), packet);
 			}
 		}
+
+		packet.nodeList = currentNodeList;
 		for (let node of this.receivers) {
 			if (amount <= 0) break;
 			if (packet.validateNode(node.id)) {
@@ -190,9 +192,7 @@ class EnergyNode {
 		return false;
 	}
 
-	init(): void {
-
-	}
+	init(): void {}
 
 	tick(): void {
 		this.energyIn = this.currentIn;

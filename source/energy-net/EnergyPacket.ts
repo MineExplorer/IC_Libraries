@@ -2,7 +2,7 @@ class EnergyPacket {
 	energyName: string;
 	size: number;
 	source: EnergyNode;
-	passedNodes: object = {};
+	nodeList: object = {};
 
 	constructor(energyName: string, size: number, source: EnergyNode) {
 		this.energyName = energyName;
@@ -12,10 +12,14 @@ class EnergyPacket {
 	}
 
 	validateNode(nodeId: number): boolean {
-		return !this.passedNodes[nodeId];
+		if (this.nodeList[nodeId]) {
+			return false;
+		}
+		this.setNodePassed(nodeId);
+		return true;
 	}
 
 	setNodePassed(nodeId: number) {
-		this.passedNodes[nodeId] = true;
+		this.nodeList[nodeId] = true;
 	}
 }
