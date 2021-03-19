@@ -8,13 +8,14 @@ class EnergyPacket {
 		this.energyName = energyName;
 		this.size = size;
 		this.source = source;
-		this.passedNodes[source.id] = true;
+		this.setNodePassed(source.id);
 	}
 
 	validateNode(nodeId: number): boolean {
-		if (this.passedNodes[nodeId])
-			return false;
+		return !this.passedNodes[nodeId];
+	}
+
+	setNodePassed(nodeId: number) {
 		this.passedNodes[nodeId] = true;
-		return true;
 	}
 }

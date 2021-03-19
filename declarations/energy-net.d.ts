@@ -1,4 +1,4 @@
-declare namespace EnergyRegistry {
+declare namespace EnergyTypeRegistry {
     type WireData = {
         type: EnergyType;
         value: number;
@@ -115,8 +115,8 @@ declare class EnergyTileNode extends EnergyNode {
     tick(): void;
 }
 interface EnergyTile extends TileEntity {
-    isEnergyTile: boolean;
-    energyTypes: {};
+    isEnergyTile?: boolean;
+    energyTypes?: {};
     energyNode: EnergyTileNode;
     energyTick(type: string, node: EnergyTileNode): void;
     energyReceive(type: string, amount: number, voltage: number): number;

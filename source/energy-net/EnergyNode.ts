@@ -117,6 +117,7 @@ class EnergyNode {
 	}
 
 	add(amount: number, power?: number): number {
+		if (amount == 0) return 0;
 		let add = this.addPacket(this.baseEnergy, amount, power);
 		return amount - add;
 	}
@@ -127,6 +128,7 @@ class EnergyNode {
 	}
 
 	transferEnergy(amount: number, packet: EnergyPacket): number {
+		packet.setNodePassed(this.id);
 		if (this.receivers.length == 0) return 0;
 
 		let receivedAmount = amount;

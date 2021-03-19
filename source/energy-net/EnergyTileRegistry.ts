@@ -1,6 +1,6 @@
 interface EnergyTile extends TileEntity {
-	isEnergyTile: boolean;
-	energyTypes: {};
+	isEnergyTile?: boolean;
+	energyTypes?: object;
 	energyNode: EnergyTileNode;
 	energyTick(type: string, node: EnergyTileNode): void;
 	energyReceive(type: string, amount: number, voltage: number): number;
