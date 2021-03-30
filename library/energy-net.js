@@ -1,3 +1,14 @@
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -21,7 +32,7 @@ var __extends = (this && this.__extends) || (function () {
 */
 LIBRARY({
     name: "EnergyNet",
-    version: 7,
+    version: 8,
     shared: true,
     api: "CoreEngine"
 });
@@ -116,17 +127,21 @@ var EnergyType = /** @class */ (function () {
 }());
 var EnergyPacket = /** @class */ (function () {
     function EnergyPacket(energyName, size, source) {
-        this.passedNodes = {};
+        this.nodeList = {};
         this.energyName = energyName;
         this.size = size;
         this.source = source;
-        this.passedNodes[source.id] = true;
+        this.setNodePassed(source.id);
     }
     EnergyPacket.prototype.validateNode = function (nodeId) {
-        if (this.passedNodes[nodeId])
+        if (this.nodeList[nodeId]) {
             return false;
-        this.passedNodes[nodeId] = true;
+        }
+        this.setNodePassed(nodeId);
         return true;
+    };
+    EnergyPacket.prototype.setNodePassed = function (nodeId) {
+        this.nodeList[nodeId] = true;
     };
     return EnergyPacket;
 }());
@@ -233,11 +248,13 @@ var EnergyNode = /** @class */ (function () {
         return energyIn;
     };
     EnergyNode.prototype.add = function (amount, power) {
-        if (power === void 0) { power = amount; }
+        if (amount == 0)
+            return 0;
         var add = this.addPacket(this.baseEnergy, amount, power);
         return amount - add;
     };
     EnergyNode.prototype.addPacket = function (energyName, amount, size) {
+        if (size === void 0) { size = amount; }
         var packet = new EnergyPacket(energyName, size, this);
         return this.transferEnergy(amount, packet);
     };
@@ -249,6 +266,7 @@ var EnergyNode = /** @class */ (function () {
             amount = Math.min(amount, packet.size);
             this.onOverload(packet.size);
         }
+        var currentNodeList = __assign({}, packet.nodeList);
         var receiversCount = this.receivers.length;
         for (var i = 0; i < receiversCount; i++) {
             var node = this.receivers[i];
@@ -258,6 +276,7 @@ var EnergyNode = /** @class */ (function () {
                 amount -= node.receiveEnergy(Math.ceil(amount / (receiversCount - i)), packet);
             }
         }
+        packet.nodeList = currentNodeList;
         for (var _i = 0, _a = this.receivers; _i < _a.length; _i++) {
             var node = _a[_i];
             if (amount <= 0)
@@ -298,8 +317,7 @@ var EnergyNode = /** @class */ (function () {
         }
         return false;
     };
-    EnergyNode.prototype.init = function () {
-    };
+    EnergyNode.prototype.init = function () { };
     EnergyNode.prototype.tick = function () {
         this.energyIn = this.currentIn;
         this.currentIn = 0;
@@ -476,18 +494,9 @@ var EnergyTileRegistry;
         Prototype.canReceiveEnergy = Prototype.canReceiveEnergy || function () {
             return true;
         };
-        if (!Prototype.canExtractEnergy) {
-            if (Prototype.isEnergySource) {
-                Prototype.canExtractEnergy = function () {
-                    return true;
-                };
-            }
-            else {
-                Prototype.canExtractEnergy = function () {
-                    return false;
-                };
-            }
-        }
+        Prototype.canExtractEnergy = Prototype.canExtractEnergy || function () {
+            return true;
+        };
     }
     EnergyTileRegistry.setupAsEnergyTile = setupAsEnergyTile;
     /* machine is tile entity, that uses energy */
@@ -526,11 +535,11 @@ var EnergyGridBuilder;
     EnergyGridBuilder.connectNodes = connectNodes;
     function buildGridForTile(te) {
         var tileNode = te.energyNode;
-        var energyType = tileNode.baseEnergy;
         for (var side = 0; side < 6; side++) {
             var c = World.getRelativeCoords(te.x, te.y, te.z, side);
             var node = EnergyNet.getNodeOnCoords(te.blockSource, c.x, c.y, c.z);
             if (node && tileNode.isCompatible(node)) {
+                var energyType = node.baseEnergy;
                 if (tileNode.canExtractEnergy(side, energyType) && node.canReceiveEnergy(side ^ 1, energyType)) {
                     tileNode.addConnection(node);
                 }

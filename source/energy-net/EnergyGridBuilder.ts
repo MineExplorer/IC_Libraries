@@ -6,11 +6,11 @@ namespace EnergyGridBuilder {
 
 	export function buildGridForTile(te: EnergyTile) {
 		let tileNode = te.energyNode;
-		let energyType = tileNode.baseEnergy;
 		for (let side = 0; side < 6; side++) {
 			let c = World.getRelativeCoords(te.x, te.y, te.z, side);
 			let node = EnergyNet.getNodeOnCoords(te.blockSource, c.x, c.y, c.z);
 			if (node && tileNode.isCompatible(node)) {
+				let energyType = node.baseEnergy;
 				if (tileNode.canExtractEnergy(side, energyType) && node.canReceiveEnergy(side ^ 1, energyType)) {
 					tileNode.addConnection(node);
 				}

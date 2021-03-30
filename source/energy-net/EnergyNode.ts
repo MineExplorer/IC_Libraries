@@ -116,12 +116,13 @@ class EnergyNode {
         return energyIn;
 	}
 
-	add(amount: number, power: number = amount): number {
+	add(amount: number, power?: number): number {
+		if (amount == 0) return 0;
 		let add = this.addPacket(this.baseEnergy, amount, power);
 		return amount - add;
 	}
 
-	addPacket(energyName: string, amount: number, size: number): number {
+	addPacket(energyName: string, amount: number, size: number = amount): number {
 		let packet = new EnergyPacket(energyName, size, this);
 		return this.transferEnergy(amount, packet);
 	}
@@ -135,6 +136,7 @@ class EnergyNode {
 			this.onOverload(packet.size);
 		}
 
+		let currentNodeList = {...packet.nodeList};
 		let receiversCount = this.receivers.length;
 		for (let i = 0; i < receiversCount; i++) {
 			let node = this.receivers[i];
@@ -143,6 +145,8 @@ class EnergyNode {
 				amount -= node.receiveEnergy(Math.ceil(amount / (receiversCount - i)), packet);
 			}
 		}
+
+		packet.nodeList = currentNodeList;
 		for (let node of this.receivers) {
 			if (amount <= 0) break;
 			if (packet.validateNode(node.id)) {
@@ -188,9 +192,7 @@ class EnergyNode {
 		return false;
 	}
 
-	init(): void {
-
-	}
+	init(): void {}
 
 	tick(): void {
 		this.energyIn = this.currentIn;

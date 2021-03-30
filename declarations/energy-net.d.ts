@@ -30,9 +30,10 @@ declare class EnergyPacket {
     energyName: string;
     size: number;
     source: EnergyNode;
-    passedNodes: object;
+    nodeList: object;
     constructor(energyName: string, size: number, source: EnergyNode);
     validateNode(nodeId: number): boolean;
+    setNodePassed(nodeId: number): void;
 }
 declare let GLOBAL_NODE_ID: number;
 declare class EnergyNode {
@@ -81,7 +82,7 @@ declare class EnergyNode {
     resetConnections(): void;
     receiveEnergy(amount: number, packet: EnergyPacket): number;
     add(amount: number, power?: number): number;
-    addPacket(energyName: string, amount: number, size: number): number;
+    addPacket(energyName: string, amount: number, size?: number): number;
     transferEnergy(amount: number, packet: EnergyPacket): number;
     /** @deprecated */
     addAll(amount: number, power?: number): void;
@@ -117,8 +118,8 @@ declare class EnergyTileNode extends EnergyNode {
     tick(): void;
 }
 interface EnergyTile extends TileEntity {
-    isEnergyTile: boolean;
-    energyTypes: {};
+    isEnergyTile?: boolean;
+    energyTypes?: object;
     energyNode: EnergyTileNode;
     energyTick(type: string, node: EnergyTileNode): void;
     energyReceive(type: string, amount: number, voltage: number): number;

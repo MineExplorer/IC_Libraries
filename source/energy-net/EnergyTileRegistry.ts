@@ -1,6 +1,6 @@
 interface EnergyTile extends TileEntity {
-	isEnergyTile: boolean;
-	energyTypes: {};
+	isEnergyTile?: boolean;
+	energyTypes?: object;
 	energyNode: EnergyTileNode;
 	energyTick(type: string, node: EnergyTileNode): void;
 	energyReceive(type: string, amount: number, voltage: number): number;
@@ -48,16 +48,8 @@ namespace EnergyTileRegistry {
 			return true;
 		}
 
-		if (!Prototype.canExtractEnergy) {
-			if (Prototype.isEnergySource) {
-				Prototype.canExtractEnergy = function() {
-					return true;
-				}
-			} else {
-				Prototype.canExtractEnergy = function() {
-					return false;
-				}
-			}
+		Prototype.canExtractEnergy = Prototype.canExtractEnergy || function() {
+			return true;
 		}
 	}
 
