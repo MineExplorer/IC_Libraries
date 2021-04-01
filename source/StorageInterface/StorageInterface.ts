@@ -111,7 +111,7 @@ namespace StorageInterface {
 			return new NativeContainerInterface(nativeTileEntity);
 		}
 		let tileEntity = World.getTileEntity(x, y, z, region);
-		if (tileEntity && tileEntity.container) {
+		if (tileEntity && tileEntity.container && tileEntity.__initialized) {
 			return new TileEntityInterface(tileEntity);
 		}
 		return null;
@@ -120,7 +120,7 @@ namespace StorageInterface {
 	/** Returns storage interface for TileEntity with liquid storage */
 	export function getLiquidStorage(region: BlockSource, x: number, y: number, z: number): Nullable<TileEntityInterface> {
 		let tileEntity = World.getTileEntity(x, y, z, region);
-		if (tileEntity && tileEntity.liquidStorage) {
+		if (tileEntity && tileEntity.liquidStorage && tileEntity.__initialized) {
 			return new TileEntityInterface(tileEntity);
 		}
 		return null;
@@ -264,7 +264,8 @@ namespace StorageInterface {
 	 * @maxAmount max amount of liquid that can be transfered
 	 * @inputStorage storage to input liquid
 	 * @outputStorage storage to extract liquid
-	 * @inputSide block side of input storage which is receiving liquid
+	 * @inputSide block side of input storage which is receiving 
+	 * @returns left liquid amount
 	*/
 	export function extractLiquid(liquid: Nullable<string>, maxAmount: number, inputStorage: TileEntity | Storage, outputStorage: Storage, inputSide: number): number {
 		let outputSide = inputSide ^ 1;

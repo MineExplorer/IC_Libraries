@@ -2,6 +2,7 @@
 
 class TileEntityInterface
 implements Storage {
+	readonly liquidUnitRatio: number = 1;
 	readonly slots?: {
 		[key: string]: SlotData
 	};
@@ -155,20 +156,20 @@ implements Storage {
 	}
 
 	canTransportLiquid(liquid: string, side?: number): boolean {
-		return this.tileEntity.liquidStorage.getLimit(liquid) < LIQUID_STORAGE_MAX_LIMIT;
+		return true;
 	}
 
 	addLiquid(liquid: string, amount: number): number {
 		let liquidStorage = this.getLiquidStorage("input");
 		let storedLiquid = liquidStorage.getLiquidStored();
 		if (!storedLiquid || storedLiquid == liquid) {
-			return liquidStorage.addLiquid(liquid, amount);
+			return liquidStorage.addLiquid(liquid, amount / this.liquidUnitRatio) * this.liquidUnitRatio;
 		}
 		return amount;
 	}
 
 	getLiquid(liquid: string, amount: number): number  {
-		return this.getLiquidStorage("output").getLiquid(liquid, amount);
+		return this.getLiquidStorage("output").getLiquid(liquid, amount / this.liquidUnitRatio) * this.liquidUnitRatio;
 	}
 
 	getLiquidStored(storageName?: string): string {

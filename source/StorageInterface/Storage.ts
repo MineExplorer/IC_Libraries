@@ -2,6 +2,7 @@ interface StorageDescriptor {
 	slots?: {
 		[key: string]: SlotData
 	},
+	liquidUnitRatio?: number;
 	isValidInput?(item: ItemInstance, side: number, tileEntity: TileEntity): boolean,
 	addItem?(item: ItemInstance, side?: number, maxCount?: number): number,
 	getInputSlots?(side?: number): string[] | number[],
@@ -11,7 +12,7 @@ interface StorageDescriptor {
 	addLiquid?(liquid: string, amount: number): number,
 	getLiquid?(liquid: string, amount: number): number,
 	getLiquidStored?(storageName: string): string,
-	getLiquidStorage?(storageName: string): any
+	getLiquidStorage?(storageName: string): any,
 }
 
 interface Storage extends StorageDescriptor {
