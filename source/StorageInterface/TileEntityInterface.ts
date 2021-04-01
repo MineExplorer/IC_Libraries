@@ -151,32 +151,31 @@ implements Storage {
 		}
 	}
 
-	canReceiveLiquid(liquid: string, side?: number): boolean {
-		return this.tileEntity.liquidStorage.getLimit(liquid) < LIQUID_STORAGE_MAX_LIMIT;
+	canReceiveLiquid(liquid: string, side: number): boolean {
+		return this.getInputTank(side).getLimit(liquid) < LIQUID_STORAGE_MAX_LIMIT;
 	}
 
-	canTransportLiquid(liquid: string, side?: number): boolean {
+	canTransportLiquid(liquid: string, side: number): boolean {
 		return true;
 	}
 
-	addLiquid(liquid: string, amount: number): number {
-		let liquidStorage = this.getLiquidStorage("input");
+	receiveLiquid(liquidStorage: ILiquidStorage, liquid: string, amount: number): number {
 		let storedLiquid = liquidStorage.getLiquidStored();
 		if (!storedLiquid || storedLiquid == liquid) {
-			return liquidStorage.addLiquid(liquid, amount / this.liquidUnitRatio) * this.liquidUnitRatio;
+			return amount - liquidStorage.addLiquid(liquid, amount / this.liquidUnitRatio) * this.liquidUnitRatio;
 		}
-		return amount;
+		return 0;
 	}
 
-	getLiquid(liquid: string, amount: number): number  {
-		return this.getLiquidStorage("output").getLiquid(liquid, amount / this.liquidUnitRatio) * this.liquidUnitRatio;
+	extractLiquid(liquidStorage: ILiquidStorage, liquid: string, amount: number): number  {
+		return liquidStorage.getLiquid(liquid, amount / this.liquidUnitRatio) * this.liquidUnitRatio;
 	}
 
-	getLiquidStored(storageName?: string): string {
-		return this.getLiquidStorage(storageName).getLiquidStored();
+	getInputTank(side: number): ILiquidStorage {
+		return this.tileEntity.liquidStorage;
 	}
 
-	getLiquidStorage(storageName?: string): any {
+	getOutputTank(side: number): ILiquidStorage {
 		return this.tileEntity.liquidStorage;
 	}
 }

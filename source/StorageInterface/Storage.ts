@@ -7,12 +7,12 @@ interface StorageDescriptor {
 	addItem?(item: ItemInstance, side?: number, maxCount?: number): number,
 	getInputSlots?(side?: number): string[] | number[],
 	getOutputSlots?(side?: number): string[] | number[],
-	canReceiveLiquid?(liquid: string, side?: number): boolean,
-	canTransportLiquid?(liquid: string, side?: number): boolean,
-	addLiquid?(liquid: string, amount: number): number,
-	getLiquid?(liquid: string, amount: number): number,
-	getLiquidStored?(storageName: string): string,
-	getLiquidStorage?(storageName: string): any,
+	canReceiveLiquid?(liquid: string, side: number): boolean,
+	canTransportLiquid?(liquid: string, side: number): boolean,
+	receiveLiquid?(liquidStorage: ILiquidStorage, liquid: string, amount: number): number,
+	extractLiquid?(liquidStorage: ILiquidStorage, liquid: string, amount: number): number,
+	getInputTank?(side: number): ILiquidStorage,
+	getOutputTank?(side: number): ILiquidStorage
 }
 
 interface Storage extends StorageDescriptor {
@@ -36,4 +36,14 @@ interface SlotData {
 	maxStack?: number,
 	isValid?(item: ItemInstance, side: number, tileEntity: TileEntity): boolean,
 	canOutput?(item: ItemInstance, side: number, tileEntity: TileEntity): boolean
+}
+
+interface ILiquidStorage {
+	getLiquidStored(): string;
+	getLimit(liquid: string): number;
+	getAmount(liquid: string): number;
+	getLiquid(liquid: string, amount: number): number;
+	addLiquid(liquid: string, amount: number): number;
+	isFull(liquid?: string): boolean;
+	isEmpty(liquid?: string): boolean;
 }

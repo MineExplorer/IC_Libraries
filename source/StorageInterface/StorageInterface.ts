@@ -120,7 +120,7 @@ namespace StorageInterface {
 	/** Returns storage interface for TileEntity with liquid storage */
 	export function getLiquidStorage(region: BlockSource, x: number, y: number, z: number): Nullable<TileEntityInterface> {
 		let tileEntity = World.getTileEntity(x, y, z, region);
-		if (tileEntity && tileEntity.liquidStorage && tileEntity.__initialized) {
+		if (tileEntity && tileEntity.__initialized) {
 			return new TileEntityInterface(tileEntity);
 		}
 		return null;
@@ -268,16 +268,20 @@ namespace StorageInterface {
 	 * @returns left liquid amount
 	*/
 	export function extractLiquid(liquid: Nullable<string>, maxAmount: number, inputStorage: TileEntity | Storage, outputStorage: Storage, inputSide: number): number {
-		let outputSide = inputSide ^ 1;
 		if (!(inputStorage instanceof TileEntityInterface)) { // reverse compatibility
 			inputStorage = new TileEntityInterface(inputStorage as TileEntity);
 		}
-		if (!liquid) {
-			liquid = outputStorage.getLiquidStored("output");
-		}
+		let outputSide = inputSide ^ 1;
+		let inputTank = inputStorage.getInputTank(inputSide);
+		let outputTank = outputStorage.getOutputTank(outputSide);
+		if (!inputTank || !outputTank) return 0;
 
-		if (liquid && outputStorage.canTransportLiquid(liquid, outputSide)) {
-			return transportLiquid(liquid, maxAmount, outputStorage, inputStorage, outputSide);
+		if (!liquid) liquid = outputTank.getLiquidStored();
+		if (liquid && outputStorage.canTransportLiquid(liquid, outputSide) && inputStorage.canReceiveLiquid(liquid, inputSide) && !inputTank.isFull(liquid)) {
+			let amount = Math.min(outputTank.getAmount(liquid) * outputStorage.liquidUnitRatio, maxAmount);
+			amount = inputStorage.receiveLiquid(inputTank, liquid, amount);
+			outputStorage.extractLiquid(outputTank, liquid, amount);
+			return amount;
 		}
 		return 0;
 	}
@@ -287,11 +291,15 @@ namespace StorageInterface {
 		if (!(outputStorage instanceof TileEntityInterface)) { // reverse compatibility
 			outputStorage = new TileEntityInterface(outputStorage as TileEntity);
 		}
+		let inputSide = outputSide ^ 1;
+		let inputTank = inputStorage.getInputTank(inputSide);
+		let outputTank = outputStorage.getOutputTank(outputSide);
+		if (!inputTank || !outputTank) return 0;
 
-		if (inputStorage.canReceiveLiquid(liquid, outputSide ^ 1)) {
-			let amount = outputStorage.getLiquid(liquid, maxAmount);
-			amount = inputStorage.addLiquid(liquid, amount);
-			outputStorage.getLiquid(liquid, -amount);
+		if (inputStorage.canReceiveLiquid(liquid, inputSide) && !inputTank.isFull(liquid)) {
+			let amount = Math.min(outputTank.getAmount(liquid) * outputStorage.liquidUnitRatio, maxAmount);
+			amount = inputStorage.receiveLiquid(inputTank, liquid, amount);
+			outputStorage.extractLiquid(outputTank, liquid, amount);
 			return amount;
 		}
 		return 0;
