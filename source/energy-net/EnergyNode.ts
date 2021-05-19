@@ -6,7 +6,6 @@ class EnergyNode {
 	energyTypes: object = {};
 	dimension: number;
 	maxValue: number = 2e9;
-	initialized: boolean = false;
 	removed: boolean = false;
 	blocksMap: object = {};
 	entries: EnergyNode[] = [];
@@ -35,7 +34,7 @@ class EnergyNode {
 	}
 
 	removeCoords(x: number, y: number, z: number): void {
-		delete this.blocksMap[x+":"+y+":"+z];
+		this.blocksMap[x+":"+y+":"+z] = false;
 	}
 
 	private addEntry(node: EnergyNode): void {
@@ -65,7 +64,7 @@ class EnergyNode {
 
 	/**
 	 * @param node receiver node
-	 * @returns true if link to the node was removed, false if it already removed
+	 * @returns true if link to the node was removed, false if it's already removed
 	 */
 	private removeReceiver(node: EnergyNode): boolean {
 		let index = this.receivers.indexOf(node);
@@ -194,8 +193,6 @@ class EnergyNode {
 		}
 		return false;
 	}
-
-	init(): void {}
 
 	tick(): void {
 		this.energyIn = this.currentIn;

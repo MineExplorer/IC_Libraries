@@ -44,7 +44,7 @@ namespace EnergyGridBuilder {
 	}
 
 	export function rebuildForWire(region: BlockSource, x: number, y: number, z: number, wireID: number): EnergyGrid {
-		if (region.getBlockId(x, y, z) == wireID) {
+		if (region.getBlockId(x, y, z) == wireID && !EnergyNet.getNodeOnCoords(region, x, y, z)) {
 			return buildWireGrid(region, x, y, z);
 		}
 		return null;
@@ -67,22 +67,30 @@ namespace EnergyGridBuilder {
 	}
 
 	export function onWireDestroyed(region: BlockSource, x: number, y: number, z: number, id: number): void {
-		let node = EnergyNet.getNodeOnCoords(region, x, y, z);
-		if (node) {
-			node.destroy();
-			EnergyGridBuilder.rebuildForWire(region, x-1, y, z, id);
-			EnergyGridBuilder.rebuildForWire(region, x+1, y, z, id);
-			EnergyGridBuilder.rebuildForWire(region, x, y-1, z, id);
-			EnergyGridBuilder.rebuildForWire(region, x, y+1, z, id);
-			EnergyGridBuilder.rebuildForWire(region, x, y, z-1, id);
-			EnergyGridBuilder.rebuildForWire(region, x, y, z+1, id);
-		}
+		EnergyGridBuilder.rebuildForWire(region, x-1, y, z, id);
+		EnergyGridBuilder.rebuildForWire(region, x+1, y, z, id);
+		EnergyGridBuilder.rebuildForWire(region, x, y-1, z, id);
+		EnergyGridBuilder.rebuildForWire(region, x, y+1, z, id);
+		EnergyGridBuilder.rebuildForWire(region, x, y, z-1, id);
+		EnergyGridBuilder.rebuildForWire(region, x, y, z+1, id);
 	}
 
 	Callback.addCallback("DestroyBlock", function(coords: BlockPosition, block: Tile, player: number) {
 		if (EnergyRegistry.isWire(block.id)) {
 			let region = BlockSource.getDefaultForActor(player);
-			onWireDestroyed(region, coords.x, coords.y, coords.z, block.id);
+			let node = EnergyNet.getNodeOnCoords(region, coords.x, coords.y, coords.z);
+			if (node) {
+				node.destroy();
+				onWireDestroyed(region, coords.x, coords.y, coords.z, block.id);
+			}
+		}
+	});
+
+	Callback.addCallback("PopBlockResources", function(coords: Vector, block: Tile, f: number, i: number, region: BlockSource) {
+		if (EnergyRegistry.isWire(block.id)) {
+			let node = EnergyNet.getNodeOnCoords(region, coords.x, coords.y, coords.z) as EnergyGrid;
+			node.removeCoords(coords.x, coords.y, coords.z);
+			node.rebuild = true;
 		}
 	});
 }

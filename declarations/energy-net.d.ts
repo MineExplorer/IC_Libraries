@@ -46,7 +46,6 @@ declare class EnergyNode {
     energyTypes: object;
     dimension: number;
     maxValue: number;
-    initialized: boolean;
     removed: boolean;
     blocksMap: object;
     entries: EnergyNode[];
@@ -70,7 +69,7 @@ declare class EnergyNode {
     private addReceiver;
     /**
      * @param node receiver node
-     * @returns true if link to the node was removed, false if it already removed
+     * @returns true if link to the node was removed, false if it's already removed
      */
     private removeReceiver;
     /**
@@ -96,7 +95,6 @@ declare class EnergyNode {
     canExtractEnergy(side: number, type: string): boolean;
     canConductEnergy(coord1: Vector, coord2: Vector, side: number): boolean;
     isCompatible(node: EnergyNode): boolean;
-    init(): void;
     tick(): void;
     destroy(): void;
     toString(): string;
@@ -104,14 +102,18 @@ declare class EnergyNode {
 declare class EnergyGrid extends EnergyNode {
     blockID: number;
     region: BlockSource;
+    rebuild: boolean;
     constructor(energyType: EnergyType, maxValue: number, wireID: number, region: BlockSource);
     isCompatible(node: EnergyNode): boolean;
     mergeGrid(grid: EnergyNode): EnergyNode;
+    rebuildGrid(): void;
     rebuildRecursive(x: number, y: number, z: number, side?: number): void;
     rebuildFor6Sides(x: number, y: number, z: number): void;
+    tick(): void;
 }
 declare class EnergyTileNode extends EnergyNode {
     tileEntity: EnergyTile;
+    initialized: boolean;
     constructor(energyType: EnergyType, parent: EnergyTile);
     getParent(): EnergyTile;
     receiveEnergy(amount: number, packet: EnergyPacket): number;

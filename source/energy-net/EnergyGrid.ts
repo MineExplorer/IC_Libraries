@@ -2,6 +2,7 @@ class EnergyGrid
 extends EnergyNode {
 	blockID: number;
 	region: BlockSource;
+	rebuild: boolean = false;
 
 	constructor(energyType: EnergyType, maxValue: number, wireID: number, region: BlockSource) {
 		super(energyType, region.getDimension());
@@ -29,6 +30,18 @@ extends EnergyNode {
 		}
 		grid.destroy();
 		return this;
+	}
+
+	rebuildGrid(): void {
+		this.destroy();
+		for (let key in this.blocksMap) {
+			if (!this.blocksMap[key]) {
+				let keyArr = key.split(":");
+				let x = parseInt(keyArr[0]), y = parseInt(keyArr[1]), z = parseInt(keyArr[2]);
+				Game.message("Rebuild " + x + ", " + y + ", " + z);
+				EnergyGridBuilder.onWireDestroyed(this.region, x, y, z, this.blockID);
+			}
+		}
 	}
 
 	rebuildRecursive(x: number, y: number, z: number, side?: number) {
@@ -74,6 +87,14 @@ extends EnergyNode {
 			if (this.canConductEnergy(coord1, coord2, side)) {
 				this.rebuildRecursive(coord2.x, coord2.y, coord2.z, side ^ 1);
 			}
+		}
+	}
+
+	tick(): void {
+		if (this.rebuild) {
+			this.rebuildGrid();
+		} else {
+			super.tick();
 		}
 	}
 }

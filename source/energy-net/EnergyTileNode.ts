@@ -1,6 +1,7 @@
 class EnergyTileNode
 extends EnergyNode {
 	tileEntity: EnergyTile;
+	initialized: boolean = false;
 
 	constructor(energyType: EnergyType, parent: EnergyTile) {
 		super(energyType, parent.dimension);
