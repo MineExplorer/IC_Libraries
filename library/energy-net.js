@@ -268,13 +268,17 @@ var EnergyNode = /** @class */ (function () {
         }
         var currentNodeList = __assign({}, packet.nodeList);
         var receiversCount = this.receivers.length;
-        for (var i = 0; i < receiversCount; i++) {
-            var node = this.receivers[i];
+        var k = 0;
+        for (var i = 0; i < this.receivers.length; i++) {
             if (amount <= 0)
                 break;
+            var node = this.receivers[i];
             if (packet.validateNode(node.id)) {
-                amount -= node.receiveEnergy(Math.ceil(amount / (receiversCount - i)), packet);
+                amount -= node.receiveEnergy(Math.ceil(amount / (receiversCount - k)), packet);
+                if (node.removed)
+                    i--;
             }
+            k++;
         }
         packet.nodeList = currentNodeList;
         for (var _i = 0, _a = this.receivers; _i < _a.length; _i++) {

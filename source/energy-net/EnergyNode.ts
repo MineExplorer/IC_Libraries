@@ -138,12 +138,15 @@ class EnergyNode {
 
 		let currentNodeList = {...packet.nodeList};
 		let receiversCount = this.receivers.length;
-		for (let i = 0; i < receiversCount; i++) {
-			let node = this.receivers[i];
+		let k = 0;
+		for (let i = 0; i < this.receivers.length; i++) {
 			if (amount <= 0) break;
+			let node = this.receivers[i];
 			if (packet.validateNode(node.id)) {
-				amount -= node.receiveEnergy(Math.ceil(amount / (receiversCount - i)), packet);
+				amount -= node.receiveEnergy(Math.ceil(amount / (receiversCount - k)), packet);
+				if (node.removed) i--;
 			}
+			k++;
 		}
 
 		packet.nodeList = currentNodeList;
