@@ -38,7 +38,6 @@ extends EnergyNode {
 			if (!this.blocksMap[key]) {
 				let keyArr = key.split(":");
 				let x = parseInt(keyArr[0]), y = parseInt(keyArr[1]), z = parseInt(keyArr[2]);
-				Game.message("Rebuild " + x + ", " + y + ", " + z);
 				EnergyGridBuilder.onWireDestroyed(this.region, x, y, z, this.blockID);
 			}
 		}
