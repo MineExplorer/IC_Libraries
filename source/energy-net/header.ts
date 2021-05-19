@@ -9,10 +9,9 @@
 
 LIBRARY({
 	name: "EnergyNet",
-	version: 8,
+	version: 9,
 	shared: true,
 	api: "CoreEngine"
 });
-
 
 Translation.addTranslation("Energy", {ru: "Энергия", zh: "能量"});

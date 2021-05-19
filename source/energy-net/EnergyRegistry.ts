@@ -2,12 +2,12 @@ namespace EnergyRegistry {
 
 	export type WireData = {
 		type: EnergyType;
-		value: number;
+		maxValue: number;
 		class: typeof EnergyGrid;
 	}
 
-	export let energyTypes = {};
-	export let wireData = {};
+	export let energyTypes: {[key: number]: EnergyType} = {};
+	export let wireData: {[key: number]: WireData} = {};
 
 	/**
 	 * name - name of this energy type,
@@ -19,7 +19,7 @@ namespace EnergyRegistry {
 			Logger.Log("duplicate energy types for name: " + name + "!", "ERROR");
 		}
 
-		let energyType = new EnergyType(name, value);
+		const energyType = new EnergyType(name, value);
 
 		energyTypes[name] = energyType;
 
@@ -47,13 +47,9 @@ namespace EnergyRegistry {
 			return type1.value / type2.value;
 		}
 		else {
-			Logger.Log("get energy value ratio failed: some of this 2 energy types is not defiled: " + [name1, name2], "ERROR");
+			Logger.Log("get energy value ratio failed: some of this 2 energy types is not defined: " + [name1, name2], "ERROR");
 			return -1;
 		}
-	}
-
-	export function getWireData(blockID: number): WireData {
-		return wireData[blockID];
 	}
 
 	export function registerWire(blockID: number, type: EnergyType, maxValue: number, energyGridClass: typeof EnergyGrid = EnergyGrid) {
@@ -62,6 +58,10 @@ namespace EnergyRegistry {
 			maxValue: maxValue,
 			class: energyGridClass
 		}
+	}
+
+	export function getWireData(blockID: number): WireData {
+		return wireData[blockID];
 	}
 
 	export function isWire(blockID: number, type?: string): boolean {

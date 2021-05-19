@@ -3,11 +3,15 @@
 declare namespace EnergyTypeRegistry {
     type WireData = {
         type: EnergyType;
-        value: number;
+        maxValue: number;
         class: typeof EnergyGrid;
     };
-    let energyTypes: {};
-    let wireData: {};
+    let energyTypes: {
+        [key: number]: EnergyType;
+    };
+    let wireData: {
+        [key: number]: WireData;
+    };
     /**
      * name - name of this energy type,
      * value - value of one unit in [Eu] (IC2 Energy)
@@ -16,8 +20,8 @@ declare namespace EnergyTypeRegistry {
     function assureEnergyType(name: string, value: number): EnergyType;
     function getEnergyType(name: string): EnergyType;
     function getValueRatio(name1: string, name2: string): number;
-    function getWireData(blockID: number): WireData;
     function registerWire(blockID: number, type: EnergyType, maxValue: number, energyGridClass?: typeof EnergyGrid): void;
+    function getWireData(blockID: number): WireData;
     function isWire(blockID: number, type?: string): boolean;
 }
 declare class EnergyType {

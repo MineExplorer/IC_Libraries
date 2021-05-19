@@ -32,7 +32,7 @@ var __extends = (this && this.__extends) || (function () {
 */
 LIBRARY({
     name: "EnergyNet",
-    version: 8,
+    version: 9,
     shared: true,
     api: "CoreEngine"
 });
@@ -75,15 +75,11 @@ var EnergyRegistry;
             return type1.value / type2.value;
         }
         else {
-            Logger.Log("get energy value ratio failed: some of this 2 energy types is not defiled: " + [name1, name2], "ERROR");
+            Logger.Log("get energy value ratio failed: some of this 2 energy types is not defined: " + [name1, name2], "ERROR");
             return -1;
         }
     }
     EnergyRegistry.getValueRatio = getValueRatio;
-    function getWireData(blockID) {
-        return EnergyRegistry.wireData[blockID];
-    }
-    EnergyRegistry.getWireData = getWireData;
     function registerWire(blockID, type, maxValue, energyGridClass) {
         if (energyGridClass === void 0) { energyGridClass = EnergyGrid; }
         EnergyRegistry.wireData[blockID] = {
@@ -93,6 +89,10 @@ var EnergyRegistry;
         };
     }
     EnergyRegistry.registerWire = registerWire;
+    function getWireData(blockID) {
+        return EnergyRegistry.wireData[blockID];
+    }
+    EnergyRegistry.getWireData = getWireData;
     function isWire(blockID, type) {
         var wireData = getWireData(blockID);
         if (wireData) {
@@ -557,7 +557,7 @@ var EnergyGridBuilder;
         var blockID = region.getBlockId(x, y, z);
         var wire = EnergyRegistry.getWireData(blockID);
         if (wire) {
-            var grid = new wire.class(wire.type, wire.value, blockID, region);
+            var grid = new wire.class(wire.type, wire.maxValue, blockID, region);
             EnergyNet.addEnergyNode(grid);
             grid.rebuildRecursive(x, y, z);
             return grid;

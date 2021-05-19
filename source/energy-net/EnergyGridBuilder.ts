@@ -27,7 +27,7 @@ namespace EnergyGridBuilder {
 		let blockID = region.getBlockId(x, y, z);
 		let wire = EnergyRegistry.getWireData(blockID);
 		if (wire) {
-			let grid = new wire.class(wire.type, wire.value, blockID, region);
+			let grid = new wire.class(wire.type, wire.maxValue, blockID, region);
 			EnergyNet.addEnergyNode(grid);
 			grid.rebuildRecursive(x, y, z);
 			return grid;
