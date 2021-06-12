@@ -89,8 +89,10 @@ namespace EnergyGridBuilder {
 	Callback.addCallback("PopBlockResources", function(coords: Vector, block: Tile, f: number, i: number, region: BlockSource) {
 		if (EnergyRegistry.isWire(block.id)) {
 			let node = EnergyNet.getNodeOnCoords(region, coords.x, coords.y, coords.z) as EnergyGrid;
-			node.removeCoords(coords.x, coords.y, coords.z);
-			node.rebuild = true;
+			if (node) {
+				node.removeCoords(coords.x, coords.y, coords.z);
+				node.rebuild = true;
+			}
 		}
 	});
 }
