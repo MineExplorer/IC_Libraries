@@ -32,7 +32,7 @@ class AudioSource {
         }
         this.radius = radius;
         this.volume = volume;
-        var soundData = SoundManager.getSoundData(soundName)
+        var soundData = SoundManager.getSound(soundName)
         this.isLooping = soundData.looping;
         this.startTime = Debug.sysTime();
         this.play();
@@ -59,7 +59,7 @@ class AudioSource {
         this.stop();
         if (this.soundName) {
             this.soundName = this.nextSound;
-            this.isLooping = SoundManager.getSoundData(this.soundName).looping;
+            this.isLooping = SoundManager.getSound(this.soundName).looping;
             this.nextSound = "";
             this.play();
         }

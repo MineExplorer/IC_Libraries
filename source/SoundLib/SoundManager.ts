@@ -8,7 +8,7 @@ namespace SoundManager {
 	export let soundPool: android.media.SoundPool;
 	export let maxStreams: number = 0;
 	export let playingStreams: number = 0;
-	export let soundPath: string = "";
+	export let resourcePath: string = "";
 	export let soundData: object = {};
 	export let audioSources: Array<AudioSource> = [];
 
@@ -24,25 +24,30 @@ namespace SoundManager {
 	}
 
 	export function setResourcePath(path: string): void {
-		soundPath = path;
+		resourcePath = path;
 	}
 
 	export function registerSound(soundName: string, path: string | string[], looping: boolean = false): void {
+		let sounds: Sound | Sound[];
 		if (Array.isArray(path)) {
-			var soundID: any = [];
+			sounds = [];
 			for (let i in path) {
-				soundID.push(soundPool.load(soundPath + path[i], 1));
+				let soundPath = resourcePath + path[i];
+				sounds.push(new Sound(soundName, soundPool, soundPath, looping));
 			}
 		} else {
-			path = soundPath + path;
-			var soundID: any = soundPool.load(path, 1);
+			let soundPath = resourcePath + path;
+			sounds = new Sound(soundName, soundPool, soundPath, looping)
 		}
-		soundData[soundName] = {id: soundID, path: path, looping: looping};
-		return soundID;
+		soundData[soundName] = sounds;
 	}
 
-	export function getSoundData(soundName: string): SoundData {
-		return soundData[soundName];
+	export function getSound(soundName: string): Sound {
+		let sound = soundData[soundName];
+		if (Array.isArray(sound)) {
+			return sound[Math.floor(Math.random() * sound.length)];
+		}
+		return sound;
 	}
 
 	export function getSoundDuration(soundName: string) {
@@ -62,7 +67,7 @@ namespace SoundManager {
 	}
 
 	export function playSound(soundName: string, volume: number = 1, pitch: number = 1): number {
-		let sound = getSoundData(soundName);
+		let sound = getSound(soundName);
 		if (!sound) {
 			Logger.Log("Cannot find sound: "+ soundName, "ERROR");
 			return 0;
@@ -99,12 +104,12 @@ namespace SoundManager {
 	}
 
 	export function createSource(sourceType: SourceType, source: any, soundName: string,  volume?: number, radius?: number): AudioSource {
-		if (sourceType == SourceType.ENTITY && typeof(source) != "number") {
-			Logger.Log("Invalid source type " + typeof(source) + "for AudioSource.ENTITY", "ERROR");
+		if (sourceType == SourceType.ENTITY && typeof source != "number") {
+			Logger.Log("Invalid source type " + typeof source + "for AudioSource.ENTITY", "ERROR");
 			return null;
 		}
-		if (sourceType == SourceType.TILEENTITY && typeof(source) != "object") {
-			Logger.Log("Invalid source type " + typeof(source) + "for AudioSource.TILEENTITY", "ERROR");
+		if (sourceType == SourceType.TILEENTITY && typeof source != "object") {
+			Logger.Log("Invalid source type " + typeof source + "for AudioSource.TILEENTITY", "ERROR");
 			return null;
 		}/*
 		let soundID = getSoundID(soundName);
