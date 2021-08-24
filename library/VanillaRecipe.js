@@ -30,6 +30,8 @@ var VanillaRecipe;
     }
     VanillaRecipe.setResourcePath = setResourcePath;
     function setBehaviorPath(path) {
+        if (behavior_path)
+            return;
         behavior_path = path + ("/" + BEHAVIOR_NAME + "/");
         behavior_recipes_path = behavior_path + "recipes/";
         FileTools.mkdir(behavior_recipes_path);
