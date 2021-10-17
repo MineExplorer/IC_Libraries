@@ -36,5 +36,7 @@ declare namespace VanillaRecipe {
     export function generateJSONRecipe(name: string, obj: any): void;
     export function addWorkbenchRecipeFromJSON(obj: RecipeFormat): void;
     export function addCraftingRecipe(name: string, obj: RecipeFormat, addToWorkbench?: boolean): void;
+    export function deleteRecipe(name: string): void;
     export function addStonecutterRecipe(name: string, obj: RecipeFormat): void;
+    export {};
 }

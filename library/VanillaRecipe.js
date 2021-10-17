@@ -9,20 +9,21 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
+var IS_OLD = getMCPEVersion().main === 28;
 LIBRARY({
     name: "VanillaRecipe",
     version: 3,
-    shared: false,
+    shared: IS_OLD ? false : true,
     api: "CoreEngine"
 });
 var MOD_PREFIX = "mod_";
 var BEHAVIOR_NAME = "VanillaRecipe";
-var IS_OLD = getMCPEVersion().main === 28;
 var VanillaRecipe;
 (function (VanillaRecipe) {
     var resource_path;
     var behavior_path;
     var behavior_recipes_path;
+    var recipes = {};
     function setResourcePath(path) {
         resource_path = path + "/definitions/recipe/";
         FileTools.mkdir(resource_path);
@@ -30,8 +31,10 @@ var VanillaRecipe;
     }
     VanillaRecipe.setResourcePath = setResourcePath;
     function setBehaviorPath(path) {
-        if (behavior_path)
+        if (behavior_path) {
+            recursiveDelete(new java.io.File(path + "/" + BEHAVIOR_NAME));
             return;
+        }
         behavior_path = path + ("/" + BEHAVIOR_NAME + "/");
         behavior_recipes_path = behavior_path + "recipes/";
         FileTools.mkdir(behavior_recipes_path);
@@ -57,6 +60,17 @@ var VanillaRecipe;
         }
     }
     VanillaRecipe.resetRecipes = resetRecipes;
+    function recursiveDelete(file) {
+        if (!file.exists())
+            return;
+        if (file.isDirectory()) {
+            var files = file.listFiles();
+            for (var i in files) {
+                recursiveDelete(files[i]);
+            }
+        }
+        file.delete();
+    }
     function generateUUID() {
         return "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
             .replace(/x/g, function (c) { return (Math.random() * 16 | 0).toString(16); });
@@ -164,6 +178,9 @@ var VanillaRecipe;
     VanillaRecipe.addWorkbenchRecipeFromJSON = addWorkbenchRecipeFromJSON;
     function addCraftingRecipe(name, obj, addToWorkbench) {
         var _a;
+        if (recipes[name])
+            return;
+        recipes[name] = true;
         if (addToWorkbench)
             addWorkbenchRecipeFromJSON(obj);
         var type = obj.type;
@@ -203,6 +220,15 @@ var VanillaRecipe;
         }
     }
     VanillaRecipe.addCraftingRecipe = addCraftingRecipe;
+    function deleteRecipe(name) {
+        var recipe = recipes[name];
+        if (recipe) {
+            var path = getFilePath(name);
+            new java.io.File(path).delete();
+            recipes[name] = false;
+        }
+    }
+    VanillaRecipe.deleteRecipe = deleteRecipe;
     function addStonecutterRecipe(name, obj) {
         obj.type = "shapeless";
         obj.tags = ["stonecutter"];
