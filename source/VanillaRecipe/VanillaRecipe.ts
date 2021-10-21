@@ -119,27 +119,16 @@ namespace VanillaRecipe {
 		return 0;
 	}
 
+	const nativeConvertNameID = ModAPI.requireGlobal("requireMethodFromNativeAPI('api.NativeAPI', 'convertNameId')");
+
 	let __isValid__ = true;
 	export function convertToVanillaID(stringID: string): string {
-		let newID = "";
 		if (!getNumericID(stringID)) {
 			Logger.Log("ID " + stringID + " is invalid", "ERROR");
 			__isValid__ = false;
 			return null;
 		}
-		stringID = stringID.replace(":", "_");
-		let wasLowerCase = false;
-		for (let i = 0; i < stringID.length; i++) {
-			if (stringID[i] == stringID[i].toUpperCase()) {
-				if (wasLowerCase && stringID[i] != "_") newID += "_";
-				newID += stringID[i].toLowerCase();
-				wasLowerCase = false;
-			} else {
-				newID += stringID[i];
-				wasLowerCase = true;
-			}
-		}
-		return "minecraft:" + newID;
+		return "minecraft:" + nativeConvertNameID(stringID.replace(":", "_"));
 	}
 
 	function generateBlankFile(recipeName: string): void {
