@@ -6,7 +6,7 @@ declare namespace TileRenderer {
     function createBlockModel(id: number, data: number, boxes: BoxVertexes[]): ICRender.Model;
     function setStaticModel(id: number, data: number, boxes: BoxVertexes[]): void;
     function setStaticModelWithRotation(id: number, boxes: BoxVertexes[]): void;
-    function getRotatedBoxVertexes(rotation: number, box: BoxVertexes): BoxVertexes;
+    function getRotatedBoxVertexes(box: BoxVertexes, rotation: number): BoxVertexes;
     function setCollisionShape(id: number, data: number, boxes: BoxVertexes[]): void;
     function setEmptyCollisionShape(id: number): void;
     function setStandardModel(id: number, data: number, texture: [string, number][]): void;
