@@ -309,8 +309,6 @@ var TileRenderer;
         render.addEntry(model);
         var entry = shape.addEntry();
         entry.addBox(0.5 - width, 0.5 - width, 0.5 - width, 0.5 + width, 0.5 + width, 0.5 + width);
-        width = Math.max(width, 0.25);
-        Block.setShape(id, 0.5 - width, 0.5 - width, 0.5 - width, 0.5 + width, 0.5 + width, 0.5 + width, data);
         BlockRenderer.setStaticICRender(id, data, render);
         BlockRenderer.setCustomCollisionShape(id, data, shape);
         BlockRenderer.setCustomRaycastShape(id, data, shape);
