@@ -62,14 +62,14 @@ namespace TileRenderer {
 		if (setRaycastShape) BlockRenderer.setCustomRaycastShape(id, data, shape);
 	}
 
-	export function setShapeWithRotation(id: number, data: number, boxes: TileRenderer.BoxVertexes[]): void {
+	export function setShapeWithRotation(id: number, data: number, boxes: BoxVertexes[]): void {
 		for (let i = 0; i < 4; i++) {
 			const newBoxes = [];
 			for (let box of boxes) {
-				newBoxes.push(TileRenderer.getRotatedBoxVertexes(box, i));
+				newBoxes.push(getRotatedBoxVertexes(box, i));
 			}
-			TileRenderer.setStaticModel(id, data + i, newBoxes);
-			TileRenderer.setCollisionShape(id, data + i, newBoxes);
+			setStaticModel(id, data + i, newBoxes);
+			setCollisionShape(id, data + i, newBoxes);
 		}
 	}
 
@@ -110,9 +110,7 @@ namespace TileRenderer {
 	}
 
 	export function setHandAndUiModel(id: number, data: number, texture: BlockRenderer.ModelTextureSet): void {
-		const render = new ICRender.Model();
 		const model = BlockRenderer.createTexturedBlock(texture);
-		render.addEntry(model);
 		ItemModel.getFor(id, data).setHandModel(model);
 		ItemModel.getFor(id, data).setUiModel(model);
 	}
@@ -192,7 +190,7 @@ namespace TileRenderer {
 	export function setRotationFunction(id: string | number, hasVertical?: boolean, placeSound?: string): void {
 		Block.registerPlaceFunction(id, function(coords, item, block, player, region) {
 			const place = World.canTileBeReplaced(block.id, block.data) ? coords : coords.relative;
-			const rotation = TileRenderer.getBlockRotation(player, hasVertical);
+			const rotation = getBlockRotation(player, hasVertical);
 			region.setBlock(place.x, place.y, place.z, item.id, rotation);
 			World.playSound(place.x, place.y, place.z, placeSound || "dig.stone", 1, 0.8);
 			return place;
@@ -205,11 +203,11 @@ namespace TileRenderer {
 			const place = World.canTileBeReplaced(block.id, block.data) ? coords : coords.relative;
 			region.setBlock(place.x, place.y, place.z, item.id, 0);
 			World.playSound(place.x, place.y, place.z, placeSound || "dig.stone", 1, 0.8)
-			let rotation = TileRenderer.getBlockRotation(player, hasVertical);
+			let rotation = getBlockRotation(player, hasVertical);
 			if (!hasVertical) rotation -= 2;
 			const tile = World.addTileEntity(place.x, place.y, place.z, region);
 			tile.data.meta = rotation;
-			TileRenderer.mapAtCoords(place.x, place.y, place.z, item.id, rotation);
+			mapAtCoords(place.x, place.y, place.z, item.id, rotation);
 			return place;
 		});
 	}
@@ -257,6 +255,10 @@ namespace TileRenderer {
 		BlockRenderer.setStaticICRender(id, data, render);
 		BlockRenderer.setCustomCollisionShape(id, data, shape);
 		BlockRenderer.setCustomRaycastShape(id, data, shape);
+
+		const itemModel = new BlockRenderer.Model(0, 0.5 - width, 0.5 - width, 1, 0.5 + width, 0.5 + width, id, data);
+		ItemModel.getFor(id, data).setHandModel(itemModel);
+		ItemModel.getFor(id, data).setUiModel(itemModel);
 	}
 
 	export function getCropModel(texture: [string, number]): ICRender.Model;
