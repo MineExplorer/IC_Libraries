@@ -2,8 +2,8 @@
 	"compilerOptions": {
 		"target": "ES5",
 		"lib": ["ESNext"],
-		"outDir": "./declarations/",
-		"allowJs": true,
+		"outFile": "../../library/TileRender.js",
+		"allowJs": false,
 		"downlevelIteration": true,
 		"strict": false,
 		"skipLibCheck": true,
@@ -11,9 +11,9 @@
 	},
 	"exclude": [],
 	"include": [
-		"./library/**/*"
-, "declarations/TileRender.d.ts"	],
+		"TileRender.ts"
+	],
 	"files": [
-		"declarations/core-engine.d.ts"
+		"../../declarations/core-engine.d.ts"
 	]
 }
