@@ -1,12 +1,11 @@
-const IS_OLD = getMCPEVersion().main === 28;
-
 LIBRARY({
 	name: "VanillaRecipe",
 	version: 3,
-	shared: IS_OLD ? false : true,
+	shared: true,
 	api: "CoreEngine"
 });
 
+const IS_OLD = getMCPEVersion().main === 28;
 const MOD_PREFIX = "mod_";
 const BEHAVIOR_NAME = "VanillaRecipe";
 
@@ -29,12 +28,15 @@ namespace VanillaRecipe {
 	let recipes = {};
 
 	export function setResourcePath(path: string): void {
-		resource_path = path + "/definitions/recipe/";
-		FileTools.mkdir(resource_path);
-		resetRecipes(resource_path);
+		if (!IS_OLD) return;
+		const resPath = path + "/definitions/recipe/";
+		if (!resource_path) resource_path = resPath;
+		FileTools.mkdir(resPath);
+		resetRecipes(resPath);
 	}
 
 	export function setBehaviorPath(path: string): void {
+		if (IS_OLD) return;
 		if (behavior_path) {
 			recursiveDelete(new java.io.File(path+ "/" + BEHAVIOR_NAME));
 			return;
