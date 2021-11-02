@@ -1,6 +1,6 @@
 LIBRARY({
 	name: "VanillaRecipe",
-	version: 3,
+	version: 4,
 	shared: true,
 	api: "CoreEngine"
 });
@@ -42,6 +42,7 @@ namespace VanillaRecipe {
 			return;
 		}
 		behavior_path = path + `/${BEHAVIOR_NAME}/`;
+		//behavior_path = Resources.addRuntimePack("behavior", BEHAVIOR_NAME) + "/";
 		behavior_recipes_path = behavior_path + "recipes/";
 		FileTools.mkdir(behavior_recipes_path);
 		generateManifestJson();
@@ -113,7 +114,8 @@ namespace VanillaRecipe {
 
 	export function getNumericID(stringID: string): number {
 		let stringArray = stringID.split(":");
-		if (stringArray.length == 1) {
+		if (stringArray.length == 1 || stringArray[0] == "minecraft") {
+			stringID = stringArray[stringArray.length - 1];
 			return VanillaBlockID[stringID] || VanillaItemID[stringID];
 		}
 		if (stringArray[0] == "item") return ItemID[stringArray[1]];
@@ -130,7 +132,9 @@ namespace VanillaRecipe {
 			__isValid__ = false;
 			return null;
 		}
-		return "minecraft:" + nativeConvertNameID(stringID.replace(":", "_"));
+		let nameID = nativeConvertNameID(stringID.replace(":", "_"));
+		if (!nameID.startsWith("minecraft:")) nameID = "minecraft:" + nameID;
+		return nameID;
 	}
 
 	function generateBlankFile(recipeName: string): void {
@@ -145,7 +149,7 @@ namespace VanillaRecipe {
 
 	export function addWorkbenchRecipeFromJSON(obj: RecipeFormat): void {
 		if (Array.isArray(obj.result)) {
-			Logger.Log("Recipes with multiple output are not supported in modded workbench", "ERROR");
+			Logger.Log("Recipes with multiple output are not supported in the modded workbench", "ERROR");
 			return;
 		}
 		var result = {
@@ -215,6 +219,16 @@ namespace VanillaRecipe {
 			}
 			generateJSONRecipe(name, newObj);
 		}
+	}
+
+	export function addShapedRecipe(name: string, obj: RecipeFormat, addToWorkbench?: boolean): void {
+		obj.type = "shaped";
+		addCraftingRecipe(name, obj, addToWorkbench);
+	}
+
+	export function addShapelessRecipe(name: string, obj: RecipeFormat, addToWorkbench?: boolean): void {
+		obj.type = "shapeless";
+		addCraftingRecipe(name, obj, addToWorkbench);
 	}
 
 	export function deleteRecipe(name: string): void {
