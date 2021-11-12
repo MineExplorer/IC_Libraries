@@ -1,7 +1,6 @@
 namespace SoundManager {
-	type SoundData = {id: number | number[], path: string, looping: boolean, duration?: number};
-
-	const settings_path: string = "/storage/emulated/0/games/Horizon/minecraftpe/options.txt";
+	const settings_folder = getMCPEVersion().main === 28 ? "Horizon" : "com.mojang"
+	const settings_path = `/storage/emulated/0/games/${settings_folder}/minecraftpe/options.txt`;
 
 	export let soundVolume: number;
 	export let musicVolume: number;
