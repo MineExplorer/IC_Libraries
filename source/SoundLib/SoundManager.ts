@@ -1,5 +1,5 @@
 namespace SoundManager {
-	const settings_folder = getMCPEVersion().main === 28 ? "Horizon" : "com.mojang"
+	const settings_folder = IS_OLD ? "Horizon" : "com.mojang"
 	const settings_path = `/storage/emulated/0/games/${settings_folder}/minecraftpe/options.txt`;
 
 	export let soundVolume: number;
@@ -12,8 +12,11 @@ namespace SoundManager {
 	export let audioSources: Array<AudioSource> = [];
 
 	export function readSettings(): void {
-		soundVolume = parseInt(FileTools.ReadKeyValueFile(settings_path)["audio_sound"]);
-		musicVolume = parseInt(FileTools.ReadKeyValueFile(settings_path)["audio_music"]);
+		const options = FileTools.ReadKeyValueFile(settings_path);
+		let mainVolume = 1;
+		if (!IS_OLD) mainVolume = parseFloat(options["audio_main"]);
+		soundVolume = mainVolume * parseFloat(options["audio_sound"]);
+		musicVolume = mainVolume * parseFloat(options["audio_music"]);
 	}
 
 	export function init(maxStreamsCount: number): void {
@@ -72,14 +75,13 @@ namespace SoundManager {
 			return 0;
 		}
 		if (playingStreams >= maxStreams) return 0;
-		if (sound.looping) playingStreams++;
 		let soundID = sound.id;
 		if (Array.isArray(soundID)) {
 			soundID = soundID[Math.floor(Math.random() * soundID.length)];
 		}
 		volume *= soundVolume;
 		let streamID = soundPool.play(soundID, volume, volume, sound.looping? 1 : 0, sound.looping? -1 : 0, pitch);
-		//Game.message(streamID +" - "+ soundName + ", volume: "+ volume);
+		Game.message(streamID +" - "+ soundName + ", volume: "+ volume);
 		return streamID;
 	}
 
@@ -102,7 +104,7 @@ namespace SoundManager {
 		return playSoundAt(tile.x + .5, tile.y + .5, tile.z + .5, soundName, volume, 1, radius)
 	}
 
-	export function createSource(sourceType: SourceType, source: any, soundName: string,  volume?: number, radius?: number): AudioSource {
+	export function createSource(sourceType: SourceType, source: any, soundName: string, volume?: number, radius?: number): AudioSource {
 		if (sourceType == SourceType.ENTITY && typeof source != "number") {
 			Logger.Log("Invalid source type " + typeof source + "for AudioSource.ENTITY", "ERROR");
 			return null;
@@ -144,8 +146,7 @@ namespace SoundManager {
 		audioSource.remove = true;
 	}
 
-	export function startPlaySound(sourceType: SourceType, source: any, soundName: string,  volume?: number, radius?: number): AudioSource
-	export function startPlaySound(sourceType: SourceType, source: any, soundName?: any, volume?: number, radius?: number): AudioSource {
+	export function startPlaySound(sourceType: SourceType, source: any, soundName: string, volume?: number, radius?: number): AudioSource {
 		let audioSource = getSource(source, soundName)
 		if (audioSource) {
 			return audioSource;

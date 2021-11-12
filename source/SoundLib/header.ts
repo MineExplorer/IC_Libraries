@@ -4,3 +4,5 @@ LIBRARY({
 	shared: false,
 	api: "CoreEngine"
 });
+
+const IS_OLD = getMCPEVersion().main === 28;

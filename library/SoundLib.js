@@ -4,9 +4,10 @@ LIBRARY({
     shared: false,
     api: "CoreEngine"
 });
+var IS_OLD = getMCPEVersion().main === 28;
 var SoundManager;
 (function (SoundManager) {
-    var settings_folder = getMCPEVersion().main === 28 ? "Horizon" : "com.mojang";
+    var settings_folder = IS_OLD ? "Horizon" : "com.mojang";
     var settings_path = "/storage/emulated/0/games/" + settings_folder + "/minecraftpe/options.txt";
     SoundManager.maxStreams = 0;
     SoundManager.playingStreams = 0;
@@ -14,8 +15,12 @@ var SoundManager;
     SoundManager.soundData = {};
     SoundManager.audioSources = [];
     function readSettings() {
-        SoundManager.soundVolume = parseInt(FileTools.ReadKeyValueFile(settings_path)["audio_sound"]);
-        SoundManager.musicVolume = parseInt(FileTools.ReadKeyValueFile(settings_path)["audio_music"]);
+        var options = FileTools.ReadKeyValueFile(settings_path);
+        var mainVolume = 1;
+        if (!IS_OLD)
+            mainVolume = parseFloat(options["audio_main"]);
+        SoundManager.soundVolume = mainVolume * parseFloat(options["audio_sound"]);
+        SoundManager.musicVolume = mainVolume * parseFloat(options["audio_music"]);
     }
     SoundManager.readSettings = readSettings;
     function init(maxStreamsCount) {
@@ -79,15 +84,13 @@ var SoundManager;
         }
         if (SoundManager.playingStreams >= SoundManager.maxStreams)
             return 0;
-        if (sound.looping)
-            SoundManager.playingStreams++;
         var soundID = sound.id;
         if (Array.isArray(soundID)) {
             soundID = soundID[Math.floor(Math.random() * soundID.length)];
         }
         volume *= SoundManager.soundVolume;
         var streamID = SoundManager.soundPool.play(soundID, volume, volume, sound.looping ? 1 : 0, sound.looping ? -1 : 0, pitch);
-        //Game.message(streamID +" - "+ soundName + ", volume: "+ volume);
+        Game.message(streamID + " - " + soundName + ", volume: " + volume);
         return streamID;
     }
     SoundManager.playSound = playSound;
@@ -305,11 +308,11 @@ var AudioSource = /** @class */ (function () {
         this.soundName = soundName;
         this.source = source;
         this.sourceType = sourceType;
-        if (sourceType == SourceType.ENTITY) {
+        if (sourceType === SourceType.ENTITY) {
             this.position = Entity.getPosition(source);
             this.dimension = Entity.getDimension(source);
         }
-        if (sourceType = SourceType.TILEENTITY) {
+        else if (sourceType === SourceType.TILEENTITY) {
             this.position = { x: source.x + .5, y: source.y + .5, z: source.z + .5 };
             this.dimension = source.dimension;
         }
@@ -349,6 +352,7 @@ var AudioSource = /** @class */ (function () {
             this.streamID = SoundManager.playSoundAt(pos.x, pos.y, pos.z, this.soundName, this.volume, 1, this.radius);
             if (this.streamID != 0) {
                 this.isPlaying = true;
+                SoundManager.playingStreams++;
             }
         }
     };

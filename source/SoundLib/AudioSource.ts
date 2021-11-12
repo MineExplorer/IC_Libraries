@@ -22,11 +22,11 @@ class AudioSource {
         this.soundName = soundName;
         this.source = source;
         this.sourceType = sourceType;
-        if (sourceType == SourceType.ENTITY) {
+        if (sourceType === SourceType.ENTITY) {
             this.position = Entity.getPosition(source);
             this.dimension = Entity.getDimension(source);
         }
-        if (sourceType = SourceType.TILEENTITY) {
+        else if (sourceType === SourceType.TILEENTITY) {
             this.position = {x: source.x + .5, y: source.y + .5, z: source.z + .5};
             this.dimension = source.dimension;
         }
@@ -71,6 +71,7 @@ class AudioSource {
             this.streamID = SoundManager.playSoundAt(pos.x, pos.y, pos.z, this.soundName, this.volume, 1, this.radius);
             if (this.streamID != 0) {
                 this.isPlaying = true;
+                SoundManager.playingStreams++;
             }
         }
     }
