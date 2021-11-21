@@ -4,19 +4,19 @@ enum SourceType {
 }
 
 class AudioSource {
-    soundName: string
-    nextSound: string = ""
-    sourceType: SourceType
-    source: any
-    position: Vector
-    radius: number
-    dimension: number
-    streamID: number = 0
-    volume: number
-    isLooping: boolean
-    isPlaying: boolean = false
-    startTime: number = 0
-    remove: boolean = false
+    sound: Sound;
+    soundName: string;
+    nextSound: string = "";
+    sourceType: SourceType;
+    source: any;
+    position: Vector;
+    radius: number;
+    dimension: number;
+    streamID: number = 0;
+    volume: number;
+    isPlaying: boolean = false;
+    startTime: number = 0;
+    remove: boolean = false;
 
     constructor(sourceType: SourceType, source: any, soundName: string, volume: number = 1, radius: number = 16) {
         this.soundName = soundName;
@@ -32,8 +32,7 @@ class AudioSource {
         }
         this.radius = radius;
         this.volume = volume;
-        var soundData = SoundManager.getSound(soundName)
-        this.isLooping = soundData.looping;
+        this.sound = SoundManager.getSound(soundName);
         this.startTime = Debug.sysTime();
         this.play();
     }
@@ -59,7 +58,6 @@ class AudioSource {
         this.stop();
         if (this.soundName) {
             this.soundName = this.nextSound;
-            this.isLooping = SoundManager.getSound(this.soundName).looping;
             this.nextSound = "";
             this.play();
         }
@@ -67,8 +65,8 @@ class AudioSource {
 
     play() {
         if (!this.isPlaying) {
-            var pos = this.position;
-            this.streamID = SoundManager.playSoundAt(pos.x, pos.y, pos.z, this.soundName, this.volume, 1, this.radius);
+            const pos = this.position;
+            this.streamID = SoundManager.playSoundAt(pos.x, pos.y, pos.z, this.sound, this.volume, 1, this.radius);
             if (this.streamID != 0) {
                 this.isPlaying = true;
                 SoundManager.playingStreams++;
@@ -97,11 +95,11 @@ class AudioSource {
 
     updateVolume() {
         if (this.source == Player.get()) return;
-        var s = this.position;
-        var p = Player.getPosition();
-		var distance = Math.sqrt(Math.pow(s.x - p.x, 2) + Math.pow(s.y - p.y, 2) + Math.pow(s.z - p.z, 2));
+        const s = this.position;
+        const p = Player.getPosition();
+		const distance = Math.sqrt(Math.pow(s.x - p.x, 2) + Math.pow(s.y - p.y, 2) + Math.pow(s.z - p.z, 2));
 		if (distance > this.radius && SoundManager.playSound) return;
-		var volume = this.volume * Math.max(0, 1 - distance / this.radius);
+		const volume = this.volume * Math.max(0, 1 - distance / this.radius);
 		SoundManager.setVolume(this.streamID, volume * SoundManager.soundVolume);
     }
 }

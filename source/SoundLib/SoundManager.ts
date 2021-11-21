@@ -8,7 +8,7 @@ namespace SoundManager {
 	export let maxStreams: number = 0;
 	export let playingStreams: number = 0;
 	export let resourcePath: string = "";
-	export let soundData: object = {};
+	export let soundData: {[key: string]: Sound | Sound[]} = {};
 	export let audioSources: Array<AudioSource> = [];
 
 	export function readSettings(): void {
@@ -52,40 +52,25 @@ namespace SoundManager {
 		return sound;
 	}
 
-	export function getSoundDuration(soundName: string) {
-		let sound = soundData[soundName];
-		if (sound) {
-			if (!sound.duration) {
-				let mmr = new android.media.MediaMetadataRetriever();
-				mmr.setDataSource(sound.path);
-				let durationStr = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION);
-				let duration = parseInt(durationStr);
-				sound.duration = duration - duration % 50;
-				//Game.message(soundName+" - "+sound.duration);
+	export function playSound(soundName: string | Sound, volume: number = 1, pitch: number = 1): number {
+		let sound: Sound;
+		if (typeof soundName == "string") {
+			sound = getSound(soundName);
+			if (!sound) {
+				Logger.Log("Cannot find sound: "+ soundName, "ERROR");
+				return 0;
 			}
-			return sound.duration;
-		}
-		return 0;
-	}
-
-	export function playSound(soundName: string, volume: number = 1, pitch: number = 1): number {
-		let sound = getSound(soundName);
-		if (!sound) {
-			Logger.Log("Cannot find sound: "+ soundName, "ERROR");
-			return 0;
+		} else {
+			sound = soundName;
 		}
 		if (playingStreams >= maxStreams) return 0;
-		let soundID = sound.id;
-		if (Array.isArray(soundID)) {
-			soundID = soundID[Math.floor(Math.random() * soundID.length)];
-		}
 		volume *= soundVolume;
-		let streamID = soundPool.play(soundID, volume, volume, sound.looping? 1 : 0, sound.looping? -1 : 0, pitch);
-		Game.message(streamID +" - "+ soundName + ", volume: "+ volume);
+		let streamID = soundPool.play(sound.id, volume, volume, sound.looping? 1 : 0, sound.looping? -1 : 0, pitch);
+		Game.message(streamID +" - "+ sound.name + ", volume: "+ volume);
 		return streamID;
 	}
 
-	export function playSoundAt(x: number, y: number, z: number, soundName: string, volume: number = 1, pitch: number = 1, radius: number = 16): number {
+	export function playSoundAt(x: number, y: number, z: number, soundName: string | Sound, volume: number = 1, pitch: number = 1, radius: number = 16): number {
 		let p = Player.getPosition();
 		let distance = Math.sqrt(Math.pow(x - p.x, 2) + Math.pow(y - p.y, 2) + Math.pow(z - p.z, 2));
 		if (distance >= radius) return 0;
@@ -94,12 +79,12 @@ namespace SoundManager {
 		return streamID;
 	}
 
-	export function playSoundAtEntity(entity: number, soundName: string, volume?: number, pitch?: number, radius: number = 16): number {
+	export function playSoundAtEntity(entity: number, soundName: string | Sound, volume?: number, pitch?: number, radius: number = 16): number {
 		let pos = Entity.getPosition(entity);
 		return playSoundAt(pos.x, pos.y, pos.z, soundName, volume, pitch, radius)
 	}
 
-	export function playSoundAtBlock(tile: any, soundName: string, volume?: number, radius: number = 16): number {
+	export function playSoundAtBlock(tile: any, soundName: string | Sound, volume?: number, radius: number = 16): number {
 		if (tile.dimension != undefined && tile.dimension != Player.getDimension()) return 0;
 		return playSoundAt(tile.x + .5, tile.y + .5, tile.z + .5, soundName, volume, 1, radius)
 	}
@@ -201,18 +186,18 @@ namespace SoundManager {
 
 	export function tick() {
 		for (let i = 0; i < audioSources.length; i++) {
-			let sound = audioSources[i];
-			if (sound.remove || sound.sourceType == SourceType.TILEENTITY && sound.source.remove) {
-				sound.stop();
+			const audio = audioSources[i];
+			if (audio.remove || audio.sourceType == SourceType.TILEENTITY && audio.source.remove) {
+				audio.stop();
 				audioSources.splice(i, 1);
 				i--;
 				continue;
 			}
-			if (!sound.isLooping && Debug.sysTime() - sound.startTime >= getSoundDuration(sound.soundName)) {
-				if (sound.nextSound) {
-					sound.playNextSound();
+			if (!audio.sound.looping && Debug.sysTime() - audio.startTime >= audio.sound.getDuration()) {
+				if (audio.nextSound) {
+					audio.playNextSound();
 				} else {
-					sound.stop();
+					audio.stop();
 					audioSources.splice(i, 1);
 					i--;
 					continue;
@@ -220,15 +205,15 @@ namespace SoundManager {
 			}
 			// TODO:
 			// check dimension
-			if (sound.sourceType == SourceType.ENTITY && Entity.isExist(sound.source)) {
-				sound.position = Entity.getPosition(sound.source);
+			if (audio.sourceType == SourceType.ENTITY && Entity.isExist(audio.source)) {
+				audio.position = Entity.getPosition(audio.source);
 			}
-			if (!sound.isPlaying && sound.isLooping && playingStreams < maxStreams) {
-				//Game.message("Start play sound: "+sound.soundName);
-				sound.play();
+			if (!audio.isPlaying && audio.sound.looping && playingStreams < maxStreams) {
+				//Game.message("Start play audio: "+audio.soundName);
+				audio.play();
 			}
-			if (sound.isPlaying) {
-				sound.updateVolume();
+			if (audio.isPlaying) {
+				audio.updateVolume();
 			}
 		}
 	}

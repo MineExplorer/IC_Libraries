@@ -58,39 +58,25 @@ var SoundManager;
         return sound;
     }
     SoundManager.getSound = getSound;
-    function getSoundDuration(soundName) {
-        var sound = SoundManager.soundData[soundName];
-        if (sound) {
-            if (!sound.duration) {
-                var mmr = new android.media.MediaMetadataRetriever();
-                mmr.setDataSource(sound.path);
-                var durationStr = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION);
-                var duration = parseInt(durationStr);
-                sound.duration = duration - duration % 50;
-                //Game.message(soundName+" - "+sound.duration);
-            }
-            return sound.duration;
-        }
-        return 0;
-    }
-    SoundManager.getSoundDuration = getSoundDuration;
     function playSound(soundName, volume, pitch) {
         if (volume === void 0) { volume = 1; }
         if (pitch === void 0) { pitch = 1; }
-        var sound = getSound(soundName);
-        if (!sound) {
-            Logger.Log("Cannot find sound: " + soundName, "ERROR");
-            return 0;
+        var sound;
+        if (typeof soundName == "string") {
+            sound = getSound(soundName);
+            if (!sound) {
+                Logger.Log("Cannot find sound: " + soundName, "ERROR");
+                return 0;
+            }
+        }
+        else {
+            sound = soundName;
         }
         if (SoundManager.playingStreams >= SoundManager.maxStreams)
             return 0;
-        var soundID = sound.id;
-        if (Array.isArray(soundID)) {
-            soundID = soundID[Math.floor(Math.random() * soundID.length)];
-        }
         volume *= SoundManager.soundVolume;
-        var streamID = SoundManager.soundPool.play(soundID, volume, volume, sound.looping ? 1 : 0, sound.looping ? -1 : 0, pitch);
-        Game.message(streamID + " - " + soundName + ", volume: " + volume);
+        var streamID = SoundManager.soundPool.play(sound.id, volume, volume, sound.looping ? 1 : 0, sound.looping ? -1 : 0, pitch);
+        Game.message(streamID + " - " + sound.name + ", volume: " + volume);
         return streamID;
     }
     SoundManager.playSound = playSound;
@@ -218,19 +204,19 @@ var SoundManager;
     SoundManager.release = release;
     function tick() {
         for (var i = 0; i < SoundManager.audioSources.length; i++) {
-            var sound = SoundManager.audioSources[i];
-            if (sound.remove || sound.sourceType == SourceType.TILEENTITY && sound.source.remove) {
-                sound.stop();
+            var audio = SoundManager.audioSources[i];
+            if (audio.remove || audio.sourceType == SourceType.TILEENTITY && audio.source.remove) {
+                audio.stop();
                 SoundManager.audioSources.splice(i, 1);
                 i--;
                 continue;
             }
-            if (!sound.isLooping && Debug.sysTime() - sound.startTime >= getSoundDuration(sound.soundName)) {
-                if (sound.nextSound) {
-                    sound.playNextSound();
+            if (!audio.sound.looping && Debug.sysTime() - audio.startTime >= audio.sound.getDuration()) {
+                if (audio.nextSound) {
+                    audio.playNextSound();
                 }
                 else {
-                    sound.stop();
+                    audio.stop();
                     SoundManager.audioSources.splice(i, 1);
                     i--;
                     continue;
@@ -238,15 +224,15 @@ var SoundManager;
             }
             // TODO:
             // check dimension
-            if (sound.sourceType == SourceType.ENTITY && Entity.isExist(sound.source)) {
-                sound.position = Entity.getPosition(sound.source);
+            if (audio.sourceType == SourceType.ENTITY && Entity.isExist(audio.source)) {
+                audio.position = Entity.getPosition(audio.source);
             }
-            if (!sound.isPlaying && sound.isLooping && SoundManager.playingStreams < SoundManager.maxStreams) {
-                //Game.message("Start play sound: "+sound.soundName);
-                sound.play();
+            if (!audio.isPlaying && audio.sound.looping && SoundManager.playingStreams < SoundManager.maxStreams) {
+                //Game.message("Start play audio: "+audio.soundName);
+                audio.play();
             }
-            if (sound.isPlaying) {
-                sound.updateVolume();
+            if (audio.isPlaying) {
+                audio.updateVolume();
             }
         }
     }
@@ -318,8 +304,7 @@ var AudioSource = /** @class */ (function () {
         }
         this.radius = radius;
         this.volume = volume;
-        var soundData = SoundManager.getSound(soundName);
-        this.isLooping = soundData.looping;
+        this.sound = SoundManager.getSound(soundName);
         this.startTime = Debug.sysTime();
         this.play();
     }
@@ -341,7 +326,6 @@ var AudioSource = /** @class */ (function () {
         this.stop();
         if (this.soundName) {
             this.soundName = this.nextSound;
-            this.isLooping = SoundManager.getSound(this.soundName).looping;
             this.nextSound = "";
             this.play();
         }
@@ -349,7 +333,7 @@ var AudioSource = /** @class */ (function () {
     AudioSource.prototype.play = function () {
         if (!this.isPlaying) {
             var pos = this.position;
-            this.streamID = SoundManager.playSoundAt(pos.x, pos.y, pos.z, this.soundName, this.volume, 1, this.radius);
+            this.streamID = SoundManager.playSoundAt(pos.x, pos.y, pos.z, this.sound, this.volume, 1, this.radius);
             if (this.streamID != 0) {
                 this.isPlaying = true;
                 SoundManager.playingStreams++;

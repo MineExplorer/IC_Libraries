@@ -1,6 +1,6 @@
 class Sound {
     id: number;
-    duration: number;
+    private duration: number;
 
     constructor(
         public name: string,
@@ -12,10 +12,10 @@ class Sound {
 
     getDuration(): number {
         if (!this.duration) {
-            let mmr = new android.media.MediaMetadataRetriever();
+            const mmr = new android.media.MediaMetadataRetriever();
             mmr.setDataSource(this.path);
-            let durationStr = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION);
-            let duration = parseInt(durationStr);
+            const durationStr = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION);
+            const duration = parseInt(durationStr);
             this.duration = duration - duration % 50;
             Game.message(this.name+" - "+this.duration);
         }
