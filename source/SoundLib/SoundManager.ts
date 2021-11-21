@@ -45,7 +45,7 @@ namespace SoundManager {
 	}
 
 	export function getSound(soundName: string): Sound {
-		let sound = soundData[soundName];
+		const sound = soundData[soundName];
 		if (Array.isArray(sound)) {
 			return sound[Math.floor(Math.random() * sound.length)];
 		}
@@ -65,22 +65,22 @@ namespace SoundManager {
 		}
 		if (playingStreams >= maxStreams) return 0;
 		volume *= soundVolume;
-		let streamID = soundPool.play(sound.id, volume, volume, sound.looping? 1 : 0, sound.looping? -1 : 0, pitch);
-		Game.message(streamID +" - "+ sound.name + ", volume: "+ volume);
+		const streamID = soundPool.play(sound.id, volume, volume, sound.looping? 1 : 0, sound.looping? -1 : 0, pitch);
+		if (Game.isDeveloperMode) Game.message(streamID +" - "+ sound.name + ", volume: "+ volume);
 		return streamID;
 	}
 
 	export function playSoundAt(x: number, y: number, z: number, soundName: string | Sound, volume: number = 1, pitch: number = 1, radius: number = 16): number {
-		let p = Player.getPosition();
-		let distance = Math.sqrt(Math.pow(x - p.x, 2) + Math.pow(y - p.y, 2) + Math.pow(z - p.z, 2));
+		const p = Player.getPosition();
+		const distance = Math.sqrt(Math.pow(x - p.x, 2) + Math.pow(y - p.y, 2) + Math.pow(z - p.z, 2));
 		if (distance >= radius) return 0;
 		volume *= 1 - distance / radius;
-		let streamID = playSound(soundName, volume, pitch);
+		const streamID = playSound(soundName, volume, pitch);
 		return streamID;
 	}
 
 	export function playSoundAtEntity(entity: number, soundName: string | Sound, volume?: number, pitch?: number, radius: number = 16): number {
-		let pos = Entity.getPosition(entity);
+		const pos = Entity.getPosition(entity);
 		return playSoundAt(pos.x, pos.y, pos.z, soundName, volume, pitch, radius)
 	}
 
@@ -103,14 +103,14 @@ namespace SoundManager {
 			Logger.Log("Cannot find sound: "+ soundName, "ERROR");
 			return null;
 		}*/
-		let audioSource = new AudioSource(sourceType, source, soundName, volume, radius);
+		const audioSource = new AudioSource(sourceType, source, soundName, volume, radius);
 		audioSources.push(audioSource);
 		return audioSource;
 	}
 
 	export function getSource(source: any, soundName?: string): AudioSource {
 		for (let i in audioSources) {
-			let audio = audioSources[i];
+			const audio = audioSources[i];
 			if (audio.source == source && (!soundName || audio.soundName == soundName))
 				return audio;
 		}
@@ -118,9 +118,9 @@ namespace SoundManager {
 	}
 
 	export function getAllSources(source: any, soundName?: string): AudioSource[] {
-		let sources = [];
+		const sources = [];
 		for (let i in audioSources) {
-			let audio = audioSources[i];
+			const audio = audioSources[i];
 			if (audio.source == source && (!soundName || audio.soundName == soundName))
 				sources.push(audio);
 		}
@@ -132,7 +132,7 @@ namespace SoundManager {
 	}
 
 	export function startPlaySound(sourceType: SourceType, source: any, soundName: string, volume?: number, radius?: number): AudioSource {
-		let audioSource = getSource(source, soundName)
+		const audioSource = getSource(source, soundName)
 		if (audioSource) {
 			return audioSource;
 		}
@@ -141,7 +141,7 @@ namespace SoundManager {
 
 	export function stopPlaySound(source: any, soundName?: string): boolean {
 		for (let i in audioSources) {
-			let audio = audioSources[i];
+			const audio = audioSources[i];
 			if (audio.source == source && (!soundName || audio.soundName == soundName)) {
 				audio.remove = true;
 				return true;

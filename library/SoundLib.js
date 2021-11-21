@@ -76,7 +76,8 @@ var SoundManager;
             return 0;
         volume *= SoundManager.soundVolume;
         var streamID = SoundManager.soundPool.play(sound.id, volume, volume, sound.looping ? 1 : 0, sound.looping ? -1 : 0, pitch);
-        Game.message(streamID + " - " + sound.name + ", volume: " + volume);
+        if (Game.isDeveloperMode)
+            Game.message(streamID + " - " + sound.name + ", volume: " + volume);
         return streamID;
     }
     SoundManager.playSound = playSound;
