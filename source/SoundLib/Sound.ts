@@ -17,7 +17,7 @@ class Sound {
             const durationStr = mmr.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION);
             const duration = parseInt(durationStr);
             this.duration = duration - duration % 50;
-            Game.message(this.name+" - "+this.duration);
+            Logger.Log(`Sound ${this.name}: duration ${this.duration} ms`, "DEBUG");
         }
         return this.duration;
     }

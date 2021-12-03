@@ -233,6 +233,7 @@ namespace SoundManager {
 	/*Volume in the settings*/
 	let prevScreen: boolean = false;
 	Callback.addCallback("NativeGuiChanged", function (screenName: string) {
+		// TODO: check audio settings screen
 		let currentScreen: boolean = screenName.includes("controls_and_settings");
 		if(prevScreen && !currentScreen){
 			readSettings();
