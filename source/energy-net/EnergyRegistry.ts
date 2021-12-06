@@ -10,8 +10,8 @@ namespace EnergyRegistry {
 	export let wireData: {[key: number]: WireData} = {};
 
 	/**
-	 * name - name of this energy type,
-	 * value - value of one unit in [Eu] (IC2 Energy)
+	 * @param name - name of this energy type
+     * @param value - value of one unit in [Eu] (IC2 Energy)
 	*/
 	export function createEnergyType(name: string, value: number): EnergyType {
 		if (energyTypes[name]) {

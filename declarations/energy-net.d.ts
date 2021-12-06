@@ -13,8 +13,8 @@ declare namespace EnergyTypeRegistry {
         [key: number]: WireData;
     };
     /**
-     * name - name of this energy type,
-     * value - value of one unit in [Eu] (IC2 Energy)
+     * @param name - name of this energy type
+     * @param value - value of one unit in [Eu] (IC2 Energy)
     */
     function createEnergyType(name: string, value: number): EnergyType;
     function assureEnergyType(name: string, value: number): EnergyType;
@@ -39,7 +39,6 @@ declare class EnergyPacket {
     validateNode(nodeId: number): boolean;
     setNodePassed(nodeId: number): void;
 }
-declare let GLOBAL_NODE_ID: number;
 declare class EnergyNode {
     id: number;
     baseEnergy: string;
