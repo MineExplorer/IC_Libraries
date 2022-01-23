@@ -1,25 +1,26 @@
 LIBRARY({
 	name: "VanillaRecipe",
-	version: 4,
+	version: 5,
 	shared: true,
 	api: "CoreEngine"
 });
 
-const IS_OLD = getMCPEVersion().main === 28;
-const MOD_PREFIX = "mod_";
-const BEHAVIOR_NAME = "VanillaRecipe";
-
 namespace VanillaRecipe {
+	const IS_OLD = getMCPEVersion().main === 28;
+	const MOD_PREFIX = "mod_";
+	const BEHAVIOR_NAME = "VanillaRecipe";
+
+	type ItemObj = {item: string, data?: number, count?: number};
 	type RecipeFormat = {
 		type?: string,
 		tags?: string[],
 		priority?: number,
 		pattern?: string[],
 		key?: {
-			[key: string]: {item: string, data?: number, count?: number}
+			[key: string]: ItemObj
 		},
-		ingredients?: {item: string, data?: number, count?: number}[],
-		result: {item: string, data?: number, count?: number} | {item: string, data?: number, count?: number}[];
+		ingredients?: ItemObj[],
+		result: ItemObj | ItemObj[];
 	}
 
 	let resource_path: string;
@@ -30,7 +31,7 @@ namespace VanillaRecipe {
 	export function setResourcePath(path: string): void {
 		if (!IS_OLD) return;
 		const resPath = path + "/definitions/recipe/";
-		if (!resource_path) resource_path = resPath;
+		resource_path ??= resPath;
 		FileTools.mkdir(resPath);
 		resetRecipes(resPath);
 	}
@@ -58,9 +59,9 @@ namespace VanillaRecipe {
 	}
 
 	export function resetRecipes(path: string): void {
-		let files = FileTools.GetListOfFiles(path, "json");
+		const files = FileTools.GetListOfFiles(path, "json");
 		for (let i in files) {
-			let file = files[i];
+			const file = files[i];
 			if (file.getName().startsWith(MOD_PREFIX)) {
 				file.delete();
 			}
@@ -68,11 +69,11 @@ namespace VanillaRecipe {
 	}
 
 	function recursiveDelete(file: java.io.File): void {
-        if (!file.exists())
+        if (!file.exists()) {
             return;
-
+		}
         if (file.isDirectory()) {
-			let files = file.listFiles();
+			const files = file.listFiles();
             for (let i in files) {
                 recursiveDelete(files[i]);
             }
@@ -113,7 +114,7 @@ namespace VanillaRecipe {
 	}
 
 	export function getNumericID(stringID: string): number {
-		let stringArray = stringID.split(":");
+		const stringArray = stringID.split(":");
 		if (stringArray.length == 1 || stringArray[0] == "minecraft") {
 			stringID = stringArray[stringArray.length - 1];
 			return VanillaBlockID[stringID] || VanillaItemID[stringID];
@@ -123,12 +124,12 @@ namespace VanillaRecipe {
 		return 0;
 	}
 
-	const nativeConvertNameID = ModAPI.requireGlobal("requireMethodFromNativeAPI('api.NativeAPI', 'convertNameId')");
+	const nativeConvertNameID: Function = ModAPI.requireGlobal("requireMethodFromNativeAPI('api.NativeAPI', 'convertNameId')");
 
 	let __isValid__ = true;
 	export function convertToVanillaID(stringID: string): string {
 		if (!getNumericID(stringID)) {
-			Logger.Log("ID " + stringID + " is invalid", "ERROR");
+			Logger.Log(`ID ${stringID} is invalid`, "ERROR");
 			__isValid__ = false;
 			return null;
 		}
@@ -138,7 +139,7 @@ namespace VanillaRecipe {
 	}
 
 	function generateBlankFile(recipeName: string): void {
-		let path = __packdir__ + "assets/definitions/recipe/" + getFileName(recipeName);
+		const path = __packdir__ + "assets/definitions/recipe/" + getFileName(recipeName);
 		FileTools.WriteText(path, '{"type": "crafting_shaped", "tags": []}');
 	}
 
@@ -147,29 +148,32 @@ namespace VanillaRecipe {
 		FileTools.WriteJSON(getFilePath(name), obj, true);
 	}
 
+	function parseItem(jsonItem: ItemObj): {id: number, data: number} {
+		return {id: getNumericID(jsonItem.item), data: jsonItem.data ?? -1}
+	}
+
 	export function addWorkbenchRecipeFromJSON(obj: RecipeFormat): void {
 		if (Array.isArray(obj.result)) {
 			Logger.Log("Recipes with multiple output are not supported in the modded workbench", "ERROR");
 			return;
 		}
-		var result = {
+		const result = {
 			id: getNumericID(obj.result.item),
 			count: obj.result.count || 1,
 			data: obj.result.data || 0
 		}
+		const ingredients = [];
 		if (obj.key) {
-			var ingredients = [];
 			for (let key in obj.key) {
 				ingredients.push(key);
-				let item = obj.key[key];
-				ingredients.push(getNumericID(item.item), item.data || -1);
+				const item = parseItem(obj.key[key]);
+				ingredients.push(item.id, item.data);
 			}
 			Recipes.addShaped(result, obj.pattern, ingredients)
 		}
 		else {
-			var ingredients = [];
-			obj.ingredients.forEach(function(item) {
-				ingredients.push({id: getNumericID(item.item), data: item.data || 0});
+			obj.ingredients.forEach(item => {
+				ingredients.push(parseItem(item))
 			});
 			Recipes.addShapeless(result, ingredients);
 		}
@@ -183,16 +187,16 @@ namespace VanillaRecipe {
 
 		const type = obj.type;
 		obj.type = "crafting_" + obj.type;
-		if (!obj.tags) obj.tags = [ "crafting_table" ];
+		obj.tags ??= [ "crafting_table" ];
 
 		__isValid__ = true;
-		let items = obj.key || obj.ingredients;
+		const items = obj.key || obj.ingredients;
 		for (let i in items) {
 			items[i].item = convertToVanillaID(items[i].item);
 		}
 		if (Array.isArray(obj.result)) {
 			for (let i in obj.result) {
-				let itemStack = obj.result[i];
+				const itemStack = obj.result[i];
 				itemStack.item = convertToVanillaID(itemStack.item);
 			}
 		}
@@ -232,9 +236,9 @@ namespace VanillaRecipe {
 	}
 
 	export function deleteRecipe(name: string): void {
-		let recipe = recipes[name];
+		const recipe = recipes[name];
 		if (recipe) {
-			let path = getFilePath(name);
+			const path = getFilePath(name);
 			new java.io.File(path).delete();
 			recipes[name] = false;
 		}

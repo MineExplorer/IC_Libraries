@@ -12,7 +12,7 @@
 	"exclude": [],
 	"include": [
 		"./library/**/*"
-, "declarations/TileRender.d.ts"	],
+	],
 	"files": [
 		"declarations/core-engine.d.ts"
 	]
