@@ -15,6 +15,7 @@
 		"SoundManager.ts",
 		"Sound.ts",
 		"AudioSource.ts",
+		"AudioSourceClient.ts",
 		"export.ts",
 	],
 	"files": [

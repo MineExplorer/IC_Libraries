@@ -1,45 +1,4 @@
-/// <reference path="AudioSourceNetworkType.ts" />
-
-enum SourceType {
-    ENTITY,
-    TILEENTITY
-}
-
-class AudioSource {
-    sound: Sound;
-    soundName: string;
-    nextSound: string = "";
-    sourceType: SourceType;
-    source: any;
-    position: Vector;
-    radius: number;
-    dimension: number;
-    streamID: number = 0;
-    volume: number;
-    isPlaying: boolean = false;
-    startTime: number = 0;
-    remove: boolean = false;
-    networkEntity: NetworkEntity
-
-    constructor(sourceType: SourceType, source: any, soundName: string, volume: number = 1, radius: number = 16) {
-        this.soundName = soundName;
-        this.source = source;
-        this.sourceType = sourceType;
-        if (sourceType === SourceType.ENTITY) {
-            this.position = Entity.getPosition(source);
-            this.dimension = Entity.getDimension(source);
-        }
-        else if (sourceType === SourceType.TILEENTITY) {
-            this.position = {x: source.x + .5, y: source.y + .5, z: source.z + .5};
-            this.dimension = source.dimension;
-        }
-        this.radius = radius;
-        this.volume = volume;
-        this.sound = SoundManager.getSound(soundName);
-        this.startTime = Debug.sysTime();
-        this.play();
-    }
-
+class AudioSourceClient extends AudioSource {
     setPosition(x: number, y: number, z: number) {
         this.position.x = x;
         this.position.y = y;
@@ -106,11 +65,3 @@ class AudioSource {
 		SoundManager.setVolume(this.streamID, volume * SoundManager.soundVolume);
     }
 }
-
-Network.addClientPacket("WorldRegion.play_sound", function(data: {x: number, y: number, z: number, name: string, volume: number, pitch: number}) {
-	World.playSound(data.x, data.y, data.z, data.name, data.volume, data.pitch);
-});
-
-Network.addClientPacket("WorldRegion.play_sound_at", function(data: {ent: number, name: string, volume: number, pitch: number}) {
-	World.playSoundAtEntity(data.ent, data.name, data.volume, data.pitch);
-});
