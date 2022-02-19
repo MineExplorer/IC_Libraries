@@ -13,7 +13,7 @@ By using the library you automatically agree to these rules.
 
 LIBRARY({
 	name: "ToolLib",
-	version: 23,
+	version: 24,
 	shared: true,
 	api: "CoreEngine"
 });
@@ -25,6 +25,7 @@ LIBRARY({
 
 let ToolType = {
 	sword: {
+		__flag: "__sword",
 		isWeapon: true,
 		enchantType: Native.EnchantType.weapon,
 		damage: 4,
@@ -41,6 +42,7 @@ let ToolType = {
 	},
 
 	shovel: {
+		__flag: "__shovel",
 		enchantType: Native.EnchantType.shovel,
 		damage: 2,
 		blockTypes: ["dirt"],
@@ -55,12 +57,14 @@ let ToolType = {
 	},
 
 	pickaxe: {
+		__flag: "__pickaxe",
 		enchantType: Native.EnchantType.pickaxe,
 		damage: 2,
 		blockTypes: ["stone"],
 	},
 
 	axe: {
+		__flag: "__axe",
 		enchantType: Native.EnchantType.axe,
 		damage: 3,
 		blockTypes: ["wood"],
@@ -84,6 +88,7 @@ let ToolType = {
 	},
 
 	hoe: {
+		__flag: "__hoe",
 		useItem: function(coords, item, block, player) {
 			if ((block.id == 2 || block.id == 3) && coords.side == 1) {
 				let region = BlockSource.getDefaultForActor(player);
