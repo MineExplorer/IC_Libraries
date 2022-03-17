@@ -23,7 +23,7 @@ LIBRARY({
 * ToolType.*name* = {...}
 */
 
-const ToolType = {
+let ToolType = {
 	sword: {
 		__flag: "__sword",
 		isWeapon: true,
@@ -134,9 +134,9 @@ function randomInt(min, max) {
 
 // data for ToolLib.getBlockDrop
 // drop from some plants are not added
-const noDropBlocks = [26, 30, 31, 32, 51, 59, 92, 99, 100, 104, 105, 106, 115, 127, 132, 141, 142, 144, 161, 175, 199, 244, 385, 386, 388, 389, 390, 391, 392, 462];
+let noDropBlocks = [26, 30, 31, 32, 51, 59, 92, 99, 100, 104, 105, 106, 115, 127, 132, 141, 142, 144, 161, 175, 199, 244, 385, 386, 388, 389, 390, 391, 392, 462];
 
-const ToolLib = {
+let ToolLib = {
 	setTool: function(id, toolMaterial, toolType, brokenId) {
 		Item.setToolRender(id, true);
 		if (typeof toolMaterial == "string") {
@@ -280,7 +280,7 @@ const ToolLib = {
 ToolAPI.setTool = ToolLib.setTool;
 ToolAPI.breakCarriedTool = ToolLib.breakCarriedTool;
 
-const MiningLevel = {
+let MiningLevel = {
 	STONE: 1,
 	IRON: 2,
 	DIAMOND: 3,
