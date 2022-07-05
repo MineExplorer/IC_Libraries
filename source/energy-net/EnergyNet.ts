@@ -14,20 +14,20 @@ namespace EnergyNet {
 	}
 
 	export function removeEnergyNode(node: EnergyNode): void {
-		let nodes = getNodesByDimension(node.dimension);
-		let index = nodes.indexOf(node);
+		const nodes = getNodesByDimension(node.dimension);
+		const index = nodes.indexOf(node);
 		if (index != -1) {
 			nodes.splice(index, 1);
 		}
 	}
 
 	export function getNodeOnCoords(region: BlockSource, x: number, y: number, z: number): EnergyNode {
-		let tileEntity = TileEntity.getTileEntity(x, y, z, region);
+		const tileEntity = TileEntity.getTileEntity(x, y, z, region);
 		if (tileEntity && tileEntity.__initialized && tileEntity.energyNode) {
 			return tileEntity.energyNode;
 		}
-		let nodes = getNodesByDimension(region.getDimension());
-		let coordKey = x+":"+y+":"+z;
+		const nodes = getNodesByDimension(region.getDimension());
+		const coordKey = `${x}:${y}:${z}`;
 		for (let node of nodes) {
 			if (node.blocksMap[coordKey]) return node;
 		}

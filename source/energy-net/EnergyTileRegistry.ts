@@ -20,7 +20,7 @@ namespace EnergyTileRegistry {
 
 	// same as addEnergyType, but works on already created prototypes, accessing them by id
 	export function addEnergyTypeForId(id: number, energyType: EnergyType): void {
-		let Prototype = TileEntity.getPrototype(id);
+		const Prototype = TileEntity.getPrototype(id);
 		if (Prototype) {
 			addEnergyType(Prototype as EnergyTile, energyType);
 		}
@@ -54,7 +54,7 @@ namespace EnergyTileRegistry {
 	}
 
 	/* machine is tile entity, that uses energy */
-	export let machineIDs = {};
+	export const machineIDs = {};
 
 	export function isMachine(id: number): boolean {
 		return !!machineIDs[id];
@@ -65,9 +65,12 @@ Callback.addCallback("TileEntityAdded", function(tileEntity: TileEntity) {
     if (tileEntity.isEnergyTile) {
 		let node: EnergyNode;
 		for (let name in tileEntity.energyTypes) {
-			let type = tileEntity.energyTypes[name];
-			if (!node) node = new EnergyTileNode(type, tileEntity as EnergyTile);
-			else node.addEnergyType(type);
+			const type = tileEntity.energyTypes[name];
+			if (!node) {
+				node = new EnergyTileNode(type, tileEntity as EnergyTile);
+			} else {
+				node.addEnergyType(type);
+			}
 		}
 		tileEntity.energyNode = node;
 		EnergyNet.addEnergyNode(node);

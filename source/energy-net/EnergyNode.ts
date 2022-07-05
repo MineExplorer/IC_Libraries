@@ -44,7 +44,7 @@ class EnergyNode {
 	}
 
 	private removeEntry(node: EnergyNode): void {
-		let index = this.entries.indexOf(node);
+		const index = this.entries.indexOf(node);
 		if (index != -1) {
 			this.entries.splice(index, 1);
 		}
@@ -67,7 +67,7 @@ class EnergyNode {
 	 * @returns true if link to the node was removed, false if it's already removed
 	 */
 	private removeReceiver(node: EnergyNode): boolean {
-		let index = this.receivers.indexOf(node);
+		const index = this.receivers.indexOf(node);
 		if (index != -1) {
 			this.receivers.splice(index, 1);
 			return true;
@@ -107,7 +107,7 @@ class EnergyNode {
 	}
 
 	receiveEnergy(amount: number, packet: EnergyPacket): number {
-		let energyIn = this.transferEnergy(amount, packet);
+		const energyIn = this.transferEnergy(amount, packet);
         if (energyIn > 0) {
         	this.currentPower = Math.max(this.currentPower, packet.size);
         	this.currentIn += energyIn;
@@ -117,32 +117,36 @@ class EnergyNode {
 
 	add(amount: number, power?: number): number {
 		if (amount == 0) return 0;
-		let add = this.addPacket(this.baseEnergy, amount, power);
+		const add = this.addPacket(this.baseEnergy, amount, power);
 		return amount - add;
 	}
 
 	addPacket(energyName: string, amount: number, size: number = amount): number {
-		let packet = new EnergyPacket(energyName, size, this);
+		const packet = new EnergyPacket(energyName, size, this);
 		return this.transferEnergy(amount, packet);
 	}
 
 	transferEnergy(amount: number, packet: EnergyPacket): number {
 		if (this.receivers.length == 0) return 0;
 
-		let receivedAmount = amount;
+		let leftAmount = amount;
 		if (packet.size > this.maxValue) {
-			amount = Math.min(amount, packet.size);
+			leftAmount = Math.min(leftAmount, packet.size);
 			this.onOverload(packet.size);
 		}
 
-		let currentNodeList = {...packet.nodeList};
-		let receiversCount = this.receivers.length;
+		const currentNodeList = {...packet.nodeList};
+		const receiversCount = this.receivers.length;
 		let k = 0;
 		for (let i = 0; i < this.receivers.length; i++) {
-			if (amount <= 0) break;
-			let node = this.receivers[i];
+			if (leftAmount <= 0) break;
+			const node = this.receivers[i];
 			if (packet.validateNode(node.id)) {
-				amount -= node.receiveEnergy(Math.ceil(amount / (receiversCount - k)), packet);
+				let receiveAmount = leftAmount;
+				if (receiveAmount > 1 && receiversCount - k > 1) {
+					receiveAmount = Math.ceil(receiveAmount / (receiversCount - k))
+				}
+				leftAmount -= node.receiveEnergy(receiveAmount, packet);
 				if (node.removed) i--;
 			}
 			k++;
@@ -150,13 +154,13 @@ class EnergyNode {
 
 		packet.nodeList = currentNodeList;
 		for (let node of this.receivers) {
-			if (amount <= 0) break;
+			if (leftAmount <= 0) break;
 			if (packet.validateNode(node.id)) {
-				amount -= node.receiveEnergy(amount, packet);
+				leftAmount -= node.receiveEnergy(leftAmount, packet);
 			}
 		}
 
-		let energyOut = receivedAmount - amount;
+		const energyOut = amount - leftAmount;
         if (energyOut > 0) {
             this.currentPower = Math.max(this.currentPower, packet.size);
             this.currentOut += energyOut;

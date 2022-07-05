@@ -6,8 +6,8 @@ namespace EnergyRegistry {
 		class: typeof EnergyGrid;
 	}
 
-	export let energyTypes: {[key: number]: EnergyType} = {};
-	export let wireData: {[key: number]: WireData} = {};
+	export const energyTypes: {[key: number]: EnergyType} = {};
+	export const wireData: {[key: number]: WireData} = {};
 
 	/**
 	 * @param name - name of this energy type
@@ -40,8 +40,8 @@ namespace EnergyRegistry {
 	}
 
 	export function getValueRatio(name1: string, name2: string): number {
-		let type1 = getEnergyType(name1);
-		let type2 = getEnergyType(name2);
+		const type1 = getEnergyType(name1);
+		const type2 = getEnergyType(name2);
 
 		if (type1 && type2) {
 			return type1.value / type2.value;
@@ -65,7 +65,7 @@ namespace EnergyRegistry {
 	}
 
 	export function isWire(blockID: number, type?: string): boolean {
-		let wireData = getWireData(blockID);
+		const wireData = getWireData(blockID);
 		if (wireData) {
 			if (!type || wireData.type.name == type) return true;
 		}

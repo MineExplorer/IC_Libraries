@@ -36,8 +36,8 @@ extends EnergyNode {
 		this.destroy();
 		for (let key in this.blocksMap) {
 			if (!this.blocksMap[key]) {
-				let keyArr = key.split(":");
-				let x = parseInt(keyArr[0]), y = parseInt(keyArr[1]), z = parseInt(keyArr[2]);
+				const keyArr = key.split(":");
+				const x = parseInt(keyArr[0]), y = parseInt(keyArr[1]), z = parseInt(keyArr[2]);
 				EnergyGridBuilder.onWireDestroyed(this.region, x, y, z, this.blockID);
 			}
 		}
@@ -46,12 +46,12 @@ extends EnergyNode {
 	rebuildRecursive(x: number, y: number, z: number, side?: number) {
 		if (this.removed) return;
 
-		let coordKey = x+":"+y+":"+z;
+		const coordKey = `${x}:${y}:${z}`;
 		if (this.blocksMap[coordKey]) {
 			return;
 		}
 
-		let node = EnergyNet.getNodeOnCoords(this.region, x, y, z);
+		const node = EnergyNet.getNodeOnCoords(this.region, x, y, z);
 		if (node && !this.isCompatible(node)) return;
 		if (node instanceof EnergyTileNode) {
 			if (node.canReceiveEnergy(side, this.baseEnergy)) {
@@ -61,7 +61,7 @@ extends EnergyNode {
 				node.addConnection(this);
 			}
 		} else {
-			let blockID = this.region.getBlockId(x, y, z);
+			const blockID = this.region.getBlockId(x, y, z);
 			if (this.blockID == blockID) {
 				if (node) {
 					this.mergeGrid(node);
@@ -80,9 +80,9 @@ extends EnergyNode {
 	}
 
 	rebuildFor6Sides(x: number, y: number, z: number): void {
-		let coord1 = {x: x, y: y, z: z};
+		const coord1 = {x: x, y: y, z: z};
 		for (let side = 0; side < 6; side++) {
-			let coord2 = World.getRelativeCoords(x, y, z, side);
+			const coord2 = World.getRelativeCoords(x, y, z, side);
 			if (this.canConductEnergy(coord1, coord2, side)) {
 				this.rebuildRecursive(coord2.x, coord2.y, coord2.z, side ^ 1);
 			}

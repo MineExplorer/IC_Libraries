@@ -11,8 +11,8 @@ class EnergyType {
 		EnergyRegistry.registerWire(id, this, maxValue, energyGridClass);
 
 		Block.registerPlaceFunction(id, function(coords, item, block, player) {
-			let region = BlockSource.getDefaultForActor(player);
-			let place = coords.relative;
+			const region = BlockSource.getDefaultForActor(player);
+			const place = coords.relative;
 			if (region.getBlockId(place.x, place.y, place.z) == 0) {
 				region.setBlock(place.x, place.y, place.z, item.id, item.data);
 				if (Game.isItemSpendingAllowed(player)) {
