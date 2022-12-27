@@ -11,7 +11,8 @@
 	},
 	"exclude": [],
 	"include": [
-		"./library/**/*"
+		"./build/**/*.d.ts",
+		"./releases/**/*.d.ts"
 	],
 	"files": [
 		"declarations/core-engine.d.ts"

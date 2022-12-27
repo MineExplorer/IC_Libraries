@@ -47,6 +47,4 @@ Temporary Items
 .apdisk
 
 # Project files
-core-engine.d.ts
-android.d.ts
-android-declarations.d.ts
+build/

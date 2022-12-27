@@ -2,13 +2,13 @@
 	"compilerOptions": {
 		"target": "ES5",
 		"lib": ["ESNext"],
-		"outFile": "../../library/energy-net.js",
+		"outFile": "../../build/Energy-Net/energy-net.js",
 		"allowJs": true,
 		"checkJs": false,
 		"downlevelIteration": false,
 		"strict": false,
 		"skipLibCheck": true,
-		"declaration": false
+		"declaration": true
 	},
 	"exclude": [],
 	"include": [

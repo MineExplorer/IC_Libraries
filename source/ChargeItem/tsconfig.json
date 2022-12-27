@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"target": "ES5",
 		"lib": ["ESNext"],
-		"outFile": "../../library/ChargeItem.js",
+		"outFile": "../../build/ChargeItem/ChargeItem.js",
 		"allowJs": false,
 		"downlevelIteration": true,
 		"strict": false,

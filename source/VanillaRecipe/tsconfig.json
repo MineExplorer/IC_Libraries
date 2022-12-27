@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"target": "ES5",
 		"lib": ["ESNext"],
-		"outFile": "../../library/VanillaRecipe.js",
+		"outFile": "../../build/VanillaRecipe/VanillaRecipe.js",
 		"allowJs": false,
 		"downlevelIteration": true,
 		"strict": false,
