@@ -39,7 +39,7 @@ namespace ChargeItemRegistry {
 				transferLimit: transferLimit,
 			}
 		} else {
-			let itemData = energyType;
+			const itemData = energyType;
 			chargeData[id] = itemData;
 			inCreative = capacity;
 			capacity = itemData.maxCharge;
@@ -61,22 +61,23 @@ namespace ChargeItemRegistry {
 	}
 
 	/** @deprecated Use registerItem instead */
-	export function registerExtraItem(id: number, energyType: string, capacity: number, transferLimit: number, tier: number, itemType?: string, addScale?: boolean, addToCreative?: boolean): void {
+	export function registerExtraItem(id: number, energyType: string, capacity: number, transferLimit: number,
+		tier: number, itemType?: string, addScale?: boolean, addToCreative?: boolean): void {
 		registerItem(id, energyType, capacity, transferLimit, tier, itemType? true : false, !addToCreative);
 	}
 
-	export function addToCreative(id: number, energy: number) {
-		let data = getItemData(id);
+	export function addToCreative(id: number, energy: number): void {
+		const data = getItemData(id);
 		if (data) {
 			Item.addToCreative(id, 1, getDisplayData(energy, data.maxCharge), new ItemExtraData().putInt("energy", energy));
 		}
 	}
 
-	export function registerChargeFunction(id: number, func: IElectricItem["onCharge"]) {
+	export function registerChargeFunction(id: number, func: IElectricItem["onCharge"]): void {
 		chargeData[id].onCharge = func;
 	}
 
-	export function registerDischargeFunction(id: number, func: IElectricItem["onDischarge"]) {
+	export function registerDischargeFunction(id: number, func: IElectricItem["onDischarge"]): void {
 		chargeData[id].onDischarge = func;
 	}
 
@@ -85,34 +86,34 @@ namespace ChargeItemRegistry {
 	}
 
 	export function isFlashStorage(id: number): boolean {
-		let data = getItemData(id);
+		const data = getItemData(id);
 		return (data && !!data.amount);
 	}
 
 	export function isValidItem(id: number, energyType: string, tier: number): boolean {
-		let data = getItemData(id);
+		const data = getItemData(id);
 		return (data && !data.amount && data.energy == energyType && data.tier <= tier);
 	}
 
 	export function isValidStorage(id: number, energyType: string, tier: number): boolean {
-		let data = getItemData(id);
+		const data = getItemData(id);
 		return (data && data.canProvideEnergy && data.energy == energyType && data.tier <= tier);
 	}
 
 	export function getMaxCharge(id: number, energyType?: string): number {
-		let data = getItemData(id);
+		const data = getItemData(id);
 		if (!data || energyType && data.energy != energyType) {
 			return 0;
 		}
 		return data.maxCharge;
 	}
 
-	export function getDisplayData(energy: number, maxCharge: number) {
+	export function getDisplayData(energy: number, maxCharge: number): number {
 		return Math.round((maxCharge - energy) / maxCharge * 26 + 1);
 	}
 
 	export function getEnergyStored(item: ItemInstance, energyType?: string): number {
-		let data = getItemData(item.id);
+		const data = getItemData(item.id);
 		if (!data || energyType && data.energy != energyType) {
 			return 0;
 		}
@@ -130,7 +131,7 @@ namespace ChargeItemRegistry {
 	}
 
 	export function setEnergyStored(item: ItemInstance, amount: number): void {
-		let data = getItemData(item.id);
+		const data = getItemData(item.id);
 		if (!data) return;
 
 		if (!item.extra) item.extra = new ItemExtraData();
@@ -139,7 +140,7 @@ namespace ChargeItemRegistry {
 	}
 
 	export function getEnergyFrom(item: ItemInstance, energyType: string, amount: number, tier: number, getAll?: boolean): number {
-		let data = getItemData(item.id);
+		const data = getItemData(item.id);
 		if (!data || data.energy != energyType || data.tier > tier || !data.canProvideEnergy) {
 			return 0;
 		}
@@ -163,20 +164,20 @@ namespace ChargeItemRegistry {
 			amount = Math.min(amount, data.transferLimit);
 		}
 
-		let energyStored = getEnergyStored(item);
-		let energyGot = Math.min(amount, energyStored);
+		const energyStored = getEnergyStored(item);
+		const energyGot = Math.min(amount, energyStored);
 		setEnergyStored(item, energyStored - energyGot);
 		return energyGot;
 	}
 
 	export function getEnergyFromSlot(slot: any, energyType: string, amount: number, tier: number, getAll?: boolean): number {
-		let energyGot = getEnergyFrom(slot, energyType, amount, tier, getAll);
+		const energyGot = getEnergyFrom(slot, energyType, amount, tier, getAll);
 		slot.setSlot(slot.id, slot.count, slot.data, slot.extra);
 		return energyGot;
 	}
 
 	export function addEnergyTo(item: ItemInstance, energyType: string, amount: number, tier: number, addAll?: boolean): number {
-		let data = getItemData(item.id);
+		const data = getItemData(item.id);
 		if (!data || !isValidItem(item.id, energyType, tier)) {
 			return 0;
 		}
@@ -189,20 +190,20 @@ namespace ChargeItemRegistry {
 			amount = Math.min(amount, data.transferLimit);
 		}
 
-		let energyStored = getEnergyStored(item);
-		let energyAdd = Math.min(amount, data.maxCharge - energyStored);
+		const energyStored = getEnergyStored(item);
+		const energyAdd = Math.min(amount, data.maxCharge - energyStored);
 		setEnergyStored(item, energyStored + energyAdd);
 		return energyAdd;
 	}
 
 	export function addEnergyToSlot(slot: any, energyType: string, amount: number, tier: number, addAll?: boolean): number {
-		let energyAdd = addEnergyTo(slot, energyType, amount, tier, addAll);
+		const energyAdd = addEnergyTo(slot, energyType, amount, tier, addAll);
 		slot.setSlot(slot.id, slot.count, slot.data, slot.extra);
 		return energyAdd;
 	}
 
 	export function transferEnergy(api: any, field: any, result: ItemInstance): void {
-		let data = getItemData(result.id);
+		const data = getItemData(result.id);
 		let amount = 0;
 		for (let i in field) {
 			if (!isFlashStorage(field[i].id)) {
