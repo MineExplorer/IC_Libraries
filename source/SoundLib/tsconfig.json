@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"target": "ES5",
 		"lib": ["ESNext"],
-		"outFile": "../../library/SoundLib.js",
+		"outFile": "../../releases/SoundLib/SoundLib.js",
 		"allowJs": false,
 		"downlevelIteration": true,
 		"strict": false,
@@ -19,6 +19,6 @@
 		"export.ts",
 	],
 	"files": [
-		"../../global.d.ts"
+		"../../declarations/core-engine.d.ts"
 	]
 }
