@@ -2,20 +2,20 @@
 	"compilerOptions": {
 		"target": "ES5",
 		"lib": ["ESNext"],
-		"outFile": "../../library/CustomChest.js",
+		"outFile": "../../build/CustomChest/CustomChest.js",
 		"allowJs": true,
 		"downlevelIteration": true,
 		"strict": false,
 		"skipLibCheck": true,
-		"declaration": false
+		"declaration": true
 	},
 	"exclude": [],
 	"include": [
-		"../../declarations/core-engine.d.ts"
-	],
-	"files": [
 		"ChestAPi.js",
 		"ChestTileEntity.js",
 		"export.js"
+	],
+	"files": [
+		"../../declarations/core-engine.d.ts"
 	]
 }

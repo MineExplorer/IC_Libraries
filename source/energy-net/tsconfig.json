@@ -2,24 +2,30 @@
 	"compilerOptions": {
 		"target": "ES5",
 		"lib": ["ESNext"],
-		"outFile": "../../library/energy-net.js",
+		"outFile": "../../build/Energy-Net/energy-net.js",
 		"allowJs": true,
 		"checkJs": false,
-		"downlevelIteration": true,
+		"downlevelIteration": false,
 		"strict": false,
 		"skipLibCheck": true,
 		"declaration": true
 	},
 	"exclude": [],
 	"include": [
-		"header.js",
-		"EnergyRegistry.js",
-		"EnergyType.js",
-		"TileEntityRegistry.js",
-		"EnergyNetBuilder.js",
-		"EnergyNet.js"
+		"header.ts",
+		"EnergyRegistry.ts",
+		"EnergyType.ts",
+		"EnergyPacket.ts",
+		"EnergyNode.ts",
+		"EnergyGrid.ts",
+		"EnergyTileNode.ts",
+		"EnergyTileRegistry.ts",
+		"EnergyGridBuilder.ts",
+		"EnergyGridBuilder.ts",
+		"EnergyNet.ts",
+		"export.ts"
 	],
 	"files": [
-		"../../global.d.ts"
+		"../../declarations/core-engine.d.ts"
 	]
 }

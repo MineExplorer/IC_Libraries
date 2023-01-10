@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"target": "ES5",
 		"lib": ["ESNext"],
-		"outFile": "../../library/vector.js",
+		"outFile": "../../build/Vector/vector.js",
 		"allowJs": false,
 		"downlevelIteration": true,
 		"strict": false,
@@ -14,6 +14,6 @@
 		"vector.ts"
 	],
 	"files": [
-		"../../global.d.ts"
+		"../../declarations/core-engine.d.ts"
 	]
 }

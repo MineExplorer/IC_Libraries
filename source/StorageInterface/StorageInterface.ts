@@ -7,6 +7,10 @@ namespace StorageInterface {
 
 	export var data: {[key: number]: StorageDescriptor} = {};
 
+	export function getData(id: number) {
+		return data[id];
+	}
+
 	export var directionsBySide = [
 		{x: 0, y: -1, z: 0}, // down
 		{x: 0, y: 1, z: 0}, // up
@@ -23,23 +27,27 @@ namespace StorageInterface {
 
 	export function setSlotMaxStackPolicy(container: ItemContainer, slotName: string, maxCount: number): void {
 		container.setSlotAddTransferPolicy(slotName, function(container, name, id, amount, data) {
-			return Math.max(0, Math.min(amount, maxCount - container.getSlot(name).count));
+			let maxStack = Math.min(maxCount, Item.getMaxStack(id));
+			return Math.max(0, Math.min(amount, maxStack - container.getSlot(name).count));
 		});
 	}
 
 	export function setSlotValidatePolicy(container: ItemContainer, slotName: string, func: (name: string, id: number, amount: number, data: number, extra: ItemExtraData, container: ItemContainer, playerUid: number) => boolean): void {
 		container.setSlotAddTransferPolicy(slotName, function(container, name, id, amount, data, extra, playerUid) {
+			amount = Math.min(amount, Item.getMaxStack(id) - container.getSlot(name).count);
 			return func(name, id, amount, data, extra, container, playerUid) ? amount : 0;
 		});
 	}
 
 	export function setGlobalValidatePolicy(container: ItemContainer, func: (name: string, id: number, amount: number, data: number, extra: ItemExtraData, container: ItemContainer, playerUid: number) => boolean): void {
 		container.setGlobalAddTransferPolicy(function(container, name, id, amount, data, extra, playerUid) {
+			amount = Math.min(amount, Item.getMaxStack(id) - container.getSlot(name).count);
 			return func(name, id, amount, data, extra, container, playerUid) ? amount : 0;
 		});
 	}
 
-	export function newStorage(storage: TileEntity | Container): Storage {
+	/** Creates new interface instance for TileEntity or Container */
+	export function getInterface(storage: TileEntity | Container): Storage {
 		if ("container" in storage) {
 			return new TileEntityInterface(storage);
 		}
@@ -49,30 +57,26 @@ namespace StorageInterface {
 		return new NativeContainerInterface(storage as any);
 	}
 
+	/** Registers interface for block container */
 	export function createInterface(id: number, descriptor: StorageDescriptor): void {
-		let tilePrototype = TileEntity.getPrototype(id);
-		if (tilePrototype) {
-			if (descriptor.slots) {
-				for (let name in descriptor.slots) {
-					if (name.includes('^')) {
-						let slotData = descriptor.slots[name];
-						let str = name.split('^');
-						let index = str[1].split('-');
-						for (let i = parseInt(index[0]); i <= parseInt(index[1]); i++) {
-							descriptor.slots[str[0] + i] = slotData;
-						}
-						delete descriptor.slots[name];
+		if (descriptor.slots) {
+			for (let name in descriptor.slots) {
+				if (name.includes('^')) {
+					let slotData = descriptor.slots[name];
+					let str = name.split('^');
+					let index = str[1].split('-');
+					for (let i = parseInt(index[0]); i <= parseInt(index[1]); i++) {
+						descriptor.slots[str[0] + i] = slotData;
 					}
+					delete descriptor.slots[name];
 				}
 			}
-			else {
-				descriptor.slots = {};
-			}
-
-			data[id] = descriptor;
-		} else {
-			Logger.Log("Failed to create storage interface: cannot find tile entity prototype for id "+id, "ERROR");
 		}
+		else {
+			descriptor.slots = {};
+		}
+
+		data[id] = descriptor;
 	}
 
 	/** Trasfers item to slot
@@ -82,16 +86,17 @@ namespace StorageInterface {
 	export function addItemToSlot(item: ItemInstance, slot: ItemInstance, count: number = 64): number {
 		if (slot.id == 0 || slot.id == item.id && slot.data == item.data) {
 			let maxStack = Item.getMaxStack(item.id);
-			let add = Math.min(maxStack - slot.count, item.count);
-			if (count > add) add = count;
+			let add = Math.min(item.count, maxStack - slot.count);
+			if (count < add) add = count;
 			if (add > 0) {
 				slot.id = item.id;
-				slot.count += add;
 				slot.data = item.data;
 				if (item.extra) slot.extra = item.extra;
+				slot.count += add;
 				item.count -= add;
 				if (item.count == 0) {
 					item.id = item.data = 0;
+					item.extra = null;
 				}
 				return add;
 			}
@@ -99,45 +104,51 @@ namespace StorageInterface {
 		return 0;
 	}
 
-	/** @returns Storage for container in the world */
+	/** Returns storage interface for container in the world */
 	export function getStorage(region: BlockSource, x: number, y: number, z: number): Nullable<Storage> {
 		let nativeTileEntity = region.getBlockEntity(x, y, z);
 		if (nativeTileEntity && nativeTileEntity.getSize() > 0) {
 			return new NativeContainerInterface(nativeTileEntity);
 		}
 		let tileEntity = World.getTileEntity(x, y, z, region);
-		if (tileEntity && tileEntity.container) {
+		if (tileEntity && tileEntity.container && tileEntity.__initialized) {
 			return new TileEntityInterface(tileEntity);
 		}
 		return null;
 	}
 
-	/** @returns Storage for TileEntity in the world if it has liquid storage */
+	/** Returns storage interface for TileEntity with liquid storage */
 	export function getLiquidStorage(region: BlockSource, x: number, y: number, z: number): Nullable<TileEntityInterface> {
 		let tileEntity = World.getTileEntity(x, y, z, region);
-		if (tileEntity && tileEntity.liquidStorage) {
+		if (tileEntity && tileEntity.__initialized) {
 			return new TileEntityInterface(tileEntity);
 		}
 		return null;
 	}
 
-	/** @returns Storage for neighbour container on specified side */
+	/** Returns storage interface for neighbour container on specified side */
 	export function getNeighbourStorage(region: BlockSource, coords: Vector, side: number): Nullable<Storage> {
 		let dir = getRelativeCoords(coords, side);
 		return getStorage(region, dir.x, dir.y, dir.z);
 	}
 
-	/** @returns Storage for neighbour TileEntity on specified side if it has liquid storage */
+	/** Returns storage interface for neighbour TileEntity with liquid storage on specified side */
 	export function getNeighbourLiquidStorage(region: BlockSource, coords: Vector, side: number): Nullable<TileEntityInterface> {
 		let dir = getRelativeCoords(coords, side);
 		return getLiquidStorage(region, dir.x, dir.y, dir.z);
 	}
 
 	/**
-	 * @returns object containing neigbour containers where keys are block side numbers
-	 * @side side to get container, use -1 to get from all sides
+	 * Returns object containing neigbour containers where keys are block side numbers
+	 * @coords position from which check neighbour blocks
 	*/
-	export function getNearestContainers(coords: Vector, side: number, region: BlockSource): ContainersMap {
+	export function getNearestContainers(coords: Vector, region: BlockSource): ContainersMap;
+	export function getNearestContainers(coords: Vector, region: any): ContainersMap {
+		let side = -1;
+		if (typeof region == "number") { // reverse compatibility
+			region = null;
+			side = region;
+		}
 		let containers = {};
 		for (let i = 0; i < 6; i++) {
 			if (side >= 0 && i != side) continue;
@@ -151,10 +162,16 @@ namespace StorageInterface {
 	}
 
 	/**
-	 * @returns object containing neigbour liquid storages where keys are block side numbers
-	 * @side side to get storage, use -1 to get from all sides
+	 * Returns object containing neigbour liquid storages where keys are block side numbers
+	 * @coords position from which check neighbour blocks
 	*/
-	export function getNearestLiquidStorages(coords: Vector, side: number, region: BlockSource): StoragesMap {
+	export function getNearestLiquidStorages(coords: Vector, region: BlockSource): StoragesMap;
+	export function getNearestLiquidStorages(coords: Vector, region: any): StoragesMap {
+		let side = -1;
+		if (typeof region == "number") { // reverse compatibility
+			region = null;
+			side = region;
+		}
 		let storages = {};
 		for (let i = 0; i < 6; i++) {
 			if (side >= 0 && side != i) continue;
@@ -165,22 +182,20 @@ namespace StorageInterface {
 	}
 
 	/**
-	 * @returns array of slot indexes for vanilla container or array of slot names for mod container
+	 * Returns array of slot indexes for vanilla container or array of slot names for mod container
 	*/
 	export function getContainerSlots(container: Container): string[] | number[] {
-		let slots = [];
 		if ("slots" in container) {
-			for (let name in container.slots) {
-				slots.push(name);
-			}
+			return Object.keys(container.slots);
 		}
 		else {
+			let slots = [];
 			let size = container.getSize();
 			for (let i = 0; i < size; i++) {
 				slots.push(i);
 			}
+			return slots;
 		}
-		return slots;
 	}
 
 	/** Puts items to containers */
@@ -200,7 +215,7 @@ namespace StorageInterface {
 	 * @maxCount max count of item to transfer (optional)
 	*/
 	export function putItemToContainer(item: ItemInstance, container: TileEntity | Container, side?: number, maxCount?: number): number {
-		let storage = newStorage(container);
+		let storage = getInterface(container);
 		return storage.addItem(item, side, maxCount);
 	}
 
@@ -213,8 +228,8 @@ namespace StorageInterface {
 	 * @oneStack if true, will extract only 1 item
 	*/
 	export function extractItemsFromContainer(inputContainer: TileEntity | Container, outputContainer: TileEntity | Container, inputSide: number, maxCount?: number, oneStack?: boolean): number {
-		let inputStorage = newStorage(inputContainer);
-		let outputStorage = newStorage(outputContainer);
+		let inputStorage = getInterface(inputContainer);
+		let outputStorage = getInterface(outputContainer);
 		return extractItemsFromStorage(inputStorage, outputStorage, inputSide, maxCount, oneStack);
 	}
 
@@ -231,7 +246,7 @@ namespace StorageInterface {
 		let slots = outputStorage.getOutputSlots(inputSide ^ 1);
 		for (let name of slots) {
 			let slot = outputStorage.getSlot(name);
-			if (slot.id > 0) {
+			if (slot.id !== 0) {
 				let added = inputStorage.addItem(slot, inputSide, maxCount - count);
 				if (added > 0) {
 					count += added;
@@ -249,19 +264,24 @@ namespace StorageInterface {
 	 * @maxAmount max amount of liquid that can be transfered
 	 * @inputStorage storage to input liquid
 	 * @outputStorage storage to extract liquid
-	 * @inputSide block side of input storage which is receiving liquid
+	 * @inputSide block side of input storage which is receiving 
+	 * @returns left liquid amount
 	*/
 	export function extractLiquid(liquid: Nullable<string>, maxAmount: number, inputStorage: TileEntity | Storage, outputStorage: Storage, inputSide: number): number {
-		let outputSide = inputSide ^ 1;
 		if (!(inputStorage instanceof TileEntityInterface)) { // reverse compatibility
 			inputStorage = new TileEntityInterface(inputStorage as TileEntity);
 		}
-		if (!liquid) {
-			liquid = outputStorage.getLiquidStored("output");
-		}
+		let outputSide = inputSide ^ 1;
+		let inputTank = inputStorage.getInputTank(inputSide);
+		let outputTank = outputStorage.getOutputTank(outputSide);
+		if (!inputTank || !outputTank) return 0;
 
-		if (liquid && outputStorage.canTransportLiquid(liquid, outputSide)) {
-			return transportLiquid(liquid, maxAmount, outputStorage, inputStorage, outputSide);
+		if (!liquid) liquid = outputTank.getLiquidStored();
+		if (liquid && outputStorage.canTransportLiquid(liquid, outputSide) && inputStorage.canReceiveLiquid(liquid, inputSide) && !inputTank.isFull(liquid)) {
+			let amount = Math.min(outputTank.getAmount(liquid) * outputStorage.liquidUnitRatio, maxAmount);
+			amount = inputStorage.receiveLiquid(inputTank, liquid, amount);
+			outputStorage.extractLiquid(outputTank, liquid, amount);
+			return amount;
 		}
 		return 0;
 	}
@@ -271,11 +291,15 @@ namespace StorageInterface {
 		if (!(outputStorage instanceof TileEntityInterface)) { // reverse compatibility
 			outputStorage = new TileEntityInterface(outputStorage as TileEntity);
 		}
+		let inputSide = outputSide ^ 1;
+		let inputTank = inputStorage.getInputTank(inputSide);
+		let outputTank = outputStorage.getOutputTank(outputSide);
+		if (!inputTank || !outputTank) return 0;
 
-		if (inputStorage.canReceiveLiquid(liquid, outputSide ^ 1)) {
-			let amount = outputStorage.getLiquid(liquid, maxAmount);
-			amount = inputStorage.addLiquid(liquid, amount);
-			outputStorage.getLiquid(liquid, -amount);
+		if (inputStorage.canReceiveLiquid(liquid, inputSide) && !inputTank.isFull(liquid)) {
+			let amount = Math.min(outputTank.getAmount(liquid) * outputStorage.liquidUnitRatio, maxAmount);
+			amount = inputStorage.receiveLiquid(inputTank, liquid, amount);
+			outputStorage.extractLiquid(outputTank, liquid, amount);
 			return amount;
 		}
 		return 0;
@@ -288,7 +312,7 @@ namespace StorageInterface {
 	export function checkHoppers(tile: TileEntity): void {
 		if (World.getThreadTime()%8 > 0) return;
 		let region = tile.blockSource;
-		let storage = StorageInterface.newStorage(tile);
+		let storage = StorageInterface.getInterface(tile);
 
 		// input
 		for (let side = 1; side < 6; side++) {

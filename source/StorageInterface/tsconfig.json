@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"target": "ES5",
 		"lib": ["ESNext"],
-		"outFile": "../../library/StorageInterface.js",
+		"outFile": "../../build/StorageInterface/StorageInterface.js",
 		"allowJs": false,
 		"downlevelIteration": false,
 		"strict": false,
