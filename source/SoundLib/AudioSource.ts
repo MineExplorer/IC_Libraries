@@ -1,5 +1,3 @@
-/// <reference path="AudioSourceNetworkType.ts" />
-
 enum SourceType {
     ENTITY,
     TILEENTITY
@@ -69,10 +67,9 @@ class AudioSource {
     play() {
         if (!this.isPlaying) {
             const pos = this.position;
-            this.streamID = SoundManager.playSoundAt(pos.x, pos.y, pos.z, this.sound, this.volume, 1, this.radius);
+            this.streamID = SoundManager.playSoundAt(pos.x, pos.y, pos.z, this.sound, true, this.volume, 1, this.radius);
             if (this.streamID != 0) {
                 this.isPlaying = true;
-                SoundManager.playingStreams++;
             }
         }
     }
@@ -81,7 +78,6 @@ class AudioSource {
         if (this.isPlaying) {
             this.isPlaying = false;
             SoundManager.stop(this.streamID);
-            SoundManager.playingStreams--;
             this.streamID = 0;
         }
     }
@@ -103,7 +99,7 @@ class AudioSource {
 		const distance = Math.sqrt(Math.pow(s.x - p.x, 2) + Math.pow(s.y - p.y, 2) + Math.pow(s.z - p.z, 2));
 		if (distance > this.radius && SoundManager.playSound) return;
 		const volume = this.volume * Math.max(0, 1 - distance / this.radius);
-		SoundManager.setVolume(this.streamID, volume * SoundManager.soundVolume);
+		SoundManager.setVolume(this.streamID, volume);
     }
 }
 

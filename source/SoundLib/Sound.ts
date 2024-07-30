@@ -2,11 +2,18 @@ class Sound {
     id: number;
     private duration: number;
 
+    /**
+     * @param name sound name
+     * @param soundPool SoundPool where sound is loaded
+     * @param path file path
+     * @param looping deprecated
+     */
     constructor(
         public name: string,
         public soundPool: android.media.SoundPool,
         public path: string,
-        public looping: boolean) {
+        public looping: boolean
+    ) {
         this.id = soundPool.load(path, 1);
     }
 

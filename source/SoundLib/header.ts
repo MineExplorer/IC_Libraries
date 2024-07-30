@@ -1,6 +1,6 @@
 LIBRARY({
 	name: "SoundLib",
-	version: 2,
+	version: 3,
 	shared: false,
 	api: "CoreEngine"
 });

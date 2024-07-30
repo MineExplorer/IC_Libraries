@@ -6,15 +6,15 @@ namespace SoundManager {
 	export let musicVolume: number;
 	export let soundPool: android.media.SoundPool;
 	export let maxStreams: number = 0;
-	export let playingStreams: number = 0;
+	export let playingStreams: number[] = [];
 	export let resourcePath: string = "";
 	export let soundData: {[key: string]: Sound | Sound[]} = {};
-	export let audioSources: Array<AudioSource> = [];
+	export const audioSources: AudioSource[] = [];
+	export const soundStreams: SoundStream[] = [];
 
 	export function readSettings(): void {
 		const options = FileTools.ReadKeyValueFile(settings_path);
-		let mainVolume = 1;
-		if (!IS_OLD) mainVolume = parseFloat(options["audio_main"]);
+		let mainVolume = IS_OLD ? 1 : parseFloat(options["audio_main"]);
 		soundVolume = mainVolume * parseFloat(options["audio_sound"]);
 		musicVolume = mainVolume * parseFloat(options["audio_music"]);
 	}
@@ -52,7 +52,15 @@ namespace SoundManager {
 		return sound;
 	}
 
-	export function playSound(soundName: string | Sound, volume: number = 1, pitch: number = 1): number {
+	/**
+	 * Starts playing sound and returns its streamId and returns 0 if failes to play sound.
+	 * @param soundName 
+	 * @param loop 
+	 * @param volume 
+	 * @param pitch 
+	 * @returns 
+	 */
+	export function playSound(soundName: string | Sound, loop: boolean = false, volume: number = 1, pitch: number = 1): number {
 		let sound: Sound;
 		if (typeof soundName == "string") {
 			sound = getSound(soundName);
@@ -63,30 +71,41 @@ namespace SoundManager {
 		} else {
 			sound = soundName;
 		}
-		if (playingStreams >= maxStreams) return 0;
+		if (playingStreams.length >= maxStreams) return 0;
 		volume *= soundVolume;
-		const streamID = soundPool.play(sound.id, volume, volume, sound.looping? 1 : 0, sound.looping? -1 : 0, pitch);
-		if (Game.isDeveloperMode) Game.message(streamID +" - "+ sound.name + ", volume: "+ volume);
+		const startTime = Debug.sysTime();
+		const streamID = soundPool.play(sound.id, volume, volume, 0, loop? -1 : 0, pitch);
+		if (streamID != 0) {
+			soundPool.setPriority(streamID, 1);
+			const msg = `${streamID} - ${sound.name}, volume: ${volume} (took ${Debug.sysTime() - startTime} ms)`;
+			if (Game.isDeveloperMode) {
+				Game.message(msg);
+			}
+			Logger.Log(msg, "SoundLib");
+			if (loop) {
+				playingStreams.push(streamID);
+			}
+		}
 		return streamID;
 	}
 
-	export function playSoundAt(x: number, y: number, z: number, soundName: string | Sound, volume: number = 1, pitch: number = 1, radius: number = 16): number {
+	export function playSoundAt(x: number, y: number, z: number, soundName: string | Sound, loop: boolean = false, volume: number = 1, pitch: number = 1, radius: number = 16): number {
 		const p = Player.getPosition();
 		const distance = Math.sqrt(Math.pow(x - p.x, 2) + Math.pow(y - p.y, 2) + Math.pow(z - p.z, 2));
 		if (distance >= radius) return 0;
 		volume *= 1 - distance / radius;
-		const streamID = playSound(soundName, volume, pitch);
+		const streamID = playSound(soundName, loop, volume, pitch);
 		return streamID;
 	}
 
 	export function playSoundAtEntity(entity: number, soundName: string | Sound, volume?: number, pitch?: number, radius: number = 16): number {
 		const pos = Entity.getPosition(entity);
-		return playSoundAt(pos.x, pos.y, pos.z, soundName, volume, pitch, radius)
+		return playSoundAt(pos.x, pos.y, pos.z, soundName, false, volume, pitch, radius)
 	}
 
-	export function playSoundAtBlock(tile: any, soundName: string | Sound, volume?: number, radius: number = 16): number {
+	export function playSoundAtBlock(tile: any, soundName: string | Sound, loop: boolean = false, volume?: number, radius: number = 16): number {
 		if (tile.dimension != undefined && tile.dimension != Player.getDimension()) return 0;
-		return playSoundAt(tile.x + .5, tile.y + .5, tile.z + .5, soundName, volume, 1, radius)
+		return playSoundAt(tile.x + .5, tile.y + .5, tile.z + .5, soundName, loop, volume, 1, radius)
 	}
 
 	export function createSource(sourceType: SourceType, source: any, soundName: string, volume?: number, radius?: number): AudioSource {
@@ -151,11 +170,15 @@ namespace SoundManager {
 	}
 
 	export function setVolume(streamID: number, leftVolume: number, rightVolume: number = leftVolume) {
-		soundPool.setVolume(streamID, leftVolume, rightVolume);
+		soundPool.setVolume(streamID, leftVolume * soundVolume, rightVolume * soundVolume);
 	}
 
 	export function stop(streamID: number) {
 		soundPool.stop(streamID);
+		const index = playingStreams.indexOf(streamID);
+		if (index != -1) {
+			playingStreams.splice(index, 1);
+		}
 	}
 
 	export function pause(streamID: number) {
@@ -169,7 +192,7 @@ namespace SoundManager {
 	export function stopAll() {
 		soundPool.autoPause();
 		audioSources.splice(0);
-		playingStreams = 0;
+		playingStreams.length = 0;
 	}
 
 	export function autoPause() {
@@ -208,7 +231,7 @@ namespace SoundManager {
 			if (audio.sourceType == SourceType.ENTITY && Entity.isExist(audio.source)) {
 				audio.position = Entity.getPosition(audio.source);
 			}
-			if (!audio.isPlaying && audio.sound.looping && playingStreams < maxStreams) {
+			if (!audio.isPlaying && audio.sound.looping && playingStreams.length < maxStreams) {
 				//Game.message("Start play audio: "+audio.soundName);
 				audio.play();
 			}
