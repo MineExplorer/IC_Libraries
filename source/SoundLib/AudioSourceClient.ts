@@ -137,7 +137,7 @@ class AudioSourceClient implements Updatable {
             }
             else if (!stream.looping && stream.sound.getDuration() <= stream.getDuration()) {
                 this.streams.splice(i--, 1);
-                stream.onComplete(this.source);
+                stream.onComplete(this);
             }
         }
     }
