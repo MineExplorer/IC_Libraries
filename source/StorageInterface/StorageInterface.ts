@@ -1,14 +1,44 @@
 /// <reference path="NativeContainerInterface.ts" />
 /// <reference path="TileEntityInterface.ts" />
+/// <reference path="StorageInterfaceFactory.ts" />
 
 namespace StorageInterface {
 	type ContainersMap = {[key: number]: Container};
 	type StoragesMap = {[key: number]: Storage};
 
-	export var data: {[key: number]: StorageDescriptor} = {};
+	interface StorageInterfacePrototype extends StorageDescriptor {
+		classType?: typeof TileEntityInterface
+	}
+	
+	export var data: {[key: number]: StorageInterfacePrototype} = {};
 
-	export function getData(id: number) {
+	/** @returns TileEntity StorageInterface prototype by block id */
+	export function getPrototype(id: number): StorageInterfacePrototype {
 		return data[id];
+	}
+
+	/** Registers interface for block container */
+	export function createInterface(id: number, descriptor: StorageDescriptor, classType = TileEntityInterface): void {
+		const prototype: StorageInterfacePrototype = {...descriptor};
+		if (descriptor.slots) {
+			for (let name in descriptor.slots) {
+				if (name.includes('^')) {
+					const slotData = descriptor.slots[name];
+					const str = name.split('^');
+					const index = str[1].split('-');
+					for (let i = parseInt(index[0]); i <= parseInt(index[1]); i++) {
+						descriptor.slots[str[0] + i] = slotData;
+					}
+					delete descriptor.slots[name];
+				}
+			}
+		}
+		else {
+			prototype.slots = {};
+		}
+
+		prototype.classType = classType;
+		data[id] = prototype;
 	}
 
 	export var directionsBySide = [
@@ -49,34 +79,12 @@ namespace StorageInterface {
 	/** Creates new interface instance for TileEntity or Container */
 	export function getInterface(storage: TileEntity | Container): Storage {
 		if ("container" in storage) {
-			return new TileEntityInterface(storage);
+			return StorageInterfaceFactory.getTileEntityInterface(storage);
 		}
 		if ("getParent" in storage) {
-			return new TileEntityInterface(storage.getParent());
+			return StorageInterfaceFactory.getTileEntityInterface(storage.getParent());
 		}
-		return new NativeContainerInterface(storage as any);
-	}
-
-	/** Registers interface for block container */
-	export function createInterface(id: number, descriptor: StorageDescriptor): void {
-		if (descriptor.slots) {
-			for (let name in descriptor.slots) {
-				if (name.includes('^')) {
-					let slotData = descriptor.slots[name];
-					let str = name.split('^');
-					let index = str[1].split('-');
-					for (let i = parseInt(index[0]); i <= parseInt(index[1]); i++) {
-						descriptor.slots[str[0] + i] = slotData;
-					}
-					delete descriptor.slots[name];
-				}
-			}
-		}
-		else {
-			descriptor.slots = {};
-		}
-
-		data[id] = descriptor;
+		return new NativeContainerInterface(storage);
 	}
 
 	/** Trasfers item to slot
@@ -112,7 +120,7 @@ namespace StorageInterface {
 		}
 		let tileEntity = World.getTileEntity(x, y, z, region);
 		if (tileEntity && tileEntity.container && tileEntity.__initialized) {
-			return new TileEntityInterface(tileEntity);
+			return StorageInterfaceFactory.getTileEntityInterface(tileEntity);
 		}
 		return null;
 	}
@@ -121,7 +129,7 @@ namespace StorageInterface {
 	export function getLiquidStorage(region: BlockSource, x: number, y: number, z: number): Nullable<TileEntityInterface> {
 		let tileEntity = World.getTileEntity(x, y, z, region);
 		if (tileEntity && tileEntity.__initialized) {
-			return new TileEntityInterface(tileEntity);
+			return StorageInterfaceFactory.getTileEntityInterface(tileEntity);
 		}
 		return null;
 	}
@@ -269,7 +277,7 @@ namespace StorageInterface {
 	*/
 	export function extractLiquid(liquid: Nullable<string>, maxAmount: number, inputStorage: TileEntity | Storage, outputStorage: Storage, inputSide: number): number {
 		if (!(inputStorage instanceof TileEntityInterface)) { // reverse compatibility
-			inputStorage = new TileEntityInterface(inputStorage as TileEntity);
+			inputStorage = StorageInterfaceFactory.getTileEntityInterface(inputStorage as TileEntity);
 		}
 		let outputSide = inputSide ^ 1;
 		let inputTank = inputStorage.getInputTank(inputSide);
@@ -289,7 +297,7 @@ namespace StorageInterface {
 	/** Similar to StorageInterface.extractLiquid, but liquid must be specified */
 	export function transportLiquid(liquid: string, maxAmount: number, outputStorage: TileEntity | Storage, inputStorage: Storage, outputSide: number): number {
 		if (!(outputStorage instanceof TileEntityInterface)) { // reverse compatibility
-			outputStorage = new TileEntityInterface(outputStorage as TileEntity);
+			outputStorage = StorageInterfaceFactory.getTileEntityInterface(outputStorage as TileEntity);
 		}
 		let inputSide = outputSide ^ 1;
 		let inputTank = inputStorage.getInputTank(inputSide);
@@ -330,16 +338,15 @@ namespace StorageInterface {
 			extractItemsFromStorage(hopper, storage, 0, 1);
 		}
 	}
+
+	Callback.addCallback("TileEntityAdded", function(tileEntity: TileEntity, created: boolean) {
+		if (created) { // fix of TileEntity access from ItemContainer
+			tileEntity.container.setParent(tileEntity);
+		}
+		if (StorageInterface.data[tileEntity.blockID]) { // reverse compatibility
+			tileEntity.interface = StorageInterfaceFactory.getTileEntityInterface(tileEntity);
+		}
+	});
 }
-
-
-Callback.addCallback("TileEntityAdded", function(tileEntity: TileEntity, created: boolean) {
-	if (created) { // fix of TileEntity access from ItemContainer
-		tileEntity.container.setParent(tileEntity);
-	}
-	if (StorageInterface.data[tileEntity.blockID]) { // reverse compatibility
-		tileEntity.interface = new TileEntityInterface(tileEntity);
-	}
-});
 
 EXPORT("StorageInterface", StorageInterface);
