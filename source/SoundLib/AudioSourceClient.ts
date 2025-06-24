@@ -52,6 +52,21 @@ class AudioSourceClient implements Updatable {
     }
 
     /**
+     * Start playing sound from this source if it's not started.
+     * @param sound sound name or object
+     * @param looping true if sound is looped, false otherwise
+     * @param volume value from 0 to 1
+     * @param radius the radius where the sound is heard
+     * @returns SoundStream object or null.
+     */
+    playSingle(sound: string | Sound, looping?: boolean, volume?: number, radius?: number) {
+        const soundName = typeof (sound) == "string" ? sound : sound.name;
+        if (!this.getStream(soundName)) {
+            this.play(sound, looping, volume, radius);
+        }
+    }
+
+    /**
      * Finds stream by sound name
      * @param soundName sound name
      * @returns sound stream or null
