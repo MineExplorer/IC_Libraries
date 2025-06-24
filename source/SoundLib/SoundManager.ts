@@ -9,7 +9,7 @@ namespace SoundManager {
 	export let playingStreams: number[] = [];
 	export let resourcePath: string = "";
 	export let soundData: {[key: string]: Sound | Sound[]} = {};
-	export const audioSources: AudioSource[] = [];
+	//export const audioSources: AudioSource[] = [];
 	export const soundStreams: SoundStream[] = [];
 
 	export function readSettings(): void {
@@ -108,66 +108,66 @@ namespace SoundManager {
 		return playSoundAt(tile.x + .5, tile.y + .5, tile.z + .5, soundName, looping, volume, 1, radius)
 	}
 
-	export function createSource(sourceType: SourceType, source: any, soundName: string, volume?: number, radius?: number): AudioSource {
-		if (sourceType == SourceType.ENTITY && typeof source != "number") {
-			Logger.Log("Invalid source type " + typeof source + "for AudioSource.ENTITY", "ERROR");
-			return null;
-		}
-		if (sourceType == SourceType.TILEENTITY && typeof source != "object") {
-			Logger.Log("Invalid source type " + typeof source + "for AudioSource.TILEENTITY", "ERROR");
-			return null;
-		}/*
-		let soundID = getSoundID(soundName);
-		if (!soundID) {
-			Logger.Log("Cannot find sound: "+ soundName, "ERROR");
-			return null;
-		}*/
-		const audioSource = new AudioSource(sourceType, source, soundName, volume, radius);
-		audioSources.push(audioSource);
-		return audioSource;
-	}
+	//export function createSource(sourceType: SourceType, source: any, soundName: string, volume?: number, radius?: number): AudioSource {
+	//	if (sourceType == SourceType.ENTITY && typeof source != "number") {
+	//		Logger.Log("Invalid source type " + typeof source + "for AudioSource.ENTITY", "ERROR");
+	//		return null;
+	//	}
+	//	if (sourceType == SourceType.TILEENTITY && typeof source != "object") {
+	//		Logger.Log("Invalid source type " + typeof source + "for AudioSource.TILEENTITY", "ERROR");
+	//		return null;
+	//	}/*
+	//	let soundID = getSoundID(soundName);
+	//	if (!soundID) {
+	//		Logger.Log("Cannot find sound: "+ soundName, "ERROR");
+	//		return null;
+	//	}*/
+	//	const audioSource = new AudioSource(sourceType, source, soundName, volume, radius);
+	//	audioSources.push(audioSource);
+	//	return audioSource;
+	//}
 
-	export function getSource(source: any, soundName?: string): AudioSource {
-		for (let i in audioSources) {
-			const audio = audioSources[i];
-			if (audio.source == source && (!soundName || audio.soundName == soundName))
-				return audio;
-		}
-		return null;
-	}
+	//export function getSource(source: any, soundName?: string): AudioSource {
+	//	for (let i in audioSources) {
+	//		const audio = audioSources[i];
+	//		if (audio.source == source && (!soundName || audio.soundName == soundName))
+	//			return audio;
+	//	}
+	//	return null;
+	//}
 
-	export function getAllSources(source: any, soundName?: string): AudioSource[] {
-		const sources = [];
-		for (let i in audioSources) {
-			const audio = audioSources[i];
-			if (audio.source == source && (!soundName || audio.soundName == soundName))
-				sources.push(audio);
-		}
-		return sources;
-	}
+	//export function getAllSources(source: any, soundName?: string): AudioSource[] {
+	//	const sources = [];
+	//	for (let i in audioSources) {
+	//		const audio = audioSources[i];
+	//		if (audio.source == source && (!soundName || audio.soundName == soundName))
+	//			sources.push(audio);
+	//	}
+	//	return sources;
+	//}
 
-	export function removeSource(audioSource: AudioSource) {
-		audioSource.remove = true;
-	}
+	//export function removeSource(audioSource: AudioSource) {
+	//	audioSource.remove = true;
+	//}
 
-	export function startPlaySound(sourceType: SourceType, source: any, soundName: string, volume?: number, radius?: number): AudioSource {
-		const audioSource = getSource(source, soundName)
-		if (audioSource) {
-			return audioSource;
-		}
-		return createSource(sourceType, source, soundName, volume, radius);
-	}
+	//export function startPlaySound(sourceType: SourceType, source: any, soundName: string, volume?: number, radius?: number): AudioSource {
+	//	const audioSource = getSource(source, soundName)
+	//	if (audioSource) {
+	//		return audioSource;
+	//	}
+	//	return createSource(sourceType, source, soundName, volume, radius);
+	//}
 
-	export function stopPlaySound(source: any, soundName?: string): boolean {
-		for (let i in audioSources) {
-			const audio = audioSources[i];
-			if (audio.source == source && (!soundName || audio.soundName == soundName)) {
-				audio.remove = true;
-				return true;
-			}
-		}
-		return false;
-	}
+	//export function stopPlaySound(source: any, soundName?: string): boolean {
+	//	for (let i in audioSources) {
+	//		const audio = audioSources[i];
+	//		if (audio.source == source && (!soundName || audio.soundName == soundName)) {
+	//			audio.remove = true;
+	//			return true;
+	//		}
+	//	}
+	//	return false;
+	//}
 
 	export function setVolume(streamID: number, leftVolume: number, rightVolume: number = leftVolume) {
 		soundPool.setVolume(streamID, leftVolume * soundVolume, rightVolume * soundVolume);
@@ -193,7 +193,7 @@ namespace SoundManager {
 
 	export function stopAll() {
 		soundPool.autoPause();
-		audioSources.splice(0);
+		//audioSources.splice(0);
 		playingStreams.length = 0;
 	}
 
@@ -209,7 +209,7 @@ namespace SoundManager {
 		soundPool.release();
 	}
 
-	export function tick() {
+	/*export function tick() {
 		for (let i = 0; i < audioSources.length; i++) {
 			const audio = audioSources[i];
 			if (audio.remove || audio.sourceType == SourceType.TILEENTITY && audio.source.remove) {
@@ -241,7 +241,7 @@ namespace SoundManager {
 				audio.updateVolume();
 			}
 		}
-	}
+	}*/
 
 	function removePlayingStream(streamID: number) {
 		const index = playingStreams.indexOf(streamID);
@@ -251,7 +251,7 @@ namespace SoundManager {
 	}
 
 	Callback.addCallback("LocalTick", function() {
-		SoundManager.tick();
+		//SoundManager.tick();
 	});
 
 	Callback.addCallback("MinecraftActivityStopped", function() {

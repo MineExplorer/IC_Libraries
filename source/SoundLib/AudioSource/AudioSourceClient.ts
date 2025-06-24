@@ -1,4 +1,4 @@
-/// <reference path="SoundStream.ts" />
+/// <reference path="./SoundStream.ts" />
 
 /**
  * Client side audio source.
