@@ -1,20 +1,20 @@
 class Sound {
-    id: number;
+    public name: string;
+    public path: string;
+    public internalId: number;
     private duration: number;
 
     /**
-     * @param name sound name
-     * @param soundPool SoundPool where sound is loaded
+     * @param name sound name id
      * @param path file path
-     * @param looping deprecated
      */
-    constructor(
-        public name: string,
-        public soundPool: android.media.SoundPool,
-        public path: string,
-        public looping: boolean
-    ) {
-        this.id = soundPool.load(path, 1);
+    constructor(name: string, path: string) { 
+        this.name = name;
+        this.path = path;
+    }
+
+    load(soundPool: android.media.SoundPool) {
+        this.internalId = soundPool.load(this.path, 1);
     }
 
     getDuration(): number {

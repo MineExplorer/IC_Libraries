@@ -37,11 +37,11 @@ class AudioSourceClient implements Updatable {
      * @param radius the radius where the sound is heard
      * @returns SoundStream object or null.
      */
-    play(sound: string | Sound, looping: boolean = false, volume: number = 1, radius: number = 16): Nullable<SoundStream> {
-        if (typeof sound == "string") {
-            sound = SoundManager.getSound(sound);
+    play(soundName: string, looping: boolean = false, volume: number = 1, radius: number = 16): Nullable<SoundStream> {
+        const sound = SoundRegistry.getSound(soundName);
+        if (!sound) {
+            return null;
         }
-        Debug.m(`[Client] Play sound ${sound.name}, ${looping}`);
         const streamId = this.playSound(sound, looping, volume, radius);
         if (streamId != 0 || looping) {
             const stream = new SoundStream(sound, streamId, looping, volume, radius);
@@ -59,10 +59,9 @@ class AudioSourceClient implements Updatable {
      * @param radius the radius where the sound is heard
      * @returns SoundStream object or null.
      */
-    playSingle(sound: string | Sound, looping?: boolean, volume?: number, radius?: number) {
-        const soundName = typeof (sound) == "string" ? sound : sound.name;
+    playSingle(soundName: string, looping?: boolean, volume?: number, radius?: number) {
         if (!this.getStream(soundName)) {
-            this.play(sound, looping, volume, radius);
+            this.play(soundName, looping, volume, radius);
         }
     }
 
@@ -140,7 +139,7 @@ class AudioSourceClient implements Updatable {
     }
     
     private playSound(sound: Sound, looping: boolean, volume: number, radius: number): number {
-        const streamId = SoundManager.playSoundAt(this.position.x, this.position.y, this.position.z, sound, looping, volume, 1, radius);
+        const streamId = SoundManager.getClient().playSoundAt(this.position.x, this.position.y, this.position.z, sound, looping, volume, 1, radius);
         return streamId;
     }
 

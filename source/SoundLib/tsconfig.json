@@ -12,8 +12,9 @@
 	"exclude": [],
 	"include": [
 		"header.ts",
+		"SoundRegistry.ts",
 		"SoundManager.ts",
-		"Sound.ts",
+		"Sound/*.ts",
 		//"AudioSourceNetworkType.ts",
 		//"TileEntityAudioSource.ts",
 		//"AudioSource.ts",

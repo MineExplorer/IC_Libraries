@@ -10,6 +10,7 @@ class SoundStream {
     state: SoundStreamState;
     startTime: number;
     onCompleteEvent?: (source: AudioSourceClient, stream: SoundStream) => void;
+    private _soundClient: SoundManagerClient;
 
     constructor(
         public sound: Sound,
@@ -20,6 +21,7 @@ class SoundStream {
     ) {
         this.name = sound.name;
         this.setStreamId(streamId);
+        this._soundClient = SoundManager.getClient();
     }
 
     setOnCompleteEvent(event: (source: AudioSourceClient, stream: SoundStream) => void) {
@@ -29,7 +31,7 @@ class SoundStream {
     onComplete(source: AudioSourceClient) {
         this.state = SoundStreamState.Stopped;
         if (this.onCompleteEvent) {
-            SoundManager.stop(this.streamId);
+            this._soundClient.stop(this.streamId);
             this.onCompleteEvent(source, this);
         }
     }
@@ -45,27 +47,27 @@ class SoundStream {
     }
 
     reset() {
-        SoundManager.stop(this.streamId);
+        this._soundClient.stop(this.streamId);
         this.state = SoundStreamState.Idle;
     }
 
     stop() {
-        SoundManager.stop(this.streamId);
+        this._soundClient.stop(this.streamId);
         this.state = SoundStreamState.Stopped;
     }
     
     pause() {
-        SoundManager.pause(this.streamId);
+        this._soundClient.pause(this.streamId);
         this.state = SoundStreamState.Paused;
     }
 
     resume() {
-        SoundManager.resume(this.streamId);
+        this._soundClient.resume(this.streamId);
         this.state = SoundStreamState.Started;
     }
 
     setVolume(volume: number) {
-        SoundManager.setVolume(this.streamId, volume);
+        this._soundClient.setVolume(this.streamId, volume);
     }
 
     getDuration() {
