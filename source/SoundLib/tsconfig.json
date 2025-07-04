@@ -19,6 +19,7 @@
 		//"TileEntityAudioSource.ts",
 		//"AudioSource.ts",
 		"AudioSource/AudioSourceClient.ts",
+		"AudioSource/AudioSourceEntityClient.ts",
 		"export.ts",
 	],
 	"files": [

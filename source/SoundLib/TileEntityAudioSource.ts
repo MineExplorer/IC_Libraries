@@ -1,4 +1,8 @@
 /// <reference path="IAudioSource.ts" />
+/*
+ WARNING!
+ This code is deprecated and may be deleted in the future.
+*/
 
 class AmbientSound {
     soundName: string;

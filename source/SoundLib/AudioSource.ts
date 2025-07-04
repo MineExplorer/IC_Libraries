@@ -1,3 +1,8 @@
+/*
+ WARNING!
+ This code is deprecated and may be deleted in the future.
+*/
+
 enum SourceType {
     ENTITY,
     TILEENTITY
