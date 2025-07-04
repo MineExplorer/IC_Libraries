@@ -1,6 +1,6 @@
 /// <reference path="./SoundManagerClient.ts" />
 
-namespace SoundManager {
+namespace SoundLib {
 	export type SoundPacketData = {
 		x: number; 
 		y: number;
@@ -23,7 +23,7 @@ namespace SoundManager {
 	 */
 	export function init(maxStreamsCount: number): void {
 		if (!Game.isDedicatedServer || !Game.isDedicatedServer()) {
-			_client = new SoundManagerClient(maxStreamsCount, SoundRegistry.getAllSounds());
+			_client = new SoundManagerClient(maxStreamsCount, Registry.getAllSounds());
 		}
 	}
 
@@ -35,7 +35,7 @@ namespace SoundManager {
 			return playSoundAt(coords.x, coords.y, coords.z, y, z, dimension, soundName, volume);
 		}
 		
-		const sound = SoundRegistry.getSound(soundName);
+		const sound = Registry.getSound(soundName);
 		if (!sound) return;
 
 		sendPacketInRadius({x: x, y: y, z: z}, dimension, radius, "SoundManager.play_sound", {

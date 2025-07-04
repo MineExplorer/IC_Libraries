@@ -39,7 +39,7 @@ class SoundManagerClient {
 	 */
 	playSound(sound: string | Sound, looping: boolean = false, volume: number = 1, pitch: number = 1): number {
         if (typeof sound === "string") {
-            sound = SoundRegistry.getSound(sound);
+            sound = SoundLib.Registry.getSound(sound);
         }
 		volume *= this.soundVolume;
 		const startTime = Debug.sysTime();

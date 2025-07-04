@@ -22,7 +22,7 @@ class SoundStream {
     ) {
         this.name = sound.name;
         this.setStreamId(streamId);
-        this._soundClient = SoundManager.getClient();
+        this._soundClient = SoundLib.getClient();
     }
 
     setOnCompleteEvent(event: (source: AudioSourceClient, stream: SoundStream) => void) {

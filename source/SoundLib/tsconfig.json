@@ -13,7 +13,7 @@
 	"include": [
 		"header.ts",
 		"SoundRegistry.ts",
-		"SoundManager.ts",
+		"SoundLib.ts",
 		"Sound/*.ts",
 		//"AudioSourceNetworkType.ts",
 		//"TileEntityAudioSource.ts",

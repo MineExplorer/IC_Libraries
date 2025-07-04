@@ -44,7 +44,7 @@ class AudioSourceClient implements Updatable {
      * @returns SoundStream object or null.
      */
     play(soundName: string, looping: boolean = false, volume: number = 1, radius: number = 16, relativePosition?: Vector): Nullable<SoundStream> {
-        const sound = SoundRegistry.getSound(soundName);
+        const sound = SoundLib.Registry.getSound(soundName);
         if (!sound) {
             return null;
         }
@@ -163,7 +163,7 @@ class AudioSourceClient implements Updatable {
     }
 
     private playSound(position: Vector, sound: Sound, looping: boolean, volume: number, radius: number): number {
-        const streamId = SoundManager.getClient().playSoundAt(position.x, position.y, position.z, sound, looping, volume, 1, radius);
+        const streamId = SoundLib.getClient().playSoundAt(position.x, position.y, position.z, sound, looping, volume, 1, radius);
         return streamId;
     }
 
