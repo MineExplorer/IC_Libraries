@@ -67,8 +67,8 @@ class SoundStream {
         this.state = SoundStreamState.Started;
     }
 
-    setVolume(volume: number) {
-        this._soundClient.setVolume(this.streamId, volume);
+    updateVolume(volumeMod: number) {
+        this._soundClient.setVolume(this.streamId, this.volume * volumeMod);
     }
 
     getDuration() {

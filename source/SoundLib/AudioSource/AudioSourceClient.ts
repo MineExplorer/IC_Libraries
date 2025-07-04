@@ -81,6 +81,11 @@ class AudioSourceClient implements Updatable {
         return this.streams.find(s => s.name == soundName) || null;
     }
 
+    isPlaying(soundName: string) {
+        const stream = this.getStream(soundName);
+        return stream && stream.isPlaying();
+    }
+
     /**
      * Stops playing sound by name
      * @param soundName sound name
@@ -187,15 +192,15 @@ class AudioSourceClient implements Updatable {
                     stream.reset();
                 }
             } else {
-                const volume = stream.volume * Math.max(0, 1 - distance / stream.radius);
+                const volumeMod = Math.max(0, 1 - distance / stream.radius);
                 if (stream.state == SoundStreamState.Idle) {
-                    const streamId = this.playSound(sourcePos, stream.sound, stream.looping, volume, stream.radius);
+                    const streamId = this.playSound(sourcePos, stream.sound, stream.looping, stream.volume * volumeMod, stream.radius);
                     if (streamId != 0) {
                         stream.setStreamId(streamId);
                     }
                 }
                 else {
-                    stream.setVolume(volume);
+                    stream.updateVolume(volumeMod);
                 }
             }
         }
