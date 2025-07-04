@@ -10,8 +10,15 @@ class AudioSourceClient implements Updatable {
     streams: SoundStream[] = [];
     entitySource?: number;
 
-    constructor(position: Vector) {
-        this.position = position
+    constructor(entity: number);
+    constructor(position: Vector);
+    constructor(source: Vector | number) {
+        if (typeof source == "number") {
+            this.entitySource = source;
+            this.position = Entity.getPosition(source);
+        } else {
+            this.position = source;
+        }
     }
 
     /**
