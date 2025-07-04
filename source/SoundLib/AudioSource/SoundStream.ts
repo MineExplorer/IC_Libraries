@@ -17,7 +17,8 @@ class SoundStream {
         public streamId: number,
         public looping: boolean,
         public volume: number,
-        public radius: number
+        public radius: number,
+        public relativePosition?: Vector
     ) {
         this.name = sound.name;
         this.setStreamId(streamId);

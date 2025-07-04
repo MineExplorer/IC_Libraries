@@ -5,11 +5,10 @@
  */
 class AudioSourceClient implements Updatable {
     position: Vector;
-    dimension: number;
     volume: number;
     remove: boolean = false;
     streams: SoundStream[] = [];
-    source: any; // TODO: add entities source support
+    entitySource?: number;
 
     constructor(position: Vector) {
         this.position = position
@@ -37,14 +36,15 @@ class AudioSourceClient implements Updatable {
      * @param radius the radius where the sound is heard
      * @returns SoundStream object or null.
      */
-    play(soundName: string, looping: boolean = false, volume: number = 1, radius: number = 16): Nullable<SoundStream> {
+    play(soundName: string, looping: boolean = false, volume: number = 1, radius: number = 16, relativePosition?: Vector): Nullable<SoundStream> {
         const sound = SoundRegistry.getSound(soundName);
         if (!sound) {
             return null;
         }
-        const streamId = this.playSound(sound, looping, volume, radius);
+        const sourcePos = relativePosition ? this.position : this.getAbsolutePosition(relativePosition);
+        const streamId = this.playSound(sourcePos, sound, looping, volume, radius);
         if (streamId != 0 || looping) {
-            const stream = new SoundStream(sound, streamId, looping, volume, radius);
+            const stream = new SoundStream(sound, streamId, looping, volume, radius, relativePosition);
             this.streams.push(stream);
             return stream;
         }
@@ -59,9 +59,9 @@ class AudioSourceClient implements Updatable {
      * @param radius the radius where the sound is heard
      * @returns SoundStream object or null.
      */
-    playSingle(soundName: string, looping?: boolean, volume?: number, radius?: number) {
+    playSingle(soundName: string, looping?: boolean, volume?: number, radius?: number, relativePosition?: Vector) {
         if (!this.getStream(soundName)) {
-            this.play(soundName, looping, volume, radius);
+            this.play(soundName, looping, volume, radius, relativePosition);
         }
     }
 
@@ -130,16 +130,28 @@ class AudioSourceClient implements Updatable {
 
     // Legacy kostyl
     update = () => {
+        if (this.entitySource && Entity.isExist(this.entitySource)) {
+            this.position = Entity.getPosition(this.entitySource);
+        }
         this.updateStreams();
         this.updateVolume();
     }
 
     unload() {
         this.stopAll();
+        this.remove = true;
     }
-    
-    private playSound(sound: Sound, looping: boolean, volume: number, radius: number): number {
-        const streamId = SoundManager.getClient().playSoundAt(this.position.x, this.position.y, this.position.z, sound, looping, volume, 1, radius);
+
+    getAbsolutePosition(relativeCoords: Vector): Vector {
+        return {
+            x: this.position.x + relativeCoords.x,
+            y: this.position.y + relativeCoords.y,
+            z: this.position.z + relativeCoords.z
+        };
+    }
+
+    private playSound(position: Vector, sound: Sound, looping: boolean, volume: number, radius: number): number {
+        const streamId = SoundManager.getClient().playSoundAt(position.x, position.y, position.z, sound, looping, volume, 1, radius);
         return streamId;
     }
 
@@ -157,11 +169,12 @@ class AudioSourceClient implements Updatable {
     }
 
     private updateVolume() {
-        //if (this.source == Player.get()) return;
-        const s = this.position;
-        const p = Player.getPosition();
-		const distance = Math.sqrt(Math.pow(s.x - p.x, 2) + Math.pow(s.y - p.y, 2) + Math.pow(s.z - p.z, 2));
+        if (this.entitySource == Player.get()) return;
+        
+        const playerPos = Player.getPosition();
         for (let stream of this.streams) {
+            const sourcePos = stream.relativePosition ? this.position : this.getAbsolutePosition(stream.relativePosition);
+            const distance = Entity.getDistanceBetweenCoords(sourcePos, playerPos);
             if (stream.looping && distance >= stream.radius) {
                 if (stream.isPlaying()) {
                     stream.reset();
@@ -169,7 +182,7 @@ class AudioSourceClient implements Updatable {
             } else {
                 const volume = stream.volume * Math.max(0, 1 - distance / stream.radius);
                 if (stream.state == SoundStreamState.Idle) {
-                    const streamId = this.playSound(stream.sound, stream.looping, volume, stream.radius);
+                    const streamId = this.playSound(sourcePos, stream.sound, stream.looping, volume, stream.radius);
                     if (streamId != 0) {
                         stream.setStreamId(streamId);
                     }

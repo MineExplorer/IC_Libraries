@@ -102,5 +102,5 @@ namespace SoundManager {
 
 	Network.addClientPacket("SoundManager.play_sound", function(data: SoundPacketData) {
 		_client?.playSoundAt(data.x, data.y, data.z, data.name, false, data.volume, data.pitch, data.radius);
-	});	
+	});
 }
