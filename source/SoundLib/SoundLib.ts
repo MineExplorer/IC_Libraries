@@ -29,7 +29,7 @@ namespace SoundLib {
 
 	export function playSoundAt(coords: Vector, dimension: number, soundName: string, volume?: number, pitch?: number, radius?: number): number;
 	export function playSoundAt(x: number, y: number, z: number, dimension: number, soundName: string, volume?: number, pitch?: number, radius?: number): number;
-	export function playSoundAt(x: number | Vector, y: number, z: any, dimension?: any, soundName?: any, volume: number = 1, pitch: number = 1, radius: number = 16): number {
+	export function playSoundAt(x: number | Vector, y: number, z: any, dimension?: any, soundName?: any, volume?: number, pitch?: number, radius?: number): number {
 		if (typeof x == "object") {
 			const coords = x;
 			return playSoundAt(coords.x, coords.y, coords.z, y, z, dimension, soundName, volume);
@@ -38,13 +38,14 @@ namespace SoundLib {
 		const sound = Registry.getSound(soundName);
 		if (!sound) return;
 
+		radius ??= 16;
 		sendPacketInRadius({x: x, y: y, z: z}, dimension, radius, "SoundManager.play_sound", {
 			x: x,
 			y: y,
 			z: z,
 			name: sound.name,
-			volume: volume,
-			pitch: pitch,
+			volume: volume ?? 1,
+			pitch: pitch ?? 1,
 			radius: radius 
 		});
 	}
@@ -76,11 +77,7 @@ namespace SoundLib {
 			}
 		}
 	}
-
-	//Callback.addCallback("LocalTick", function() {
-	//	SoundManager.tick();
-	//});
-
+	
 	Callback.addCallback("MinecraftActivityStopped", function() {
 		_client?.stopAll();
 	});
