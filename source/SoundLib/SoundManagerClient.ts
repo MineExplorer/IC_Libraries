@@ -4,16 +4,17 @@
 class SoundManagerClient {
 	settingsFolder = IS_OLD ? "Horizon" : "com.mojang"
 	settingsPath = `/storage/emulated/0/games/${this.settingsFolder}/minecraftpe/options.txt`;
+	globalVolume: number;
     soundVolume: number;
 	musicVolume: number;
 	soundPool: android.media.SoundPool;
 	isDebugMode = Game.isDeveloperMode;
     maxStreams: number = 0;
 
-    constructor(maxStreamsCount: number, sounds: Sound[]) {
+    constructor(maxStreamsCount: number, globalVolume: number, sounds: Sound[]) {
         this.soundPool = new android.media.SoundPool.Builder().setMaxStreams(maxStreamsCount).build();
 		this.maxStreams = maxStreamsCount;
-		this.readSettings();
+		this.globalVolume = globalVolume;
         this.loadSounds(sounds);
     }
     
@@ -22,6 +23,14 @@ class SoundManagerClient {
 		const mainVolume = IS_OLD ? 1 : parseFloat(options["audio_main"]);
 		this.soundVolume = mainVolume * parseFloat(options["audio_sound"]);
 		this.musicVolume = mainVolume * parseFloat(options["audio_music"]);
+	}
+
+	getSoundVolume(): number {
+		return this.globalVolume * this.soundVolume;
+	}
+
+	getMusicVolume(): number {
+		return this.globalVolume * this.musicVolume;
 	}
 
     loadSounds(sounds: Sound[]): void {
@@ -34,7 +43,7 @@ class SoundManagerClient {
     }
 
     /**
-	 * Starts playing sound and returns its streamId or 0 if failes to play sound.
+	 * Starts playing ssoundVolumeound and returns its streamId or 0 if failes to play sound.
 	 * @param sound sound name or object
 	 * @param looping true if sound is looped, false otherwise
      * @param volume value from 0 to 1
@@ -45,7 +54,7 @@ class SoundManagerClient {
         if (typeof sound === "string") {
             sound = SoundLib.Registry.getSound(sound);
         }
-		volume *= this.soundVolume;
+		volume *= this.getSoundVolume();
 		const startTime = Debug.sysTime();
 		const streamId = this.soundPool.play(sound.internalId, volume, volume, 0, looping? -1 : 0, pitch);
 		if (streamId != 0) {
@@ -71,7 +80,8 @@ class SoundManagerClient {
 	}
 
     setVolume(streamID: number, leftVolume: number, rightVolume: number = leftVolume) {
-		this.soundPool.setVolume(streamID, leftVolume * this.soundVolume, rightVolume * this.soundVolume);
+		const soundVolume = this.getSoundVolume();
+		this.soundPool.setVolume(streamID, leftVolume * soundVolume, rightVolume * soundVolume);
 	}
 
 	stop(streamID: number) {

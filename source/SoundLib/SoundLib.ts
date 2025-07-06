@@ -20,10 +20,11 @@ namespace SoundLib {
 	/**
 	 * Initializes client side code
 	 * @param maxStreamsCount max count of concurrently playing streams
+	 * @param globalVolume volume modifier for all sounds
 	 */
-	export function init(maxStreamsCount: number): void {
+	export function init(maxStreamsCount: number, globalVolume: number = 1): void {
 		if (!Game.isDedicatedServer || !Game.isDedicatedServer()) {
-			_client = new SoundManagerClient(maxStreamsCount, Registry.getAllSounds());
+			_client = new SoundManagerClient(maxStreamsCount, globalVolume, Registry.getAllSounds());
 		}
 	}
 

@@ -29,7 +29,7 @@ class AudioSourceClient implements Updatable {
      * Plays sound from this source.
      * If the sound cannot be played and its looped it creates SoundStream object in pending state,
      * otherwise it just skipped.
-     * @param sound sound name or object
+     * @param sound sound name
      * @param looping true if sound is looped, false otherwise
      * @param volume value from 0 to 1
      * @param radius the radius where the sound is heard
@@ -52,7 +52,7 @@ class AudioSourceClient implements Updatable {
 
     /**
      * Start playing sound from this source if it's not started.
-     * @param sound sound name or object
+     * @param sound sound name
      * @param looping true if sound is looped, false otherwise
      * @param volume value from 0 to 1
      * @param radius the radius where the sound is heard
