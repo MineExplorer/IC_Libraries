@@ -1,7 +1,7 @@
 /// <reference path="./SoundManagerClient.ts" />
 
 namespace SoundLib {
-	export type SoundPacketData = {
+	type SoundPacketData = {
 		x: number; 
 		y: number;
 		z: number;
@@ -11,14 +11,17 @@ namespace SoundLib {
 		radius: number;
 	}
 
-	let _client: SoundManagerClient | null;
+	let _client: Nullable<SoundManagerClient>;
 
-	export function getClient(): SoundManagerClient {
+	/**
+	 * @returns SoundManagerClient if it was initialized or null
+	 */
+	export function getClient(): Nullable<SoundManagerClient> {
 		return _client;
 	}
 
 	/**
-	 * Initializes client side code
+	 * Initializes client side code if the current instance of game has a client
 	 * @param maxStreamsCount max count of concurrently playing streams
 	 * @param globalVolume volume modifier for all sounds
 	 */
@@ -28,12 +31,32 @@ namespace SoundLib {
 		}
 	}
 
-	export function playSoundAt(coords: Vector, dimension: number, soundName: string, volume?: number, pitch?: number, radius?: number): number;
-	export function playSoundAt(x: number, y: number, z: number, dimension: number, soundName: string, volume?: number, pitch?: number, radius?: number): number;
-	export function playSoundAt(x: number | Vector, y: number, z: any, dimension?: any, soundName?: any, volume?: number, pitch?: number, radius?: number): number {
+	/**
+	 * Plays sound at coords
+	 * @param coords coords
+	 * @param dimension dimension
+	 * @param soundName sound name
+	 * @param volume value from 0 to 1
+	 * @param pitch value from 0 to 1
+	 * @param radius radius in blocks, 16 by default
+	 */
+	export function playSoundAt(coords: Vector, dimension: number, soundName: string, volume?: number, pitch?: number, radius?: number): void;
+	/**
+	 * Plays sound at coords
+	 * @param x x coord
+	 * @param y y coord
+	 * @param z z coord
+	 * @param dimension dimension
+	 * @param soundName sound name
+	 * @param radius radius in blocks, 16 by default
+	 * @param volume value from 0 to 1
+	 * @param pitch value from 0 to 1
+	 */
+	export function playSoundAt(x: number, y: number, z: number, dimension: number, soundName: string, radius?: number, volume?: number, pitch?: number): void;
+	export function playSoundAt(x: number | Vector, y: number, z: any, dimension?: any, soundName?: any, radius?: number, volume?: number, pitch?: number): void {
 		if (typeof x == "object") {
 			const coords = x;
-			return playSoundAt(coords.x, coords.y, coords.z, y, z, dimension, soundName, volume);
+			return playSoundAt(coords.x, coords.y, coords.z, y, z, dimension, soundName, radius);
 		}
 		
 		const sound = Registry.getSound(soundName);
@@ -51,14 +74,31 @@ namespace SoundLib {
 		});
 	}
 
-	export function playSoundAtEntity(entity: number, soundName: string, volume?: number, pitch?: number, radius: number = 16): number {
+	/**
+	 * Plays sound at entity coords and dimension
+	 * @param entity entity id
+	 * @param soundName sound name
+	 * @param radius radius in blocks, 16 by default
+	 * @param volume value from 0 to 1
+	 * @param pitch value from 0 to 1
+	 */
+	export function playSoundAtEntity(entity: number, soundName: string, radius?: number, volume?: number, pitch?: number): void {
 		const pos = Entity.getPosition(entity);
 		const dimension = Entity.getDimension(entity);
 		return playSoundAt(pos.x, pos.y, pos.z, dimension, soundName, volume, pitch, radius);
 	}
 
-	export function playSoundAtBlock(coords: Vector, dimension: number, soundName: string, volume?: number, radius: number = 16): number {
-		return playSoundAt(coords.x + .5, coords.y + .5, coords.z + .5, dimension, soundName, volume, 1, radius);
+	/**
+	 * Plays sound at center of the block
+	 * @param coords block coords
+	 * @param dimension dimension
+	 * @param soundName sound name
+	 * @param radius radius in blocks, 16 by default
+	 * @param volume value from 0 to 1
+	 * @param pitch value from 0 to 1
+	 */
+	export function playSoundAtBlock(coords: Vector, dimension: number, soundName: string, radius?: number, volume?: number, pitch?: number): void {
+		return playSoundAt(coords.x + .5, coords.y + .5, coords.z + .5, dimension, soundName, volume, pitch, radius);
 	}
 
 	/**

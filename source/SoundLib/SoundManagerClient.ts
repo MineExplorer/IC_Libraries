@@ -1,5 +1,5 @@
 /**
- * For wrapping SoundPool object
+ * Class for wrapping SoundPool object and provide client-side methods to play sounds
  */
 class SoundManagerClient {
 	settingsFolder = IS_OLD ? "Horizon" : "com.mojang"
@@ -8,13 +8,13 @@ class SoundManagerClient {
     soundVolume: number;
 	musicVolume: number;
 	soundPool: android.media.SoundPool;
-	isDebugMode = Game.isDeveloperMode;
     maxStreams: number = 0;
 
     constructor(maxStreamsCount: number, globalVolume: number, sounds: Sound[]) {
         this.soundPool = new android.media.SoundPool.Builder().setMaxStreams(maxStreamsCount).build();
 		this.maxStreams = maxStreamsCount;
 		this.globalVolume = globalVolume;
+		this.readSettings();
         this.loadSounds(sounds);
     }
     
@@ -59,11 +59,11 @@ class SoundManagerClient {
 		const streamId = this.soundPool.play(sound.internalId, volume, volume, 0, looping? -1 : 0, pitch);
 		if (streamId != 0) {
 			this.soundPool.setPriority(streamId, 1);
-			if (this.isDebugMode) {
+			if (Game.isDeveloperMode) {
 				Debug.m(`Playing sound ${sound.name} - id: ${streamId}, volume: ${volume} (took ${Debug.sysTime() - startTime} ms)`);
 			}
 		}
-		else if (this.isDebugMode) {
+		else if (Game.isDeveloperMode) {
 			Debug.m(`Failed to play sound ${sound.name}, volume: ${volume}`);
 		}
 		return streamId;
