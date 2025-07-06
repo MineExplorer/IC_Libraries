@@ -7,6 +7,7 @@ class SoundManagerClient {
     soundVolume: number;
 	musicVolume: number;
 	soundPool: android.media.SoundPool;
+	isDebugMode = Game.isDeveloperMode;
     maxStreams: number = 0;
 
     constructor(maxStreamsCount: number, sounds: Sound[]) {
@@ -24,9 +25,12 @@ class SoundManagerClient {
 	}
 
     loadSounds(sounds: Sound[]): void {
+		const startTime = Debug.sysTime();
         for (let sound of sounds) {
             sound.load(this.soundPool);
         }
+		const loadTime = Debug.sysTime() - startTime;
+		Logger.Log(`Loaded sounds in ${loadTime} ms`, "SoundLib");
     }
 
     /**
@@ -46,11 +50,11 @@ class SoundManagerClient {
 		const streamId = this.soundPool.play(sound.internalId, volume, volume, 0, looping? -1 : 0, pitch);
 		if (streamId != 0) {
 			this.soundPool.setPriority(streamId, 1);
-			if (Game.isDeveloperMode) {
+			if (this.isDebugMode) {
 				Debug.m(`Playing sound ${sound.name} - id: ${streamId}, volume: ${volume} (took ${Debug.sysTime() - startTime} ms)`);
 			}
 		}
-		else if (Game.isDeveloperMode) {
+		else if (this.isDebugMode) {
 			Debug.m(`Failed to play sound ${sound.name}, volume: ${volume}`);
 		}
 		return streamId;
