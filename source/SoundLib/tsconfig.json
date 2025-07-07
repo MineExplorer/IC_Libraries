@@ -1,0 +1,28 @@
+{
+	"compilerOptions": {
+		"target": "ES5",
+		"lib": ["ESNext"],
+		"outFile": "../../build/SoundLib/SoundLib.js",
+		"allowJs": false,
+		"downlevelIteration": true,
+		"strict": false,
+		"skipLibCheck": true,
+		"declaration": true
+	},
+	"exclude": [],
+	"include": [
+		"header.ts",
+		"SoundRegistry.ts",
+		"SoundLib.ts",
+		"Sound/*.ts",
+		//"AudioSourceNetworkType.ts",
+		//"TileEntityAudioSource.ts",
+		//"AudioSource.ts",
+		"AudioSource/AudioSourceClient.ts",
+		"AudioSource/AudioSourceEntityClient.ts",
+		"export.ts",
+	],
+	"files": [
+		"../../declarations/core-engine.d.ts"
+	]
+}
