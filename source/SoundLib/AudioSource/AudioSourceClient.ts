@@ -27,8 +27,8 @@ class AudioSourceClient implements Updatable {
 
     /**
      * Plays sound from this source.
-     * If the sound cannot be played and its looped it creates SoundStream object in pending state,
-     * otherwise it just skipped.
+     * If the sound cannot be played and its looped it creates SoundStream object in a pending state,
+     * otherwise it is just skipped.
      * @param sound sound name
      * @param looping true if sound is looped, false otherwise
      * @param volume value from 0 to 1
@@ -73,6 +73,10 @@ class AudioSourceClient implements Updatable {
         return this.streams.find(s => s.name == soundName) || null;
     }
 
+    /**
+     * Сhecks if the given sound is playing
+     * @param soundName sound name
+     */
     isPlaying(soundName: string) {
         const stream = this.getStream(soundName);
         return stream && stream.isPlaying();

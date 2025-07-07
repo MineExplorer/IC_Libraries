@@ -1,7 +1,7 @@
 class Sound {
     public name: string;
     public path: string;
-    public internalId: number;
+    public internalId?: number;
     private duration: number;
 
     /**
@@ -15,6 +15,10 @@ class Sound {
 
     load(soundPool: android.media.SoundPool) {
         this.internalId = soundPool.load(this.path, 1);
+    }
+
+    isLoaded(): boolean {
+        return !!this.internalId;
     }
 
     getDuration(): number {

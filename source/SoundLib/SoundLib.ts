@@ -21,13 +21,14 @@ namespace SoundLib {
 	}
 
 	/**
-	 * Initializes client side code if the current instance of game has a client
+	 * Initializes client side code if the current instance of game is not a dedicated server
 	 * @param maxStreamsCount max count of concurrently playing streams
 	 * @param globalVolume volume modifier for all sounds
 	 */
-	export function init(maxStreamsCount: number, globalVolume: number = 1): void {
+	export function initClient(maxStreamsCount: number, globalVolume: number = 1): void {
 		if (!Game.isDedicatedServer || !Game.isDedicatedServer()) {
-			_client = new SoundManagerClient(maxStreamsCount, globalVolume, Registry.getAllSounds());
+			_client = new SoundManagerClient(maxStreamsCount, globalVolume);
+			_client.loadSounds(Registry.getAllSounds());
 		}
 	}
 
@@ -48,15 +49,15 @@ namespace SoundLib {
 	 * @param z z coord
 	 * @param dimension dimension
 	 * @param soundName sound name
-	 * @param radius radius in blocks, 16 by default
 	 * @param volume value from 0 to 1
 	 * @param pitch value from 0 to 1
+	 * @param radius radius in blocks, 16 by default
 	 */
-	export function playSoundAt(x: number, y: number, z: number, dimension: number, soundName: string, radius?: number, volume?: number, pitch?: number): void;
-	export function playSoundAt(x: number | Vector, y: number, z: any, dimension?: any, soundName?: any, radius?: number, volume?: number, pitch?: number): void {
+	export function playSoundAt(x: number, y: number, z: number, dimension: number, soundName: string, volume?: number, pitch?: number, radius?: number): void;
+	export function playSoundAt(x: number | Vector, y: number, z: any, dimension?: any, soundName?: any, volume?: number, pitch?: number, radius?: number): void {
 		if (typeof x == "object") {
 			const coords = x;
-			return playSoundAt(coords.x, coords.y, coords.z, y, z, dimension, soundName, radius);
+			return playSoundAt(coords.x, coords.y, coords.z, y, z, dimension, soundName, volume);
 		}
 		
 		const sound = Registry.getSound(soundName);
@@ -78,11 +79,11 @@ namespace SoundLib {
 	 * Plays sound at entity coords and dimension
 	 * @param entity entity id
 	 * @param soundName sound name
-	 * @param radius radius in blocks, 16 by default
 	 * @param volume value from 0 to 1
 	 * @param pitch value from 0 to 1
+	 * @param radius radius in blocks, 16 by default
 	 */
-	export function playSoundAtEntity(entity: number, soundName: string, radius?: number, volume?: number, pitch?: number): void {
+	export function playSoundAtEntity(entity: number, soundName: string, volume?: number, pitch?: number, radius?: number): void {
 		const pos = Entity.getPosition(entity);
 		const dimension = Entity.getDimension(entity);
 		return playSoundAt(pos.x, pos.y, pos.z, dimension, soundName, volume, pitch, radius);
@@ -93,11 +94,11 @@ namespace SoundLib {
 	 * @param coords block coords
 	 * @param dimension dimension
 	 * @param soundName sound name
-	 * @param radius radius in blocks, 16 by default
 	 * @param volume value from 0 to 1
 	 * @param pitch value from 0 to 1
+	 * @param radius radius in blocks, 16 by default
 	 */
-	export function playSoundAtBlock(coords: Vector, dimension: number, soundName: string, radius?: number, volume?: number, pitch?: number): void {
+	export function playSoundAtBlock(coords: Vector, dimension: number, soundName: string, volume?: number, pitch?: number, radius?: number): void {
 		return playSoundAt(coords.x + .5, coords.y + .5, coords.z + .5, dimension, soundName, volume, pitch, radius);
 	}
 

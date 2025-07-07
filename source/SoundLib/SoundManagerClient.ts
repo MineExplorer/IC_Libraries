@@ -10,12 +10,11 @@ class SoundManagerClient {
 	soundPool: android.media.SoundPool;
     maxStreams: number = 0;
 
-    constructor(maxStreamsCount: number, globalVolume: number, sounds: Sound[]) {
+    constructor(maxStreamsCount: number, globalVolume: number) {
         this.soundPool = new android.media.SoundPool.Builder().setMaxStreams(maxStreamsCount).build();
 		this.maxStreams = maxStreamsCount;
 		this.globalVolume = globalVolume;
 		this.readSettings();
-        this.loadSounds(sounds);
     }
     
 	readSettings(): void {
@@ -43,7 +42,7 @@ class SoundManagerClient {
     }
 
     /**
-	 * Starts playing ssoundVolumeound and returns its streamId or 0 if failes to play sound.
+	 * Starts playing sound and returns its streamId or 0 if failes to play sound.
 	 * @param sound sound name or object
 	 * @param looping true if sound is looped, false otherwise
      * @param volume value from 0 to 1
@@ -54,6 +53,10 @@ class SoundManagerClient {
         if (typeof sound === "string") {
             sound = SoundLib.Registry.getSound(sound);
         }
+		if (!sound || !sound.isLoaded()) {
+			Logger.Log(`Attempted to play not loaded sound ${sound.name}`, "ERROR");
+			return 0;
+		}
 		volume *= this.getSoundVolume();
 		const startTime = Debug.sysTime();
 		const streamId = this.soundPool.play(sound.internalId, volume, volume, 0, looping? -1 : 0, pitch);
