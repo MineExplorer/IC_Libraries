@@ -31,7 +31,7 @@ namespace StorageInterface {
 		}
 
 		getSlotMaxStack(name: string): number {
-			let data = this.getSlotData(name);
+			const data = this.getSlotData(name);
 			return data && data.maxStack || 64;
 		}
 
@@ -48,7 +48,7 @@ namespace StorageInterface {
 		}
 
 		private isValidSlotInput(name: string, item: ItemInstance, side: number) {
-			let slotData = this.getSlotData(name);
+			const slotData = this.getSlotData(name);
 			return !slotData || !slotData.isValid || slotData.isValid(item, side, this.tileEntity);
 		}
 
@@ -68,9 +68,9 @@ namespace StorageInterface {
 				return this.getDefaultSlots("input");
 			}
 
-			let slotNames = [];
+			const slotNames = [];
 			for (let name in this.slots) {
-				let slotData = this.getSlotData(name);
+				const slotData = this.getSlotData(name);
 				if (slotData.input && this.isValidSlotSide(slotData.side, side)) {
 					slotNames.push(name);
 				}
@@ -80,13 +80,13 @@ namespace StorageInterface {
 
 		getReceivingItemCount(item: ItemInstance, side: number = -1): number {
 			if (!this.isValidInput(item, side, this.tileEntity)) return 0;
-			let slots = this.getInputSlots(side);
+			const slots = this.getInputSlots(side);
 			let count = 0;
 			for (let name of slots) {
 				if (!this.isValidSlotInput(name, item, side)) continue;
-				let slot = this.getSlot(name);
+				const slot = this.getSlot(name);
 				if (slot.id == 0 || slot.id == item.id && slot.data == item.data) {
-					let maxStack = Math.min(Item.getMaxStack(item.id), this.getSlotMaxStack(name));
+					const maxStack = Math.min(Item.getMaxStack(item.id, item.data), this.getSlotMaxStack(name));
 					count += maxStack - slot.count;
 					if (count >= item.count) break;
 				}
@@ -99,9 +99,9 @@ namespace StorageInterface {
 		}
 
 		addItemToSlot(name: string, item: ItemInstance, maxCount: number = 64) {
-			let slot = this.getSlot(name);
-			let maxStack = this.getSlotMaxStack(name);
-			let added = StorageInterface.addItemToSlot(item, slot, Math.min(maxCount, maxStack));
+			const slot = this.getSlot(name);
+			const maxStack = this.getSlotMaxStack(name);
+			const added = StorageInterface.addItemToSlot(item, slot, Math.min(maxCount, maxStack));
 			if (added > 0) {
 				this.setSlot(name, slot.id, slot.count, slot.data, slot.extra);
 			}
@@ -111,7 +111,7 @@ namespace StorageInterface {
 		addItem(item: ItemInstance, side: number = -1, maxCount: number = 64): number {
 			if (!this.isValidInput(item, side, this.tileEntity)) return 0;
 			let count = 0;
-			let slots = this.getInputSlots(side);
+			const slots = this.getInputSlots(side);
 			for (let name of slots) {
 				if (this.isValidSlotInput(name, item, side)) {
 					count += this.addItemToSlot(name, item, maxCount - count);
@@ -126,11 +126,11 @@ namespace StorageInterface {
 				return this.getDefaultSlots("output");
 			}
 
-			let slotNames = [];
+			const slotNames = [];
 			for (let name in this.slots) {
-				let slotData = this.slots[name];
+				const slotData = this.slots[name];
 				if (slotData.output) {
-					let item = this.container.getSlot(name);
+					const item = this.container.getSlot(name);
 					if (this.isValidSlotSide(slotData.side, side) && (!slotData.canOutput || slotData.canOutput(item, side, this.tileEntity))) {
 						slotNames.push(name);
 					}
@@ -154,7 +154,7 @@ namespace StorageInterface {
 		}
 
 		receiveLiquid(liquidStorage: ILiquidStorage, liquid: string, amount: number): number {
-			let storedLiquid = liquidStorage.getLiquidStored();
+			const storedLiquid = liquidStorage.getLiquidStored();
 			if (!storedLiquid || storedLiquid == liquid) {
 				return amount - liquidStorage.addLiquid(liquid, amount / this.liquidUnitRatio) * this.liquidUnitRatio;
 			}

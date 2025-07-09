@@ -10,7 +10,7 @@ namespace StorageInterface {
 		classType?: typeof TileEntityInterface
 	}
 	
-	export var data: {[key: number]: StorageInterfacePrototype} = {};
+	export const data: {[key: number]: StorageInterfacePrototype} = {};
 
 	/** @returns TileEntity StorageInterface prototype by block id */
 	export function getPrototype(id: number): StorageInterfacePrototype {
@@ -51,27 +51,27 @@ namespace StorageInterface {
 	];
 
 	export function getRelativeCoords(coords: Vector, side: number): Vector {
-		let dir = directionsBySide[side];
+		const dir = directionsBySide[side];
 		return {x: coords.x + dir.x, y: coords.y + dir.y, z: coords.z + dir.z};
 	}
 
 	export function setSlotMaxStackPolicy(container: ItemContainer, slotName: string, maxCount: number): void {
 		container.setSlotAddTransferPolicy(slotName, function(container, name, id, amount, data) {
-			let maxStack = Math.min(maxCount, Item.getMaxStack(id));
+			const maxStack = Math.min(maxCount, Item.getMaxStack(id, data));
 			return Math.max(0, Math.min(amount, maxStack - container.getSlot(name).count));
 		});
 	}
 
 	export function setSlotValidatePolicy(container: ItemContainer, slotName: string, func: (name: string, id: number, amount: number, data: number, extra: ItemExtraData, container: ItemContainer, playerUid: number) => boolean): void {
 		container.setSlotAddTransferPolicy(slotName, function(container, name, id, amount, data, extra, playerUid) {
-			amount = Math.min(amount, Item.getMaxStack(id) - container.getSlot(name).count);
+			amount = Math.min(amount, Item.getMaxStack(id, data) - container.getSlot(name).count);
 			return func(name, id, amount, data, extra, container, playerUid) ? amount : 0;
 		});
 	}
 
 	export function setGlobalValidatePolicy(container: ItemContainer, func: (name: string, id: number, amount: number, data: number, extra: ItemExtraData, container: ItemContainer, playerUid: number) => boolean): void {
 		container.setGlobalAddTransferPolicy(function(container, name, id, amount, data, extra, playerUid) {
-			amount = Math.min(amount, Item.getMaxStack(id) - container.getSlot(name).count);
+			amount = Math.min(amount, Item.getMaxStack(id, data) - container.getSlot(name).count);
 			return func(name, id, amount, data, extra, container, playerUid) ? amount : 0;
 		});
 	}
@@ -93,7 +93,7 @@ namespace StorageInterface {
 	 */
 	export function addItemToSlot(item: ItemInstance, slot: ItemInstance, count: number = 64): number {
 		if (slot.id == 0 || slot.id == item.id && slot.data == item.data) {
-			let maxStack = Item.getMaxStack(item.id);
+			const maxStack = Item.getMaxStack(item.id, item.data);
 			let add = Math.min(item.count, maxStack - slot.count);
 			if (count < add) add = count;
 			if (add > 0) {
@@ -114,11 +114,11 @@ namespace StorageInterface {
 
 	/** Returns storage interface for container in the world */
 	export function getStorage(region: BlockSource, x: number, y: number, z: number): Nullable<Storage> {
-		let nativeTileEntity = region.getBlockEntity(x, y, z);
+		const nativeTileEntity = region.getBlockEntity(x, y, z);
 		if (nativeTileEntity && nativeTileEntity.getSize() > 0) {
 			return new NativeContainerInterface(nativeTileEntity);
 		}
-		let tileEntity = World.getTileEntity(x, y, z, region);
+		const tileEntity = World.getTileEntity(x, y, z, region);
 		if (tileEntity && tileEntity.container && tileEntity.__initialized) {
 			return StorageInterfaceFactory.getTileEntityInterface(tileEntity);
 		}
@@ -127,7 +127,7 @@ namespace StorageInterface {
 
 	/** Returns storage interface for TileEntity with liquid storage */
 	export function getLiquidStorage(region: BlockSource, x: number, y: number, z: number): Nullable<TileEntityInterface> {
-		let tileEntity = World.getTileEntity(x, y, z, region);
+		const tileEntity = World.getTileEntity(x, y, z, region);
 		if (tileEntity && tileEntity.__initialized) {
 			return StorageInterfaceFactory.getTileEntityInterface(tileEntity);
 		}
@@ -136,13 +136,13 @@ namespace StorageInterface {
 
 	/** Returns storage interface for neighbour container on specified side */
 	export function getNeighbourStorage(region: BlockSource, coords: Vector, side: number): Nullable<Storage> {
-		let dir = getRelativeCoords(coords, side);
+		const dir = getRelativeCoords(coords, side);
 		return getStorage(region, dir.x, dir.y, dir.z);
 	}
 
 	/** Returns storage interface for neighbour TileEntity with liquid storage on specified side */
 	export function getNeighbourLiquidStorage(region: BlockSource, coords: Vector, side: number): Nullable<TileEntityInterface> {
-		let dir = getRelativeCoords(coords, side);
+		const dir = getRelativeCoords(coords, side);
 		return getLiquidStorage(region, dir.x, dir.y, dir.z);
 	}
 
@@ -157,11 +157,11 @@ namespace StorageInterface {
 			region = null;
 			side = region;
 		}
-		let containers = {};
+		const containers = {};
 		for (let i = 0; i < 6; i++) {
 			if (side >= 0 && i != side) continue;
-			let dir = getRelativeCoords(coords, i);
-			let container = World.getContainer(dir.x, dir.y, dir.z, region);
+			const dir = getRelativeCoords(coords, i);
+			const container = World.getContainer(dir.x, dir.y, dir.z, region);
 			if (container) {
 				containers[i] = container;
 			}
@@ -180,10 +180,10 @@ namespace StorageInterface {
 			region = null;
 			side = region;
 		}
-		let storages = {};
+		const storages = {};
 		for (let i = 0; i < 6; i++) {
 			if (side >= 0 && side != i) continue;
-			let storage = getNeighbourLiquidStorage(region, coords, i);
+			const storage = getNeighbourLiquidStorage(region, coords, i);
 			if (storage) storages[i] = storage;
 		}
 		return storages;
@@ -197,8 +197,8 @@ namespace StorageInterface {
 			return Object.keys(container.slots);
 		}
 		else {
-			let slots = [];
-			let size = container.getSize();
+			const slots = [];
+			const size = container.getSize();
 			for (let i = 0; i < size; i++) {
 				slots.push(i);
 			}
@@ -209,10 +209,10 @@ namespace StorageInterface {
 	/** Puts items to containers */
 	export function putItems(items: ItemInstance[], containers: ContainersMap): void {
 		for (let i in items) {
-			let item = items[i];
+			const item = items[i];
 			for (let side in containers) {
 				if (item.count == 0) break;
-				let container = containers[side];
+				const container = containers[side];
 				putItemToContainer(item, container, parseInt(side) ^ 1);
 			}
 		}
@@ -223,7 +223,7 @@ namespace StorageInterface {
 	 * @maxCount max count of item to transfer (optional)
 	*/
 	export function putItemToContainer(item: ItemInstance, container: TileEntity | Container, side?: number, maxCount?: number): number {
-		let storage = getInterface(container);
+		const storage = getInterface(container);
 		return storage.addItem(item, side, maxCount);
 	}
 
@@ -236,8 +236,8 @@ namespace StorageInterface {
 	 * @oneStack if true, will extract only 1 item
 	*/
 	export function extractItemsFromContainer(inputContainer: TileEntity | Container, outputContainer: TileEntity | Container, inputSide: number, maxCount?: number, oneStack?: boolean): number {
-		let inputStorage = getInterface(inputContainer);
-		let outputStorage = getInterface(outputContainer);
+		const inputStorage = getInterface(inputContainer);
+		const outputStorage = getInterface(outputContainer);
 		return extractItemsFromStorage(inputStorage, outputStorage, inputSide, maxCount, oneStack);
 	}
 
@@ -251,11 +251,11 @@ namespace StorageInterface {
 	*/
 	export function extractItemsFromStorage(inputStorage: Storage, outputStorage: Storage, inputSide: number, maxCount?: number, oneStack?: boolean): number {
 		let count = 0;
-		let slots = outputStorage.getOutputSlots(inputSide ^ 1);
+		const slots = outputStorage.getOutputSlots(inputSide ^ 1);
 		for (let name of slots) {
-			let slot = outputStorage.getSlot(name);
+			const slot = outputStorage.getSlot(name);
 			if (slot.id !== 0) {
-				let added = inputStorage.addItem(slot, inputSide, maxCount - count);
+				const added = inputStorage.addItem(slot, inputSide, maxCount - count);
 				if (added > 0) {
 					count += added;
 					outputStorage.setSlot(name, slot.id, slot.count, slot.data, slot.extra);
@@ -279,9 +279,9 @@ namespace StorageInterface {
 		if (!(inputStorage instanceof TileEntityInterface)) { // reverse compatibility
 			inputStorage = StorageInterfaceFactory.getTileEntityInterface(inputStorage as TileEntity);
 		}
-		let outputSide = inputSide ^ 1;
-		let inputTank = inputStorage.getInputTank(inputSide);
-		let outputTank = outputStorage.getOutputTank(outputSide);
+		const outputSide = inputSide ^ 1;
+		const inputTank = inputStorage.getInputTank(inputSide);
+		const outputTank = outputStorage.getOutputTank(outputSide);
 		if (!inputTank || !outputTank) return 0;
 
 		if (!liquid) liquid = outputTank.getLiquidStored();
@@ -299,9 +299,9 @@ namespace StorageInterface {
 		if (!(outputStorage instanceof TileEntityInterface)) { // reverse compatibility
 			outputStorage = StorageInterfaceFactory.getTileEntityInterface(outputStorage as TileEntity);
 		}
-		let inputSide = outputSide ^ 1;
-		let inputTank = inputStorage.getInputTank(inputSide);
-		let outputTank = outputStorage.getOutputTank(outputSide);
+		const inputSide = outputSide ^ 1;
+		const inputTank = inputStorage.getInputTank(inputSide);
+		const outputTank = outputStorage.getOutputTank(outputSide);
 		if (!inputTank || !outputTank) return 0;
 
 		if (inputStorage.canReceiveLiquid(liquid, inputSide) && !inputTank.isFull(liquid)) {
@@ -319,22 +319,22 @@ namespace StorageInterface {
 	*/
 	export function checkHoppers(tile: TileEntity): void {
 		if (World.getThreadTime()%8 > 0) return;
-		let region = tile.blockSource;
-		let storage = StorageInterface.getInterface(tile);
+		const region = tile.blockSource;
+		const storage = StorageInterface.getInterface(tile);
 
 		// input
 		for (let side = 1; side < 6; side++) {
-			let dir = getRelativeCoords(tile, side);
-			let block = region.getBlock(dir.x, dir.y, dir.z);
+			const dir = getRelativeCoords(tile, side);
+			const block = region.getBlock(dir.x, dir.y, dir.z);
 			if (block.id == 154 && block.data == side + Math.pow(-1, side)) {
-				let hopper = StorageInterface.getStorage(region, dir.x, dir.y, dir.z);
+				const hopper = StorageInterface.getStorage(region, dir.x, dir.y, dir.z);
 				extractItemsFromStorage(storage, hopper, side, 1);
 			}
 		}
 
 		// extract
 		if (region.getBlockId(tile.x, tile.y - 1, tile.z) == 154) {
-			let hopper = StorageInterface.getStorage(region, tile.x, tile.y - 1, tile.z);
+			const hopper = StorageInterface.getStorage(region, tile.x, tile.y - 1, tile.z);
 			extractItemsFromStorage(hopper, storage, 0, 1);
 		}
 	}

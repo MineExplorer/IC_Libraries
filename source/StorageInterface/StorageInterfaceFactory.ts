@@ -6,12 +6,15 @@ namespace StorageInterfaceFactory {
             return tileEntity.__storageInterface;
         }
         const storagePrototype = StorageInterface.getPrototype(tileEntity.blockID);
-        const interface = new storagePrototype.classType(tileEntity);
+        let interface: StorageInterface.TileEntityInterface;
         if (storagePrototype) {
+            interface = new storagePrototype.classType(tileEntity)
             for (let key in storagePrototype) {
                 if (key == "classType") continue;
                 interface[key] = storagePrototype[key];
             }
+        } else {
+            interface = new StorageInterface.TileEntityInterface(tileEntity);
         }
         tileEntity.__storageInterface = interface;
         return interface;

@@ -1,8 +1,7 @@
 /// <reference path="Storage.ts" />
 
 namespace StorageInterface {
-	export class NativeContainerInterface
-	implements Storage {
+	export class NativeContainerInterface implements Storage {
 		readonly container: NativeTileEntity;
 		readonly isNativeContainer = true;
 
@@ -19,8 +18,8 @@ namespace StorageInterface {
 		}
 
 		getContainerSlots() {
-			let slots = [];
-			let size = this.container.getSize();
+			const slots = [];
+			const size = this.container.getSize();
 			for (let i = 0; i < size; i++) {
 				slots.push(i);
 			}
@@ -28,7 +27,7 @@ namespace StorageInterface {
 		}
 
 		getInputSlots(side: number): number[] {
-			let type = this.container.getType();
+			const type = this.container.getType();
 			switch(type) {
 			case 1:
 			case 38:
@@ -42,12 +41,12 @@ namespace StorageInterface {
 		}
 
 		getReceivingItemCount(item: ItemInstance, side: number): number {
-			let slots = this.getInputSlots(side);
+			const slots = this.getInputSlots(side);
 			let count = 0;
 			for (let name of slots) {
-				let slot = this.getSlot(name);
+				const slot = this.getSlot(name);
 				if (slot.id == 0 || slot.id == item.id && slot.data == item.data) {
-					count += Item.getMaxStack(item.id) - slot.count;
+					count += Item.getMaxStack(item.id, item.data) - slot.count;
 					if (count >= item.count) break;
 				}
 			}
@@ -55,8 +54,8 @@ namespace StorageInterface {
 		}
 
 		addItemToSlot(index: number, item: ItemInstance, maxCount?: number) {
-			let slot = this.getSlot(index);
-			let added = StorageInterface.addItemToSlot(item, slot, maxCount);
+			const slot = this.getSlot(index);
+			const added = StorageInterface.addItemToSlot(item, slot, maxCount);
 			if (added > 0) {
 				this.setSlot(index, slot.id, slot.count, slot.data, slot.extra);
 			}
@@ -65,7 +64,7 @@ namespace StorageInterface {
 
 		addItem(item: ItemInstance, side: number, maxCount: number = 64): number {
 			let count = 0;
-			let slots = this.getInputSlots(side);
+			const slots = this.getInputSlots(side);
 			for (let i = 0; i < slots.length; i++) {
 				count += this.addItemToSlot(i, item, maxCount);
 				if (item.count == 0 || count >= maxCount) {break;}
@@ -74,7 +73,7 @@ namespace StorageInterface {
 		}
 
 		getOutputSlots(): number[] {
-			let type = this.container.getType();
+			const type = this.container.getType();
 			switch(type) {
 			case 1:
 			case 38:
@@ -88,7 +87,7 @@ namespace StorageInterface {
 		}
 
 		clearContainer(): void {
-			let size = this.container.getSize();
+			const size = this.container.getSize();
 			for (let i = 0; i < size; i++) {
 				this.container.setSlot(i, 0, 0, 0);
 			}
