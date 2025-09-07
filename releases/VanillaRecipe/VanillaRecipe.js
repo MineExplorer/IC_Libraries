@@ -9,9 +9,20 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
+var __values = (this && this.__values) || function(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    if (m) return m.call(o);
+    if (o && typeof o.length === "number") return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+};
 LIBRARY({
     name: "VanillaRecipe",
-    version: 5,
+    version: 6,
     shared: true,
     api: "CoreEngine"
 });
@@ -23,7 +34,8 @@ var VanillaRecipe;
     var resource_path;
     var behavior_path;
     var behavior_recipes_path;
-    var recipes = {};
+    VanillaRecipe.recipes = {};
+    var stonecutterRecipesForRV = [];
     function setResourcePath(path) {
         if (!IS_OLD)
             return;
@@ -40,7 +52,7 @@ var VanillaRecipe;
             recursiveDelete(new java.io.File(path + "/" + BEHAVIOR_NAME));
             return;
         }
-        behavior_path = path + ("/" + BEHAVIOR_NAME + "/");
+        behavior_path = path + "/".concat(BEHAVIOR_NAME, "/");
         //behavior_path = Resources.addRuntimePack("behavior", BEHAVIOR_NAME) + "/";
         behavior_recipes_path = behavior_path + "recipes/";
         FileTools.mkdir(behavior_recipes_path);
@@ -125,7 +137,7 @@ var VanillaRecipe;
     var __isValid__ = true;
     function convertToVanillaID(stringID) {
         if (!getNumericID(stringID)) {
-            Logger.Log("ID " + stringID + " is invalid", "ERROR");
+            Logger.Log("ID ".concat(stringID, " is invalid"), "ERROR");
             __isValid__ = false;
             return null;
         }
@@ -179,9 +191,9 @@ var VanillaRecipe;
     function addCraftingRecipe(name, obj, addToWorkbench) {
         var _a;
         var _b;
-        if (recipes[name])
+        if (VanillaRecipe.recipes[name])
             return;
-        recipes[name] = true;
+        VanillaRecipe.recipes[name] = obj;
         if (addToWorkbench)
             addWorkbenchRecipeFromJSON(obj);
         var type = obj.type;
@@ -212,14 +224,23 @@ var VanillaRecipe;
             var newObj = (_a = {
                     format_version: "1.12"
                 },
-                _a["minecraft:recipe_" + type] = __assign({ description: {
-                        identifier: "vanilla_recipe:" + name
+                _a["minecraft:recipe_".concat(type)] = __assign({ description: {
+                        identifier: "vanilla_recipe:".concat(name)
                     } }, obj),
                 _a);
             generateJSONRecipe(name, newObj);
         }
     }
     VanillaRecipe.addCraftingRecipe = addCraftingRecipe;
+    function deleteRecipe(name) {
+        var recipe = VanillaRecipe.recipes[name];
+        if (recipe) {
+            var path = getFilePath(name);
+            new java.io.File(path).delete();
+            delete VanillaRecipe.recipes[name];
+        }
+    }
+    VanillaRecipe.deleteRecipe = deleteRecipe;
     function addShapedRecipe(name, obj, addToWorkbench) {
         obj.type = "shaped";
         addCraftingRecipe(name, obj, addToWorkbench);
@@ -230,21 +251,51 @@ var VanillaRecipe;
         addCraftingRecipe(name, obj, addToWorkbench);
     }
     VanillaRecipe.addShapelessRecipe = addShapelessRecipe;
-    function deleteRecipe(name) {
-        var recipe = recipes[name];
-        if (recipe) {
-            var path = getFilePath(name);
-            new java.io.File(path).delete();
-            recipes[name] = false;
-        }
-    }
-    VanillaRecipe.deleteRecipe = deleteRecipe;
     function addStonecutterRecipe(name, obj) {
         obj.type = "shapeless";
         obj.tags = ["stonecutter"];
         obj.priority = obj.priority || 0;
+        if (!IS_OLD) {
+            var jsonInput = obj.ingredients[0];
+            var jsonResult = obj.result;
+            stonecutterRecipesForRV.push({
+                input: { id: getNumericID(jsonInput.item), count: jsonInput.count || 1, data: jsonInput.data || 0 },
+                output: { id: getNumericID(jsonResult.item), count: jsonResult.count || 1, data: jsonResult.data || 0 }
+            });
+            //const inputItem = {id: getNumericID(jsonInput.item), count: jsonInput.count || 1, data: jsonInput.data || 0};
+            //const outputItem = {id: getNumericID(jsonResult.item), count: jsonResult.count || 1, data: jsonResult.data || 0};
+            //const find = stonecutterRecipesForRV.find(recipe => 
+            //	recipe.input.id === inputItem.id && recipe.input.count === inputItem.count && recipe.input.data === inputItem.data
+            //);
+            //find ? find.output.push(outputItem) : stonecutterRecipesForRV.push({input: inputItem, output: [outputItem]});
+        }
         addCraftingRecipe(name, obj);
     }
     VanillaRecipe.addStonecutterRecipe = addStonecutterRecipe;
+    var RecipeViewer;
+    if (!IS_OLD) {
+        ModAPI.addAPICallback("RecipeViewer", function (api) {
+            RecipeViewer = api;
+        });
+        Callback.addCallback("PostLoaded", function () {
+            var e_1, _a;
+            if (!RecipeViewer)
+                return;
+            var stonecutterRecipes = RecipeViewer.RecipeTypeRegistry.get("stonecutter").getAllList();
+            try {
+                for (var stonecutterRecipesForRV_1 = __values(stonecutterRecipesForRV), stonecutterRecipesForRV_1_1 = stonecutterRecipesForRV_1.next(); !stonecutterRecipesForRV_1_1.done; stonecutterRecipesForRV_1_1 = stonecutterRecipesForRV_1.next()) {
+                    var recipe = stonecutterRecipesForRV_1_1.value;
+                    stonecutterRecipes.push({ input: [recipe.input], output: [recipe.output] });
+                }
+            }
+            catch (e_1_1) { e_1 = { error: e_1_1 }; }
+            finally {
+                try {
+                    if (stonecutterRecipesForRV_1_1 && !stonecutterRecipesForRV_1_1.done && (_a = stonecutterRecipesForRV_1.return)) _a.call(stonecutterRecipesForRV_1);
+                }
+                finally { if (e_1) throw e_1.error; }
+            }
+        });
+    }
 })(VanillaRecipe || (VanillaRecipe = {}));
 EXPORT("VanillaRecipe", VanillaRecipe);

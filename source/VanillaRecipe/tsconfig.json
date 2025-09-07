@@ -14,6 +14,7 @@
 		"VanillaRecipe.ts"
 	],
 	"files": [
-		"../../declarations/core-engine.d.ts"
+		"../../declarations/core-engine.d.ts",
+		"../../declarations/RecipeViewer.d.ts",
 	]
 }

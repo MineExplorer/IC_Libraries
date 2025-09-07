@@ -1,6 +1,6 @@
 LIBRARY({
 	name: "VanillaRecipe",
-	version: 5,
+	version: 6,
 	shared: true,
 	api: "CoreEngine"
 });
@@ -26,7 +26,8 @@ namespace VanillaRecipe {
 	let resource_path: string;
 	let behavior_path: string;
 	let behavior_recipes_path: string;
-	let recipes = {};
+	export const recipes: {[key: string]: RecipeFormat} = {};
+	const stonecutterRecipesForRV: {input: ItemInstance, output: ItemInstance}[] = [];
 
 	export function setResourcePath(path: string): void {
 		if (!IS_OLD) return;
@@ -181,7 +182,7 @@ namespace VanillaRecipe {
 
 	export function addCraftingRecipe(name: string, obj: RecipeFormat, addToWorkbench?: boolean): void {
 		if (recipes[name]) return;
-		recipes[name] = true;
+		recipes[name] = obj;
 
 		if (addToWorkbench) addWorkbenchRecipeFromJSON(obj);
 
@@ -225,6 +226,15 @@ namespace VanillaRecipe {
 		}
 	}
 
+	export function deleteRecipe(name: string): void {
+		const recipe = recipes[name];
+		if (recipe) {
+			const path = getFilePath(name);
+			new java.io.File(path).delete();
+			delete recipes[name];
+		}
+	}
+
 	export function addShapedRecipe(name: string, obj: RecipeFormat, addToWorkbench?: boolean): void {
 		obj.type = "shaped";
 		addCraftingRecipe(name, obj, addToWorkbench);
@@ -235,20 +245,35 @@ namespace VanillaRecipe {
 		addCraftingRecipe(name, obj, addToWorkbench);
 	}
 
-	export function deleteRecipe(name: string): void {
-		const recipe = recipes[name];
-		if (recipe) {
-			const path = getFilePath(name);
-			new java.io.File(path).delete();
-			recipes[name] = false;
-		}
-	}
-
 	export function addStonecutterRecipe(name: string, obj: RecipeFormat): void {
 		obj.type = "shapeless";
 		obj.tags = [ "stonecutter" ];
 		obj.priority = obj.priority || 0;
+		if (!IS_OLD) {
+			const jsonInput = obj.ingredients[0];
+			const jsonResult = obj.result as ItemObj;
+			stonecutterRecipesForRV.push({
+				input: {id: getNumericID(jsonInput.item), count: jsonInput.count || 1, data: jsonInput.data || 0}, 
+				output: {id: getNumericID(jsonResult.item), count: jsonResult.count || 1, data: jsonResult.data || 0}
+			});
+		}
 		addCraftingRecipe(name, obj);
+	}
+	
+	let RecipeViewer: {Core: any, RecipeType: typeof RecipeType, RecipeTypeRegistry: RecipeTypeRegistry};
+
+	if (!IS_OLD) {
+		ModAPI.addAPICallback("RecipeViewer", function(api: typeof RecipeViewer) {
+			RecipeViewer = api;
+		});
+		Callback.addCallback("PostLoaded", function() {
+			if (!RecipeViewer) return;
+
+			const stonecutterRecipes = RecipeViewer.RecipeTypeRegistry.get("stonecutter").getAllList();
+			for (let recipe of stonecutterRecipesForRV) {
+				stonecutterRecipes.push({input: [recipe.input], output: [recipe.output]});
+			}
+		});
 	}
 }
 
