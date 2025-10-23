@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"target": "ES5",
+		"lib": ["ESNext"],
+		"outFile": "../../build/LangLoader/LangLoader.js",
+		"allowJs": false,
+		"downlevelIteration": true,
+		"strict": false,
+		"skipLibCheck": true,
+		"declaration": true
+	},
+	"exclude": [],
+	"include": [
+		"LangLoader.ts"
+	],
+	"files": [
+		"../../declarations/core-engine.d.ts"
+	]
+}

@@ -748,6 +748,33 @@ declare namespace Block {
 	}
 
 	/**
+	 * Adds ability to apply numeric state to a block in runtime by using
+	 * {@link BlockSource.setBlock} and passing desired state via {@link BlockState.addState}.
+	 * Each state can be requested by getting a block using {@link BlockSource.getBlock}
+	 * and then calling {@link BlockState.hasState}/{@link BlockState.getState}
+	 * states can be used in {@link ICRender.BlockState} conditions,
+	 * by game itself and manually by developer.
+	 * @param id numeric block ID
+	 * @param state numeric state that will be added for block
+     * @since 2.4.0b122-4 arm64
+	 */
+	function addBlockStateId(id: number, state: EBlockStates | number): void;
+
+	/**
+	 * Adds ability to apply named state to a block in runtime by using
+	 * {@link BlockSource.setBlock} and passing desired state via {@link BlockState.addState}.
+	 * Each state can be requested by getting a block using {@link BlockSource.getBlock}
+	 * and then calling {@link BlockState.hasState}/{@link BlockState.getState},
+	 * states can be used in {@link ICRender.BlockState} conditions,
+	 * by game itself and manually by developer.
+	 * @param id numeric block ID
+	 * @param key named state that will be added for block,
+	 * usually key of {@link EBlockStates}
+     * @since 2.4.0b122-4 arm64
+	 */
+	function addBlockState(id: number, key: string): void;
+
+	/**
 	 * @param id numeric block ID
 	 * @returns `true`, if the specified block ID is a vanilla block.
 	 */
@@ -792,7 +819,7 @@ declare namespace Block {
 	 * @param player unique ID of the player entity
 	 */
 	interface ClickFunction {
-		(coords: Callback.ItemUseCoordinates, item: ItemInstance, block: Tile, player: number): void;
+		(coords: Callback.ItemUseCoordinates, item: ItemInstance, block: Tile, playerUid: number): void;
 	}
 
 	/**
@@ -1092,7 +1119,7 @@ declare namespace Block {
 	/**
 	 * Makes block receive redstone signals via "RedstoneSignal" callback.
 	 * @param nameID block numeric or string ID
-	 * @param connectToRedstone if true, redstone wires will connect to the block
+	 * @param connectToRedstone if `true`, redstone wires will connect to the block
 	 * @since 2.0.2b23
 	 */
 	function setupAsRedstoneReceiver(nameID: number | string, connectToRedstone: boolean): void;
@@ -1100,7 +1127,7 @@ declare namespace Block {
 	/**
 	 * Makes block emit redstone signal.
 	 * @param nameID block numeric or string ID
-	 * @param connectToRedstone if true, redstone wires will connect to the block
+	 * @param connectToRedstone if `true`, redstone wires will connect to the block
 	 * @since 2.0.2b23
 	 */
 	function setupAsRedstoneEmitter(nameID: number | string, connectToRedstone: boolean): void;
@@ -1313,7 +1340,35 @@ declare namespace Block {
 		 * @default false
 		 * @since 2.2.1b95
 		 */
-		can_be_extra_block?: boolean
+		can_be_extra_block?: boolean,
+		/**
+		 * Adds ability to apply states to this block, preferably using
+		 * vanilla ones from {@link EBlockStates}, but if they are not enough,
+		 * you can always add your own using {@link BlockState.registerBlockState}.
+		 * Inexistent states are ignored.
+		 * @default ["color"] // this state always has been here
+		 * @since 2.4.0b122-4 arm64
+		 */
+		states?: [EBlockStates | number | string][],
+		/**
+		 * Alternatively catch on fire chance modifier,
+		 * values between 0 and 100, with a higher number
+		 * meaning more likely to catch on fire.
+		 * For a "flame_odds" greater than 0, the fire will
+		 * continue to burn until the block is destroyed
+		 * (or it will burn forever if the "burn_odds" is 0).
+		 * @default 0 // 5 for planks
+		 * @since 3.1.0b125
+		 */
+		flame_odds?: number,
+		/**
+		 * Alternatively destroy by fire chance modifier,
+		 * values between 0 and 100, with a higher number
+		 * meaning more likely to be destroyed by fire.
+		 * @default 0 // 20 for planks
+		 * @since 3.1.0b125
+		 */
+		burn_odds?: number;
 	}
 
 	/**
@@ -2003,6 +2058,15 @@ declare class BlockSource {
 	getGrassColor(x: number, z: number): number;
 
 	/**
+	 * @param material numeric identifier of block material, which is specified when
+	 * it is registered in {@link Block.SpecialType}, e.g. 5 for liquids and 3 by default
+	 * @returns Is requested material available in that bounds,
+	 * preferably for a quick check of block pile.
+     * @since 2.4.0b122-4 arm64
+	 */
+	containsMaterial(x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, material: number): boolean;
+
+	/**
 	 * @param chunkX X coord of the chunk
 	 * @param chunkZ Z coord of the chunk
 	 * @returns `true` if chunk is loaded, `false` otherwise.
@@ -2131,12 +2195,128 @@ declare class BlockSource {
 	  */
 	spawnExpOrbs(x: number, y: number, z: number, amount: number): void;
 
+	/**
+	 * Gets signal strength at specified coordinates
+	 * that consumers can receive.
+	 * @since 3.1.0b125
+	 */
+	getRedstoneSignal(x: number, y: number, z: number): number;
+
+	/**
+	 * Sets signal with specified strength to block, it is
+	 * recommended to call {@link Block.setupAsRedstoneEmitter}
+	 * to be able to add a source. Once block is destroyed,
+	 * signal will be reset.
+	 * @param strength level between 0-15 (inclusive)
+	 * @param delay time in ticks after which signal strength
+	 * will be reset, should be more than zero, updated depending
+	 * on redstone tick (1 redstone tick = 2 regular ticks), default is `4`
+	 * @param facing world side of {@link EBlockSide} to which signal
+	 * from source will be applied, use -1 to apply it to all sides
+	 * (as from redstone block), default is `-1`
+	 * @since 3.1.0b125
+	 */
+	setRedstoneSignal(x: number, y: number, z: number, strength: number, delay?: number, facing?: number): void;
+
+	/**
+	 * Causes a random tick event, usually affecting rate of
+	 * plant growth or grass spread and leaf disappearings.
+	 * @since 3.1.0b125
+	 */
+	randomTick(x: number, y: number, z: number): void;
+
 }
+declare namespace BlockState {
+    interface KeyStateScriptable {
+        [key: number]: number
+    }
+}
+
 /**
- * Class to work with vanilla blocks parameters.
+ * A block state is a set of parameters applicable to any blocks in world,
+ * created to store data permanently.
+ * Each state can be requested by getting a block using {@link BlockSource.getBlock}
+ * and then calling {@link BlockState.hasState}/{@link BlockState.getState},
+ * states can be used in {@link ICRender.BlockState} conditions,
+ * by game itself and manually by developer.
+ * @remarks
+ * Do not use numeric identifiers to save inside containers, convert them to
+ * named identifiers before, numeric ones may change with each world entrance.
  * @since 2.2.1b89
  */
 declare class BlockState implements Tile {
+
+    /**
+     * Creates a state that can be applied to any block via
+     * {@link Block.addBlockState} or {@link Block.SpecialType.states SpecialType.states}.
+     * Accepts any integer numeric value from 0 to capacity (exclusive).
+     * When called on existing state if new capacity is larger,
+     * it will be incremented for existing state.
+     * @param key a unique name by which state can be retrieved from other mods,
+     * must not overlap with vanilla {@link EBlockStates}; if identifier is intended
+     * for your mod only, add a prefix (e.g., for "handle_type", "tcon_handle_type")
+     * @param capacity number of states that may be applicable to block,
+     * it is recommended to use powers of two
+     * (2 for boolean values, 8 for 5-8 states inclusive, and so on)
+     * @example
+     * ```ts
+     * // store numeric identifier in variable, as alternative BlockState.getIdByName comes handy
+     * const HANDLE_TYPE_STATE = BlockState.registerBlockState("tcon_handle_type", 8);
+     * 
+     * IDRegistry.genBlockID("tcon_workbench");
+     * Block.createBlock("tcon_workbench", [{ ... }], {
+     *     // state key can be passed as alternative, vanilla EBlockStates too
+     *     states: [HANDLE_TYPE_STATE]
+     * });
+     * 
+     * Block.registerClickFunction("tcon_workbench", (coords, item, tile, playerUid) => {
+     *     if (item.id !== VanillaItemID.stick) {
+     *         return;
+     *     }
+     *     const region = BlockSource.getDefaultForActor(playerUid);
+     *     const block = region.getBlock(coords.x, coords.y, coords.z);
+     *     // increment to existing state, 0-5 values are applicable
+     *     if (block.hasState(HANDLE_TYPE_STATE)) {
+     *         const handleType = block.getState(HANDLE_TYPE_STATE) + 1;
+     *         block.addState(HANDLE_TYPE_STATE, handleType < 6 ? handleType : 0);
+     *     } else {
+     *         // if state does not exist, assume that it has a default value of 0 and increment it
+     *         block.addState(HANDLE_TYPE_STATE, 1);
+     *     }
+     *     region.setBlock(coords.x, coords.y, coords.z, block);
+     * });
+     * ```
+     * @since 2.4.0b122-4 arm64 (until 2.4.0b123-2 arm64 identifiers could be mismatched)
+     */
+    static registerBlockState(key: string, capacity: number): number;
+
+    /**
+     * @returns Numeric state identifier that can be used for most
+     * block operations. Works for both new and vanilla states.
+     * @since 2.4.0b122-4 arm64
+     */
+    static getIdByName(key: string): EBlockStates | number;
+
+    /**
+     * @returns Named state identifier, stable for saving in tiles and
+     * other objects in mods. Works for both new and vanilla states.
+     * @since 2.4.0b122-4 arm64
+     */
+    static getNameById(state: number): string;
+
+    /**
+     * @returns List of all state keys, including vanilla ones
+     * from {@link EBlockStates}. Order is randomized.
+     * @since 2.4.0b122-4 arm64
+     */
+    static getAllStates(): string[];
+
+    /**
+     * @returns Maximum capacity of state, state takes
+     * values from 0 to capacity (exclusive).
+     * @since 2.4.0b122-4 arm64
+     */
+    static getBlockStateCapacity(state: EBlockStates | number): number;
 
     /**
      * Data of the block.
@@ -2158,7 +2338,7 @@ declare class BlockState implements Tile {
      * Constructs new BlockState object
      * from given ID and states object.
      */
-    constructor(id: number, scriptable: {[key: number]: number});
+    constructor(id: number, scriptable: BlockState.KeyStateScriptable);
 
     /**
      * @returns ID of the block.
@@ -2230,13 +2410,13 @@ declare class BlockState implements Tile {
      * @returns All states from following object
      * in JS object instance.
      */
-    getStatesScriptable(): { [key: string]: number };
+    getStatesScriptable(): BlockState.KeyStateScriptable;
 
     /**
      * @returns All named states from following object
      * in JS object instance.
      */
-    getNamedStatesScriptable(): { [key: string]: number };
+    getNamedStatesScriptable(): BlockState.KeyStateScriptable;
 
     /**
      * @returns Whether the following object is equal to given,
@@ -2268,8 +2448,32 @@ declare namespace Callback {
      * do so. If you want to trigger some event in your mod, use your own 
      * callback names.
      * @param name callback name
+     * @deprecated Avoid untyped callbacks, use generic function to pass argument types and more convenient calls.
      */
     function invokeCallback(name: string, o1?: any, o2?: any, o3?: any, o4?: any, o5?: any, o6?: any, o7?: any, o8?: any, o9?: any, o10?: any): void;
+
+    type InferCallbackFunction<T extends any[]> = T extends [
+        infer A1, infer A2, infer A3, infer A4, infer A5,
+        infer A6, infer A7, infer A8, infer A9, infer A10, ...any[]
+    ] ? [A1, A2, A3, A4, A5, A6, A7, A8, A9, A10] : T;
+
+    /**
+     * Invokes callback with any name and up to 10 additional parameters. You
+     * should not generally call pre-defined callbacks until you really need to 
+     * do so. If you want to trigger some event in your mod, use your own 
+     * callback names. Parameters inferred from generic callback function.
+     * @param name callback name
+     * @param args inferred callback function arguments
+     * 
+     * @example
+     * ```ts
+     * Callback.invokeCallback<Callback.ItemUseFunction>("ItemUseServer", coords, item, block, playerUid);
+     * ```
+     */
+    function invokeCallback<T extends (o1?: any, o2?: any, o3?: any, o4?: any, o5?: any, o6?: any, o7?: any, o8?: any, o9?: any, o10?: any) => void>(
+        name: string,
+        ...args: InferCallbackFunction<Parameters<T>>
+    ): void;
 
     /**
      * Function used in "DimensionLoaded" callback.
@@ -2897,14 +3101,52 @@ declare namespace Callback {
     function addCallback(name: "ProjectileHit", func: ProjectileHitFunction, priority?: number): void;
 
     /**
-     * @since 2.4.0b122
+     * @since 2.4.0b122 (only on 32-bit devices)
+     * @deprecated In 2.4.0b123, replaced with "ChunkLoaded/Discarded" callbacks in 3.1.0b125.
      */
     function addCallback(name: "ChunkLoadingStateChanged", func: World.ChunkStateChangedFunction, priority?: number): void;
 
     /**
-     * @since 2.4.0b122
+     * @since 2.4.0b122 (only on 32-bit devices)
+     * @deprecated In 2.4.0b123, replaced with "ChunkLoaded/Discarded" callbacks in 3.1.0b125.
      */
     function addCallback(name: "LocalChunkLoadingStateChanged", func: World.ChunkStateChangedFunction, priority?: number): void;
+
+    /**
+     * Function used in "ChunkLoaded" and "ChunkDiscarded" callbacks
+     * (including local client alternatives).
+     * @since 3.1.0b125
+     */
+    interface DimensionChunkFunction {
+        /**
+         * @param dimensionId current dimension's numeric ID
+         * @param chunkX chunk X coordinate; multiply by 16 to receive
+         * corner block coordinates
+         * @param chunkZ chunk Z coordinate; multiply by 16 to receive
+         * corner block coordinates
+         */
+        (dimensionId: number, chunkX: number, chunkZ: number): void
+    }
+
+    /**
+     * @since 3.1.0b125
+     */
+    function addCallback(name: "LocalChunkLoaded", func: DimensionChunkFunction, priority?: number): void;
+
+    /**
+     * @since 3.1.0b125
+     */
+    function addCallback(name: "ChunkLoaded", func: DimensionChunkFunction, priority?: number): void;
+
+    /**
+     * @since 3.1.0b125
+     */
+    function addCallback(name: "LocalChunkDiscarded", func: DimensionChunkFunction, priority?: number): void;
+
+    /**
+     * @since 3.1.0b125
+     */
+    function addCallback(name: "ChunkDiscarded", func: DimensionChunkFunction, priority?: number): void;
 
     /**
      * Function used in all generation callbacks.
@@ -3961,6 +4203,153 @@ declare class EntityModelWatcher {
     destroy(): void;
 }
 /**
+ * Interface for registering and customizing custom scales,
+ * including getting and modifying them from other mods.
+ * Vanilla scales cannot be obtained in this way.
+ * @since 3.1.0b125
+ */
+declare class CustomScale {
+	/**
+	 * Returns scale by unique named identifier,
+	 * or `null` if it does not exist, vanilla
+	 * in-game scales is not counted.
+	 */
+	static getScaleByName(id: string): Nullable<CustomScale>;
+
+	/**
+	 * Returns all custom scales ever registered,
+	 * vanilla in-game scales are not counted.
+	 */
+	static getAllScales(): CustomScale[];
+
+	/**
+	 * Registers a new scale according to given identifier
+	 * (also quantifies as name) and textures for hotbar.
+	 * @param id unique identifier, should include project
+	 * definition, such as `insomnia.thirst`
+	 * @param fullTexture relative texture path
+	 * to single part filled state (2, full part)
+	 * @param halfTexture relative texture path
+	 * to single part half state (1, half part)
+	 * @param emptyTexture relative texture path
+	 * to single part empty state (0, empty part)
+	 */
+	constructor(id: string, fullTexture: string, halfTexture: string, emptyTexture: string);
+
+	getPointer(): number;
+
+	/**
+	 * Returns unique named identifier used when registering scale.
+	 */
+	getScaleId(): string;
+
+	/**
+	 * Gets a maximum value that scale can reach,
+	 * scale cannot get a value above maximum
+	 * or below zero, default is `20`.
+	 */
+	getMaxValue(): number;
+
+	/**
+	 * Sets a maximum value that scale can reach,
+	 * scale cannot get a value above maximum
+	 * or below zero, default is `20`.
+	 * @remarks
+	 * Remember to change {@link CustomScale.setDefaultValue}.
+	 */
+	setMaxValue(value: number): void;
+
+	/**
+	 * Gets a default value that scale will get after
+	 * first entry to world, or death if such options are
+	 * enabled. Cannot be less than zero or greater than
+	 * {@link CustomScale.getMaxValue}, default value is `20`.
+	 */
+	getDefaultValue(): number;
+
+	/**
+	 * Sets a default value that scale will get after
+	 * first entry to world, or death if such options are
+	 * enabled. Cannot be less than zero or greater than
+	 * {@link CustomScale.getMaxValue}, default value is `20`.
+	 */
+	setDefaultValue(value: number): void;
+
+	/**
+	 * Gets whether scale is inverted, minimum value will
+	 * visually become maximum and maximum value will
+	 * become minimum, disabled by default.
+	 */
+	hasLeft(): boolean;
+
+	/**
+	 * If scale is inverted, minimum value will visually
+	 * become maximum and maximum value will visually
+	 * become minimum, disabled by default.
+	 */
+	setLeft(inverse: boolean): void;
+
+	/**
+	 * Whether scale is reset after player
+	 * death, enabled by default.
+	 */
+	hasResetAfterDeath(): boolean;
+
+	/**
+	 * Enables or disables resetting scale after player
+	 * death, enabled by default.
+	 */
+	setResetAfterDeath(reset: boolean): void;
+
+	/**
+	 * Whether scale display is enabled on local
+	 * player's screen, enabled by default.
+	 */
+	hasDisplay(): boolean;
+
+	/**
+	 * Enables or disables displaying scale on local
+	 * player's screen, enabled by default.
+	 */
+	setDisplay(displayed: boolean): void;
+
+	/**
+	 * Gets relative texture path to single part
+	 * filled state for local player (2, full part).
+	 */
+	getTextureFull(): string;
+
+	/**
+	 * Sets relative texture path to single part
+	 * filled state for local player (2, full part).
+	 */
+	setTextureFull(texture: string): void;
+
+	/**
+	 * Gets relative texture path to single part
+	 * half state for local player (1, half part).
+	 */
+	getTextureHalf(): string;
+
+	/**
+	 * Sets relative texture path to single part
+	 * half state for local player (1, half part).
+	 */
+	setTextureHalf(texture: string): void;
+
+	/**
+	 * Gets relative texture path to single part
+	 * empty state for local player (0, empty part).
+	 */
+	getTextureEmpty(): string;
+
+	/**
+	 * Sets relative texture path to single part
+	 * empty state for local player (0, empty part).
+	 */
+	setTextureEmpty(texture: string): void;
+}
+/**
  * Defines some useful methods for debugging.
  */
 declare namespace Debug {
@@ -4198,7 +4587,7 @@ declare namespace Dimensions {
          * Determines whether the generator should generate underground
          * and/or underwater caves as part of its result.
          * Wworks only with the "overworld"1" and "flat" base types.
-         * @param caves generate caves
+         * @param caves generate caves (until 2.4.0b123-2 arm64 inverted)
          * @param underwaterCaves generate large caves and canyons
 	     * @since 2.3.1b115
          */
@@ -4923,6 +5312,13 @@ declare namespace Entity {
     function setCompoundTag(entityUid: number, tag: NBT.CompoundTag): void;
 
     /**
+     * @returns Start and end physical bounds in that entity will take
+     * damage when hit and will also push entities on contact.
+     * @since 2.4.0b122-4 arm64
+     */
+    function getAABB(entityUid: number): AxisAlignedBoundingBox;
+
+    /**
      * Sets hitbox to the entity. Hitboxes defines entity collisions
      * between terrain and themselves (e.g. physics).
      * @param w hitbox width and length
@@ -5189,6 +5585,13 @@ declare namespace Entity {
      * Sets entity's maximum health value.
      */
     function setMaxHealth(entityUid: number, health: number): void;
+
+    /**
+     * @returns Whether a entity is in a sleeping state, sleeping is defined
+     * as player or villagers being on a bed, as well as foxes napping.
+     * @since 2.4.0b122-4 arm64
+     */
+    function isSleeping(entityUid: number): boolean;
 
     /**
      * Sets the specified coordinates as a new position for the entity.
@@ -5733,6 +6136,22 @@ declare namespace Entity {
      */
     function getAllInsideBox(coords1: Vector, coords2: Vector, type?: number, flag?: boolean): number[];
 
+    /**
+     * Plays an animation on a given entity as soon
+     * as conditions are met to display it.
+     * @param time interval in seconds that animation will
+     * be played, floating point number
+     * @param controller name of entity animation controller,
+     * which will be used to determine a way in which it
+     * will be played, default is `__runtime_controller`
+     * @param query molang script statement, which validates
+     * when animation can be played safely, default is
+     * `query.any_animation_finished`
+     * @param state pretty unknown parameter, possibly
+     * controller state, default is `default`
+	 * @since 3.1.0b125
+     */
+    function playAnimation(entityUid: number, animation: string, time: number, controller: string, query: string, state: string): void;
 }
 /**
  * Class used to create new entity AI types.
@@ -6482,6 +6901,29 @@ declare namespace Game {
      * @since 2.0.4b35
      */
     function simulateBackPressed(): void;
+
+    /**
+     * Appends a world to list displayed in selection interface,
+     * use when opening game main menu, then update interface
+     * itself with {@link Game.updateWorlds}.
+     * @param path absolute path to world directory
+     * @since 3.1.0b125
+     */
+    function addWorldToCache(path: string): void;
+
+    /**
+     * Updates worlds list in selection interface, use after
+     * modifying folders or world descriptions.
+     * @since 3.1.0b125
+     */
+    function updateWorlds(): void;
+
+    /**
+     * Returns amount of selectable worlds in interface, may
+     * differ from pack if some worlds are corrupted.
+     * @since 3.1.0b125
+     */
+    function getWorldsCount(): number;
 }
 /**
  * Methods for manipulating player with world,
@@ -7111,7 +7553,7 @@ declare namespace ICRender {
 	 * @param x is relative x coordinate
 	 * @param y is relative y coordinate
 	 * @param z is relative z coordinate
-	 * @param state one of {@link EBlockStates} values of relative block
+	 * @param state one of {@link EBlockStates} values or custom one of relative block
 	 * @param value value to match selected state
 	 * @since 2.3.1b116
 	 */
@@ -7120,7 +7562,7 @@ declare namespace ICRender {
 	/**
 	 * Constructs new {@link ICRender.BlockState} condition that uses
 	 * block state data (it must match the value) to display.
-	 * @param state one of {@link EBlockStates} values
+	 * @param state one of {@link EBlockStates} values or custom one
 	 * @param value value to match selected state
 	 * @since 2.3.1b116
 	 */
@@ -7226,30 +7668,6 @@ declare namespace IDRegistry {
      * @deprecated Use {@link IDRegistry.getStringIdAndTypeForItemId} instead.
      */
     function getIdInfo(id: number): string;
-
-    /**
-     * Gets type of item ("block" or "item") and it's string ID in Minecraft.
-     * @param id numeric item or block ID
-     * @returns String in format `"type:string_id"`.
-     * @since 2.2.1b94
-     */
-    function getStringIdAndTypeForIntegerId(id: number): string;
-
-    /**
-     * Gets type of item ("block" or "item").
-     * @param id numeric item or block ID
-     * @returns Represent of type.
-     * @since 2.2.1b94
-     */
-    function getTypeForIntegerId(id: number): string;
-
-    /**
-     * Gets item string ID in Minecraft.
-     * @param id numeric item or block ID
-     * @returns Represent of named identifier.
-     * @since 2.2.1b94
-     */
-    function getStringIdForIntegerId(id: number): string;
 
 }
 /**
@@ -7636,7 +8054,8 @@ declare namespace Item {
     function registerIconOverrideFunction(nameID: string | number, func: Callback.ItemIconOverrideFunction): void;
 
     /**
-     * Registers function to perform item name override.
+     * Registers function to perform item name overrides.
+     * Since 2.4.0b122-4 arm64 also supports vanilla items and blocks.
      * @param nameID string or numeric ID of the item
      * @param func function that is called to override item name. Should return 
      * string to be used as new item name
@@ -11815,6 +12234,13 @@ declare interface NativeTileEntity {
      * @since 2.0.5b44
      */
     setCompoundTag(tag: NBT.CompoundTag): void;
+
+    /**
+     * Causes a tick event on requested tile,
+     * can be used to speed it up.
+     * @since 3.1.0b125
+     */
+    tick(region: BlockSource): void;
 }
 /**
  * Working with client and server packets in multiplayer
@@ -13141,9 +13567,15 @@ declare class PlayerActor {
     constructor(playerUid: number);
 
     /**
+     * @since 3.1.0b125
      * @returns Player's unique numeric entity ID.
      */
     getUid(): number;
+
+    /**
+     * @since 2.2.1b102
+     */
+    getPointer(): number;
 
     /**
      * @returns ID of dimension where player is.
@@ -13191,11 +13623,6 @@ declare class PlayerActor {
      * @param value experience points value
      */
     spawnExpOrbs(x: number, y: number, z: number, value: number): void;
-
-    /**
-     * @since 2.2.1b102
-     */
-    getPointer(): number;
 
     /**
      * @returns Whether the player is a valid entity.
@@ -13379,6 +13806,33 @@ declare class PlayerActor {
      * Server-side analogue of {@link Player.setFlying}.
      */
     setFlying(enabled: boolean): void;
+
+    /**
+     * Gets value of a custom scale registered by a unique
+     * identifier. Returns a floating point number, non-ceilinged
+     * values are given only for convenience of storage.
+     * @param scale unique named identifier or scale
+     * @since 3.1.0b125
+     */
+    getScale(scale: string | CustomScale): number;
+
+    /**
+     * Sets value of a custom scale registered by a unique identifier.
+     * @param scale unique named identifier or scale
+     * @param value floating point number, non-ceilinged
+     * values are given only for convenience of storage
+     * @since 3.1.0b125
+     */
+    setScale(scale: string | CustomScale, value: number): void;
+
+    /**
+     * Adds value of a custom scale registered by a unique identifier.
+     * @param scale unique named identifier or scale
+     * @param value floating point number, non-ceilinged
+     * values are given only for convenience of storage
+     * @since 3.1.0b125
+     */
+    addScale(scale: string | CustomScale, value: number): void;
 }
 /**
  * Module used to manipulate crafting recipes for vanilla and custom workbenches.
@@ -13526,15 +13980,15 @@ declare namespace Recipes {
      * @param prefix recipe prefix, defaults to empty string (vanilla workbench)
      */
     function provideRecipe(field: WorkbenchField, prefix?: string): Nullable<ItemInstance>;
-    
+
     /**
      * Performs crafting by the field contents and recipe prefix for a player.
      * @param field {@link Recipes.WorkbenchField WorkbenchField} object containing crafting field 
      * information
      * @param prefix recipe prefix, defaults to empty string (vanilla workbench)
-     * @param player player uid
+     * @param playerUid player which performs crafting
      */
-    function provideRecipeForPlayer(field: WorkbenchField, prefix: string, player: number): Nullable<ItemInstance>;
+    function provideRecipeForPlayer(field: WorkbenchField, prefix: string, playerUid: number): Nullable<ItemInstance>;
 
     /**
      * Adds new furnace recipe.
@@ -15817,7 +16271,7 @@ declare interface TileEntity extends TileEntity.TileEntityPrototype {
     /**
      * Sends packet to specified client.
      * @remarks
-     * Availabled only in server-side methods!
+     * Available only in server-side methods!
      */
     sendResponse: (packetName: string, someData: object) => void;
     /**
@@ -20937,6 +21391,8 @@ declare namespace World {
 
     /**
      * Function that is used in {@link World.addListenerChunkStateChanged} and {@link World.addLocalListenerChunkStateChanged}.
+     * @since 2.4.0b122 (only on 32-bit devices)
+     * @deprecated In 2.4.0b123, replaced with "ChunkLoaded/Discarded" callbacks in 3.1.0b125.
      */
     interface ChunkStateChangedFunction {
         /**
@@ -20957,7 +21413,8 @@ declare namespace World {
      * Listens for chunk loading state changes.
      * @param listener chunk state function watcher
      * @param states chunk states that should be received by watcher
-     * @since 2.4.0b122
+     * @since 2.4.0b122 (only on 32-bit devices)
+     * @deprecated In 2.4.0b123, replaced with "ChunkLoaded/Discarded" callbacks in 3.1.0b125.
      */
     function addListenerChunkStateChanged(listener: ChunkStateChangedFunction, states: number[]): void;
 
@@ -20965,7 +21422,8 @@ declare namespace World {
      * Listens for local chunk loading state changes.
      * @param listener chunk state function watcher
      * @param states chunk states that should be received by watcher
-     * @since 2.4.0b122
+     * @since 2.4.0b122 (only on 32-bit devices)
+     * @deprecated In 2.4.0b123, replaced with "ChunkLoaded/Discarded" callbacks in 3.1.0b125.
      */
     function addLocalListenerChunkStateChanged(listener: ChunkStateChangedFunction, states: number[]): void;
 
@@ -22214,6 +22672,19 @@ interface BlockPosition extends Vector {
      * Side of the block, one of the {@link EBlockSide} constants.
      */
     side: number;
+}
+
+/**
+ * Abstract two points in space between which a region,
+ * usually parallelepipedic, is formed.
+ */
+interface AxisAlignedBoundingBox {
+    x1: number,
+    y1: number,
+    z1: number,
+    x2: number,
+    y2: number,
+    z2: number;
 }
 
 /**
