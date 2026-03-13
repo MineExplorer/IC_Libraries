@@ -218,6 +218,7 @@ class EnergyNode {
 	}
 
 	toString(): string {
-		return `[EnergyNode id=${this.id}, type=${this.baseEnergy}, entries=${this.entries.length}, receivers=${this.receivers.length}, energyIn=${this.energyIn}, energyOut=${this.energyOut}, power=${this.energyPower}]`;
+		const blockCount = Object.keys(this.blockCoords.data).length;
+		return `[EnergyNode id=${this.id}, type=${this.baseEnergy}, blocks=${blockCount}, entries=${this.entries.length}, receivers=${this.receivers.length}, energyIn=${this.energyIn}, energyOut=${this.energyOut}, power=${this.energyPower}]`;
 	}
 }

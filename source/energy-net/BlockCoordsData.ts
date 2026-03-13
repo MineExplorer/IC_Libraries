@@ -1,5 +1,5 @@
 class BlockCoordsData {
-	data: {[coordKey: string]: true} = {};
+	data: {[coordKey: string]: Vector} = {};
 
 	getCoordKey(x: number, y: number, z: number): string {
 		return `${x}:${y}:${z}`;
@@ -12,7 +12,7 @@ class BlockCoordsData {
 
 	add(x: number, y: number, z: number): void {
 		const coordKey = this.getCoordKey(x, y, z);
-		this.data[coordKey] = true;
+		this.data[coordKey] = {x: x, y: y, z: z};
 	}
 
 	remove(x: number, y: number, z: number): boolean {
@@ -25,17 +25,13 @@ class BlockCoordsData {
 
 	mergeFrom(other: BlockCoordsData): void {
 		for (let coordKey in other.data) {
-			this.data[coordKey] = true;
+			this.data[coordKey] = other.data[coordKey];
 		}
 	}
 
-	forEachCoord(func: (x: number, y: number, z: number) => void): void {
+	forEachCoord(func: (coords: Vector) => void): void {
 		for (let coordKey in this.data) {
-			const keyArr = coordKey.split(":");
-			const x = parseInt(keyArr[0]);
-			const y = parseInt(keyArr[1]);
-			const z = parseInt(keyArr[2]);
-			func(x, y, z);
+			func(this.data[coordKey]);
 		}
 	}
 
