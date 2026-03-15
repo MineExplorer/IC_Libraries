@@ -1,3 +1,5 @@
+/// <reference path="./BlockCoordsData.ts" />
+
 let GLOBAL_NODE_ID = 0;
 
 class EnergyNode {
@@ -7,7 +9,9 @@ class EnergyNode {
 	dimension: number;
 	maxValue: number = 2e9;
 	removed: boolean = false;
-	blocksMap: object = {};
+	blockCoords: BlockCoordsData = new BlockCoordsData();
+	/** @deprecated */
+	blocksMap = this.blockCoords.data;
 	entries: EnergyNode[] = [];
 	receivers: EnergyNode[] = [];
 
@@ -30,11 +34,11 @@ class EnergyNode {
 	}
 
 	addCoords(x: number, y: number, z: number): void {
-		this.blocksMap[x+":"+y+":"+z] = true;
+		this.blockCoords.add(x, y, z);
 	}
 
 	removeCoords(x: number, y: number, z: number): void {
-		this.blocksMap[x+":"+y+":"+z] = false;
+		this.blockCoords.remove(x, y, z);
 	}
 
 	private addEntry(node: EnergyNode): void {
@@ -214,6 +218,7 @@ class EnergyNode {
 	}
 
 	toString(): string {
-		return `[EnergyNode id=${this.id}, type=${this.baseEnergy}, entries=${this.entries.length}, receivers=${this.receivers.length}, energyIn=${this.energyIn}, energyOut=${this.energyOut}, power=${this.energyPower}]`;
+		const blockCount = Object.keys(this.blockCoords.data).length;
+		return `[EnergyNode id=${this.id}, type=${this.baseEnergy}, blocks=${blockCount}, entries=${this.entries.length}, receivers=${this.receivers.length}, energyIn=${this.energyIn}, energyOut=${this.energyOut}, power=${this.energyPower}]`;
 	}
 }

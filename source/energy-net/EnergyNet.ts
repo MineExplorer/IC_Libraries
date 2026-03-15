@@ -27,9 +27,8 @@ namespace EnergyNet {
 			return tileEntity.energyNode;
 		}
 		const nodes = getNodesByDimension(region.getDimension());
-		const coordKey = `${x}:${y}:${z}`;
 		for (let node of nodes) {
-			if (node.blocksMap[coordKey]) return node;
+			if (node.blockCoords.has(x, y, z)) return node;
 		}
 		return null;
 	}

@@ -2,7 +2,7 @@ class EnergyGrid
 extends EnergyNode {
 	blockID: number;
 	region: BlockSource;
-	rebuild: boolean = false;
+	removedCoords: Vector[] = [];
 
 	constructor(energyType: EnergyType, maxValue: number, wireID: number, region: BlockSource) {
 		super(energyType, region.getDimension());
@@ -19,9 +19,7 @@ extends EnergyNode {
 	}
 
 	mergeGrid(grid: EnergyNode): EnergyNode {
-		for (let key in grid.blocksMap) {
-			this.blocksMap[key] = true;
-		}
+		this.blockCoords.mergeFrom(grid.blockCoords);
 		for (let node of grid.entries) {
 			node.addConnection(this);
 		}
@@ -34,22 +32,16 @@ extends EnergyNode {
 
 	rebuildGrid(): void {
 		this.destroy();
-		for (let key in this.blocksMap) {
-			if (!this.blocksMap[key]) {
-				const keyArr = key.split(":");
-				const x = parseInt(keyArr[0]), y = parseInt(keyArr[1]), z = parseInt(keyArr[2]);
-				EnergyGridBuilder.onWireDestroyed(this.region, x, y, z, this.blockID);
-			}
+		for (let coords of this.removedCoords) {
+			EnergyGridBuilder.onWireDestroyed(this.region, coords.x, coords.y, coords.z, this.blockID);
 		}
+		this.removedCoords = [];
 	}
 
 	rebuildRecursive(x: number, y: number, z: number, side?: number) {
 		if (this.removed) return;
 
-		const coordKey = `${x}:${y}:${z}`;
-		if (this.blocksMap[coordKey]) {
-			return;
-		}
+		if (this.blockCoords.has(x, y, z)) return;
 
 		const node = EnergyNet.getNodeOnCoords(this.region, x, y, z);
 		if (node && !this.isCompatible(node)) return;
@@ -66,7 +58,7 @@ extends EnergyNode {
 				if (node) {
 					this.mergeGrid(node);
 				} else {
-					this.blocksMap[coordKey] = true;
+					this.addCoords(x, y, z);
 					this.rebuildFor6Sides(x, y, z);
 				}
 			}
@@ -76,6 +68,12 @@ extends EnergyNode {
 			else if (EnergyRegistry.isWire(blockID, this.baseEnergy)) {
 				EnergyGridBuilder.buildWireGrid(this.region, x, y, z);
 			}
+		}
+	}
+
+	removeCoords(x: number, y: number, z: number): void {
+		if (this.blockCoords.remove(x, y, z)) {
+			this.removedCoords.push({x: x, y: y, z: z});
 		}
 	}
 
@@ -90,7 +88,7 @@ extends EnergyNode {
 	}
 
 	tick(): void {
-		if (this.rebuild) {
+		if (this.removedCoords.length > 0) {
 			this.rebuildGrid();
 		} else {
 			super.tick();
