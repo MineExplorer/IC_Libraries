@@ -111,7 +111,6 @@ class EnergyNode {
 	}
 
 	receiveEnergy(amount: number, packet: EnergyPacket): number {
-		if (this.removed) return 0;
 		const energyIn = this.transferEnergy(amount, packet);
         if (energyIn > 0) {
         	this.currentPower = Math.max(this.currentPower, packet.size);
@@ -140,7 +139,7 @@ class EnergyNode {
 	}
 
 	transferEnergy(amount: number, packet: EnergyPacket): number {
-		if (this.receivers.length == 0) return 0;
+		if (this.receivers.length == 0 || this.removed) return 0;
 
 		let leftAmount = amount;
 		if (packet.size > this.maxValue) {
@@ -149,24 +148,22 @@ class EnergyNode {
 		}
 
 		if (packet.transferMode === TransferMode.Split) {
-			const receiversCount = this.receivers.length;
-			let k = 0;
 			for (let i = 0; i < this.receivers.length; i++) {
 				if (leftAmount <= 0) break;
 				const node = this.receivers[i];
+				if (node.removed) continue;
 				if (packet.validateNode(node.id)) {
 					let receiveAmount = leftAmount;
-					if (receiveAmount > 1 && receiversCount - k > 1) {
-						receiveAmount = Math.ceil(receiveAmount / (receiversCount - k));
+					if (receiveAmount > 1 && this.receivers.length - i > 1) {
+						receiveAmount = Math.ceil(receiveAmount / (this.receivers.length - i));
 					}
 					leftAmount -= node.receiveEnergy(receiveAmount, packet);
-					if (node.removed) i--;
 				}
-				k++;
 			}
 		} else {
 			for (let node of this.receivers) {
 				if (leftAmount <= 0) break;
+				if (node.removed) continue;
 				if (packet.validateNode(node.id)) {
 					leftAmount -= node.receiveEnergy(leftAmount, packet);
 				}
@@ -222,8 +219,7 @@ class EnergyNode {
 
 	destroy(): void {
 		this.removed = true;
-		this.resetConnections();
-		EnergyNet.removeEnergyNode(this);
+		EnergyNet.enqueueRemoval(this);
 	}
 
 	toString(): string {

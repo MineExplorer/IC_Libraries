@@ -4,6 +4,7 @@ namespace EnergyNet {
 	 * @key dimension id
 	 */
 	let energyNodes: {[key: number]: EnergyNode[]} = {};
+	let pendingRemoval: EnergyNode[] = [];
 
 	export function getNodesByDimension(dimension: number) {
 		return energyNodes[dimension] = energyNodes[dimension] || [];
@@ -21,6 +22,20 @@ namespace EnergyNet {
 		}
 	}
 
+	export function enqueueRemoval(node: EnergyNode): void {
+		if (pendingRemoval.includes(node)) return;
+		pendingRemoval.push(node);
+	}
+
+	export function flushRemovals(): void {
+		if (pendingRemoval.length == 0) return;
+		for (let node of pendingRemoval) {
+			node.resetConnections();
+			removeEnergyNode(node);
+		}
+		pendingRemoval = [];
+	}
+
 	export function getNodeOnCoords(region: BlockSource, x: number, y: number, z: number): EnergyNode {
 		const tileEntity = TileEntity.getTileEntity(x, y, z, region);
 		if (tileEntity && tileEntity.__initialized && tileEntity.energyNode) {
@@ -28,6 +43,7 @@ namespace EnergyNet {
 		}
 		const nodes = getNodesByDimension(region.getDimension());
 		for (let node of nodes) {
+			if (node.removed) continue;
 			if (node.blockCoords.has(x, y, z)) return node;
 		}
 		return null;
@@ -48,5 +64,6 @@ namespace EnergyNet {
 
 	Callback.addCallback("tick", function() {
 		energyNodesTick();
+		flushRemovals();
 	});
 }
