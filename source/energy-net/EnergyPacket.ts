@@ -1,25 +1,33 @@
+enum TransferMode {
+	Split = 1,
+	Full = 2
+}
+
 class EnergyPacket {
 	energyName: string;
 	size: number;
 	source: EnergyNode;
-	nodeList: object = {};
+	transferMode: TransferMode;
+	nodeList: { [key: number]: TransferMode } = {};
 
-	constructor(energyName: string, size: number, source: EnergyNode) {
+	constructor(energyName: string, size: number, source: EnergyNode, transferMode: TransferMode = TransferMode.Split) {
 		this.energyName = energyName;
 		this.size = size;
 		this.source = source;
-		this.setNodePassed(source.id);
+		this.transferMode = transferMode;
+		this.setNodePassed(source.id, transferMode);
 	}
 
 	validateNode(nodeId: number): boolean {
-		if (this.nodeList[nodeId]) {
-			return false;
+		const passedMode = this.nodeList[nodeId];
+		if (passedMode == undefined || passedMode < this.transferMode) {
+			this.setNodePassed(nodeId, this.transferMode);
+			return true;
 		}
-		this.setNodePassed(nodeId);
-		return true;
+		return false;
 	}
 
-	setNodePassed(nodeId: number) {
-		this.nodeList[nodeId] = true;
+	setNodePassed(nodeId: number, mode: TransferMode = this.transferMode) {
+		this.nodeList[nodeId] = mode;
 	}
 }
