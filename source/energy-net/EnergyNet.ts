@@ -44,7 +44,7 @@ namespace EnergyNet {
 		const nodes = getNodesByDimension(region.getDimension());
 		for (let node of nodes) {
 			if (node.removed) continue;
-			if (node.blockCoords.has(x, y, z)) return node;
+			if (node.blockNodes.has(x, y, z)) return node;
 		}
 		return null;
 	}

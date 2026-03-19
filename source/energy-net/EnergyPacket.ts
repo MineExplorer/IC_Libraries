@@ -1,4 +1,4 @@
-enum TransferMode {
+const enum TransferMode {
 	Split = 1,
 	Full = 2
 }

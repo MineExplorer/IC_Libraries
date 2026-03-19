@@ -19,7 +19,7 @@ extends EnergyNode {
 	}
 
 	mergeGrid(grid: EnergyNode): EnergyNode {
-		this.blockCoords.mergeFrom(grid.blockCoords);
+		this.blockNodes.mergeFrom(grid.blockNodes);
 		for (let node of grid.entries) {
 			node.addConnection(this);
 		}
@@ -41,7 +41,7 @@ extends EnergyNode {
 	rebuildRecursive(x: number, y: number, z: number, side?: number) {
 		if (this.removed) return;
 
-		if (this.blockCoords.has(x, y, z)) return;
+		if (this.blockNodes.has(x, y, z)) return;
 
 		const node = EnergyNet.getNodeOnCoords(this.region, x, y, z);
 		if (node && !this.isCompatible(node)) return;
@@ -58,8 +58,8 @@ extends EnergyNode {
 				if (node) {
 					this.mergeGrid(node);
 				} else {
-					this.addCoords(x, y, z);
-					this.rebuildFor6Sides(x, y, z);
+					const blockNode = this.addCoords(x, y, z);
+					this.rebuildFor6Sides(blockNode);
 				}
 			}
 			else if (node) {
@@ -71,18 +71,40 @@ extends EnergyNode {
 		}
 	}
 
-	removeCoords(x: number, y: number, z: number): void {
-		if (this.blockCoords.remove(x, y, z)) {
+	removeCoords(x: number, y: number, z: number): BlockNode {
+		const blockNode = this.blockNodes.remove(x, y, z);
+		if (blockNode) {
+			blockNode.unlinkAllBlocks();
+			blockNode.clearAdjacentTileEntityNodes();
 			this.removedCoords.push({x: x, y: y, z: z});
+		}
+		return blockNode;
+	}
+
+	private connectBlockToNeighbor(blockNode: BlockNode, x: number, y: number, z: number): void {
+		const node = EnergyNet.getNodeOnCoords(this.region, x, y, z);
+		if (!node || !this.isCompatible(node)) return;
+
+		if (node instanceof EnergyTileNode) {
+			blockNode.addAdjacentTileEntityNode(node);
+			return;
+		}
+
+		if (node instanceof EnergyGrid) {
+			const adjacentBlockNode = node.blockNodes.get(x, y, z);
+			if (adjacentBlockNode) {
+				blockNode.linkBlock(adjacentBlockNode);
+			}
 		}
 	}
 
-	rebuildFor6Sides(x: number, y: number, z: number): void {
-		const coord1 = {x: x, y: y, z: z};
+	rebuildFor6Sides(blockNode: BlockNode): void {
+		const coord1 = {x: blockNode.x, y: blockNode.y, z: blockNode.z};
 		for (let side = 0; side < 6; side++) {
-			const coord2 = World.getRelativeCoords(x, y, z, side);
+			const coord2 = World.getRelativeCoords(blockNode.x, blockNode.y, blockNode.z, side);
 			if (this.canConductEnergy(coord1, coord2, side)) {
 				this.rebuildRecursive(coord2.x, coord2.y, coord2.z, side ^ 1);
+				this.connectBlockToNeighbor(blockNode, coord2.x, coord2.y, coord2.z);
 			}
 		}
 	}

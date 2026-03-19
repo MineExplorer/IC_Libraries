@@ -1,17 +1,18 @@
-/// <reference path="./BlockCoordsData.ts" />
+/// <reference path="./BlockNode.ts" />
+/// <reference path="./BlockNodesData.ts" />
 
 let GLOBAL_NODE_ID = 0;
 
-class EnergyNode {
+abstract class EnergyNode {
 	id: number;
 	baseEnergy: string;
 	energyTypes: object = {};
 	dimension: number;
 	maxValue: number = 2e9;
 	removed: boolean = false;
-	blockCoords: BlockCoordsData = new BlockCoordsData();
+	blockNodes: BlockNodesData = new BlockNodesData();
 	/** @deprecated */
-	blocksMap = this.blockCoords.data;
+	blocksMap = this.blockNodes.data;
 	entries: EnergyNode[] = [];
 	receivers: EnergyNode[] = [];
 
@@ -33,12 +34,12 @@ class EnergyNode {
 		this.energyTypes[energyType.name] = energyType;
 	}
 
-	addCoords(x: number, y: number, z: number): void {
-		this.blockCoords.add(x, y, z);
+	addCoords(x: number, y: number, z: number): BlockNode {
+		return this.blockNodes.add(x, y, z);
 	}
 
-	removeCoords(x: number, y: number, z: number): void {
-		this.blockCoords.remove(x, y, z);
+	removeCoords(x: number, y: number, z: number): BlockNode {
+		return this.blockNodes.remove(x, y, z);
 	}
 
 	private addEntry(node: EnergyNode): void {
@@ -147,7 +148,7 @@ class EnergyNode {
 			this.onOverload(packet.size);
 		}
 
-		if (packet.transferMode === TransferMode.Split) {
+		if (packet.transferMode == TransferMode.Split) {
 			for (let i = 0; i < this.receivers.length; i++) {
 				if (leftAmount <= 0) break;
 				const node = this.receivers[i];
@@ -223,7 +224,7 @@ class EnergyNode {
 	}
 
 	toString(): string {
-		const blockCount = Object.keys(this.blockCoords.data).length;
+		const blockCount = Object.keys(this.blockNodes.data).length;
 		return `[EnergyNode id=${this.id}, type=${this.baseEnergy}, blocks=${blockCount}, entries=${this.entries.length}, receivers=${this.receivers.length}, energyIn=${this.energyIn}, energyOut=${this.energyOut}, power=${this.energyPower}]`;
 	}
 }
