@@ -76,15 +76,6 @@ namespace EnergyGridBuilder {
 		EnergyGridBuilder.buildWireGrid(region, x, y, z);
 	}
 
-	export function onWireDestroyed(region: BlockSource, x: number, y: number, z: number, id: number): void {
-		EnergyGridBuilder.rebuildForWire(region, x - 1, y, z, id);
-		EnergyGridBuilder.rebuildForWire(region, x + 1, y, z, id);
-		EnergyGridBuilder.rebuildForWire(region, x, y - 1, z, id);
-		EnergyGridBuilder.rebuildForWire(region, x, y + 1, z, id);
-		EnergyGridBuilder.rebuildForWire(region, x, y, z - 1, id);
-		EnergyGridBuilder.rebuildForWire(region, x, y, z + 1, id);
-	}
-
 	Callback.addCallback("DestroyBlock", function(coords: BlockPosition, block: Tile, player: number) {
 		if (EnergyRegistry.isWire(block.id)) {
 			const region = BlockSource.getDefaultForActor(player);

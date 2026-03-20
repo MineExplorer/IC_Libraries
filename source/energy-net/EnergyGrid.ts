@@ -18,6 +18,13 @@ extends EnergyNode {
 		return false;
 	}
 
+	/**
+	 * Determines whether the specified wire block can be absorbed into this grid.
+	 */
+	isValidWire(tile: Tile): boolean {
+		return this.blockID == tile.id;
+	}
+
 	mergeGrid(grid: EnergyNode): EnergyNode {
 		this.blockNodes.mergeFrom(grid.blockNodes);
 		for (let node of grid.entries) {
@@ -148,19 +155,19 @@ extends EnergyNode {
 				node.addConnection(this);
 			}
 		} else {
-			const blockID = this.region.getBlockId(x, y, z);
-			if (this.blockID == blockID) {
+			const tile = this.region.getBlock(x, y, z);
+			if (this.isValidWire(tile)) {
 				if (node) {
 					this.mergeGrid(node);
 				} else {
-					const blockNode = this.addCoords(x, y, z, this.region.getBlock(x, y, z));
+					const blockNode = this.addCoords(x, y, z, tile);
 					this.rebuildFor6Sides(blockNode);
 				}
 			}
 			else if (node) {
 				EnergyGridBuilder.connectNodes(this, node);
 			}
-			else if (EnergyRegistry.isWire(blockID, this.baseEnergy)) {
+			else if (EnergyRegistry.isWire(tile.id, this.baseEnergy)) {
 				EnergyGridBuilder.buildWireGrid(this.region, x, y, z);
 			}
 		}
