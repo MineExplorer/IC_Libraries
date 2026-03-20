@@ -26,10 +26,15 @@ namespace EnergyGridBuilder {
 					connectTileToGridBlock(node, coords.x, coords.y, coords.z, side, tileNode);
 				}
 				const energyType = node.baseEnergy;
-				if (tileNode.canExtractEnergy(side, energyType) && node.canReceiveEnergy(side ^ 1, energyType)) {
+				const canOutput = tileNode.canExtractEnergy(side, energyType) && node.canReceiveEnergy(side ^ 1, energyType);
+				const canInput = tileNode.canReceiveEnergy(side, energyType) && node.canExtractEnergy(side ^ 1, energyType);
+				if (node instanceof EnergyTileNode && (canInput || canOutput)) {
+					tileNode.linkTile(node, canInput, canOutput);
+				}
+				if (canOutput) {
 					tileNode.addConnection(node);
 				}
-				if (tileNode.canReceiveEnergy(side, energyType) && node.canExtractEnergy(side ^ 1, energyType)) {
+				if (canInput) {
 					node.addConnection(tileNode);
 				}
 			} else {

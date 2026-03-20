@@ -47,7 +47,7 @@ class BlockNode implements EnergyGraphNode {
 
 	linkTile(tileNode: EnergyTileNode, canInput: boolean, canOutput: boolean): void {
 		if (this.addAdjacentLink(tileNode, canInput, canOutput)) {
-			tileNode.addAdjacentLink(this, canInput, canOutput);
+			tileNode.addAdjacentLink(this, canOutput, canInput);
 		}
 	}
 

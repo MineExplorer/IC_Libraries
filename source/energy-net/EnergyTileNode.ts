@@ -18,7 +18,19 @@ implements EnergyGraphNode {
 		return this.tileEntity.x == x && this.tileEntity.y == y && this.tileEntity.z == z;
 	}
 
-	addAdjacentLink(node: BlockNode, canInput: boolean, canOutput: boolean): boolean {
+	linkTile(tileNode: EnergyTileNode, canInput: boolean, canOutput: boolean): void {
+		if (this.addAdjacentLink(tileNode, canInput, canOutput)) {
+			tileNode.addAdjacentLink(this, canOutput, canInput);
+		}
+	}
+
+	unlinkTile(tileNode: EnergyTileNode): void {
+		if (this.removeAdjacentLink(tileNode)) {
+			tileNode.removeAdjacentLink(this);
+		}
+	}
+
+	addAdjacentLink(node: EnergyGraphNode, canInput: boolean, canOutput: boolean): boolean {
 		for (let link of this.adjacentLinks) {
 			if (link.node == node) return false;
 		}
@@ -30,7 +42,7 @@ implements EnergyGraphNode {
 		return true;
 	}
 
-	removeAdjacentLink(node: BlockNode): boolean {
+	removeAdjacentLink(node: EnergyGraphNode): boolean {
 		const index = this.adjacentLinks.findIndex((link) => link.node == node);
 		if (index == -1) return false;
 		this.adjacentLinks.splice(index, 1);
