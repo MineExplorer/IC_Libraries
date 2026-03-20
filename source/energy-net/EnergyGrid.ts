@@ -25,6 +25,10 @@ extends EnergyNode {
 		return this.blockNodes.add(x, y, z, tile);
 	}
 
+	hasCoords(x: number, y: number, z: number): boolean {
+		return this.blockNodes.has(x, y, z);
+	}
+
 	/**
 	 * Determines whether the specified wire block can be absorbed into this grid.
 	 */

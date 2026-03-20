@@ -27,6 +27,8 @@ abstract class EnergyNode {
 		this.energyTypes[energyType.name] = energyType;
 	}
 
+	abstract hasCoords(x: number, y: number, z: number): boolean;
+
 	private addEntry(node: EnergyNode): void {
 		if (this.entries.indexOf(node) == -1) {
 			this.entries.push(node);

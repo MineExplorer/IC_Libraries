@@ -12,6 +12,10 @@ extends EnergyNode {
 		return this.tileEntity;
 	}
 
+	hasCoords(x: number, y: number, z: number): boolean {
+		return this.tileEntity.x == x && this.tileEntity.y == y && this.tileEntity.z == z;
+	}
+
 	receiveEnergy(amount: number, packet: EnergyPacket): number {
 		let energyIn = this.tileEntity.energyReceive(packet.energyName, amount, packet.size);
         if (energyIn < amount && this.isConductor(packet.energyName)) {

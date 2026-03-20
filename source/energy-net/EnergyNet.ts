@@ -39,13 +39,16 @@ namespace EnergyNet {
 
 	export function getNodeOnCoords(region: BlockSource, x: number, y: number, z: number): EnergyNode {
 		const tileEntity = TileEntity.getTileEntity(x, y, z, region);
-		if (tileEntity && tileEntity.__initialized && tileEntity.energyNode) {
-			return tileEntity.energyNode;
+		if (tileEntity) {
+			if (tileEntity.__initialized && tileEntity.energyNode) {
+				return tileEntity.energyNode;
+			}
+			return null;
 		}
 		const nodes = getNodesByDimension(region.getDimension());
 		for (let node of nodes) {
 			if (node.removed) continue;
-			if (node instanceof EnergyGrid && node.blockNodes.has(x, y, z)) return node;
+			if (node.hasCoords(x, y, z)) return node;
 		}
 		return null;
 	}
