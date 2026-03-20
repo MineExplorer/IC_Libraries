@@ -2,6 +2,7 @@ class EnergyGrid
 extends EnergyNode {
 	blockID: number;
 	region: BlockSource;
+	idleTicks: number = 0;
 
 	constructor(energyType: EnergyType, maxValue: number, wireID: number, region: BlockSource) {
 		super(energyType, region.getDimension());
@@ -218,6 +219,15 @@ extends EnergyNode {
 	}
 
 	tick(): void {
+		if (this.entries.length == 0 && this.receivers.length == 0) {
+			this.idleTicks++;
+			if (this.idleTicks > 200) { // destroy after 10 seconds of inactivity
+				this.destroy();
+				return;
+			}
+		} else {
+			this.idleTicks = 0;
+		}
 		super.tick();
 	}
 }
