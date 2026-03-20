@@ -16,9 +16,11 @@ class BlockNode implements EnergyGraphNode {
 	y: number;
 	z: number;
 	tile: Tile;
+	parent: EnergyGrid = null;
 	adjacentLinks: AdjacentNodeLink[] = [];
 
-	constructor(x: number, y: number, z: number, tile: Tile) {
+	constructor(parent: EnergyGrid, x: number, y: number, z: number, tile: Tile) {
+		this.parent = parent;
 		this.x = x;
 		this.y = y;
 		this.z = z;

@@ -1,15 +1,17 @@
 class EnergyGrid
 extends EnergyNode {
 	readonly kind: EnergyNodeKind = "grid";
-	blockNodes: BlockNodesSet = new BlockNodesSet();
+	blockNodes: BlockNodesSet;
 	/** @deprecated */
-	blocksMap = this.blockNodes.data;
+	blocksMap: {[coordKey: string]: BlockNode};
 	blockID: number;
 	region: BlockSource;
 	idleTicks: number = 0;
 
 	constructor(energyType: EnergyType, maxValue: number, wireID: number, region: BlockSource) {
 		super(energyType, region.getDimension());
+		this.blockNodes = new BlockNodesSet(this);
+		this.blocksMap = this.blockNodes.data;
 		this.maxValue = maxValue;
 		this.blockID = wireID;
 		this.region = region;
@@ -47,102 +49,6 @@ extends EnergyNode {
 		}
 		grid.destroy();
 		return this;
-	}
-
-	private collectConnectedBlocks(startNode: BlockNode, visited: {[coordKey: string]: boolean}): BlockNode[] {
-		const component: BlockNode[] = [];
-		const stack: BlockNode[] = [startNode];
-
-		while (stack.length > 0) {
-			const blockNode = stack.pop();
-			const coordKey = blockNode.getCoordKey();
-			if (visited[coordKey] || !this.blockNodes.containsNode(blockNode)) continue;
-
-			visited[coordKey] = true;
-			component.push(blockNode);
-			for (let link of blockNode.adjacentLinks) {
-				if (!(link.node instanceof BlockNode)) continue;
-				const adjacentBlock = link.node;
-				if (!this.blockNodes.containsNode(adjacentBlock)) continue;
-				stack.push(adjacentBlock);
-			}
-		}
-
-		return component;
-	}
-
-	private createGridComponent(component: BlockNode[]): EnergyGrid {
-		const grid = EnergyRegistry.createWireGrid(this.blockID, this.region);
-		for (let blockNode of component) {
-			this.blockNodes.removeNode(blockNode);
-			grid.blockNodes.addNode(blockNode);
-		}
-		EnergyNet.addEnergyNode(grid);
-		return grid;
-	}
-
-	private rebuildConnectionsFromBlockGraph(): void {
-		this.resetConnections();
-		this.blockNodes.forEachNode((blockNode) => {
-			for (let link of blockNode.adjacentLinks) {
-				if (link.node instanceof EnergyTileNode) {
-					const tileNode = link.node;
-					if (tileNode.removed) continue;
-					if (link.canOutput) {
-						this.addConnection(tileNode);
-					}
-					if (link.canInput) {
-						tileNode.addConnection(this);
-					}
-					continue;
-				}
-				else if (link.node instanceof BlockNode) {
-					const adjacentBlock = link.node;
-					if (this.blockNodes.containsNode(adjacentBlock)) continue;
-
-					const adjacentNode = EnergyNet.getNodeOnCoords(this.region, adjacentBlock.x, adjacentBlock.y, adjacentBlock.z);
-					if (adjacentNode && !adjacentNode.removed && this.isCompatible(adjacentNode)) {
-						EnergyGridBuilder.connectNodes(this, adjacentNode);
-					}
-				}
-			}
-		});
-	}
-
-	private splitByComponents(seedNodes: BlockNode[]): EnergyGrid[] {
-		const visited: {[coordKey: string]: boolean} = {};
-		const components: BlockNode[][] = [];
-
-		for (let blockNode of seedNodes) {
-			if (!this.blockNodes.containsNode(blockNode)) continue;
-			const coordKey = blockNode.getCoordKey();
-			if (visited[coordKey]) continue;
-
-			const component = this.collectConnectedBlocks(blockNode, visited);
-			if (component.length > 0) {
-				components.push(component);
-			}
-		}
-
-		this.blockNodes.forEachNode((blockNode) => {
-			if (visited[blockNode.getCoordKey()]) return;
-			const component = this.collectConnectedBlocks(blockNode, visited);
-			if (component.length > 0) {
-				components.push(component);
-			}
-		});
-
-		if (components.length <= 1) {
-			return [this];
-		}
-
-		components.sort((a, b) => b.length - a.length);
-		const splitGrids: EnergyGrid[] = [this];
-		for (let i = 1; i < components.length; i++) {
-			const createdGrid = this.createGridComponent(components[i]);
-			splitGrids.push(createdGrid);
-		}
-		return splitGrids;
 	}
 
 	rebuildRecursive(x: number, y: number, z: number, side?: number) {
@@ -184,9 +90,6 @@ extends EnergyNode {
 		const blockNode = this.blockNodes.remove(x, y, z);
 		if (!blockNode) return null;
 
-		const adjacentBlocks = blockNode.adjacentLinks
-			.filter((link) => link.node instanceof BlockNode)
-			.map((link) => link.node as BlockNode);
 		blockNode.clearAdjacentLinks();
 
 		if (Object.keys(this.blockNodes.data).length == 0) {
@@ -195,7 +98,7 @@ extends EnergyNode {
 			return blockNode;
 		}
 
-		const splitGrids = this.splitByComponents(adjacentBlocks);
+		const splitGrids = this.splitByComponents();
 		for (let grid of splitGrids) {
 			grid.rebuildConnectionsFromBlockGraph();
 		}
@@ -211,28 +114,6 @@ extends EnergyNode {
 			}
 		});
 		return removed;
-	}
-
-	private connectBlockToNeighbor(blockNode: BlockNode, x: number, y: number, z: number, side: number): void {
-		const node = EnergyNet.getNodeOnCoords(this.region, x, y, z);
-		if (!node || !this.isCompatible(node)) return;
-
-		if (node instanceof EnergyTileNode) {
-			const tileSide = side ^ 1;
-			blockNode.linkTile(
-				node,
-				node.canExtractEnergy(tileSide, this.baseEnergy),
-				node.canReceiveEnergy(tileSide, this.baseEnergy)
-			);
-			return;
-		}
-
-		if (node instanceof EnergyGrid) {
-			const adjacentBlockNode = node.blockNodes.get(x, y, z);
-			if (adjacentBlockNode) {
-				blockNode.linkBlock(adjacentBlockNode);
-			}
-		}
 	}
 
 	rebuildFor6Sides(blockNode: BlockNode): void {
@@ -262,5 +143,109 @@ extends EnergyNode {
 	toString(): string {
 		const blockCount = Object.keys(this.blockNodes.data).length;
 		return `[EnergyGrid id=${this.id}, type=${this.baseEnergy}, blocks=${blockCount}, entries=${this.entries.length}, receivers=${this.receivers.length}, energyIn=${this.energyIn}, energyOut=${this.energyOut}, power=${this.energyPower}]`;
+	}
+
+	private connectBlockToNeighbor(blockNode: BlockNode, x: number, y: number, z: number, side: number): void {
+		const node = EnergyNet.getNodeOnCoords(this.region, x, y, z);
+		if (!node || !this.isCompatible(node)) return;
+
+		if (node instanceof EnergyTileNode) {
+			const tileSide = side ^ 1;
+			blockNode.linkTile(
+				node,
+				node.canExtractEnergy(tileSide, this.baseEnergy),
+				node.canReceiveEnergy(tileSide, this.baseEnergy)
+			);
+			return;
+		}
+
+		if (node instanceof EnergyGrid) {
+			const adjacentBlockNode = node.blockNodes.get(x, y, z);
+			if (adjacentBlockNode) {
+				blockNode.linkBlock(adjacentBlockNode);
+			}
+		}
+	}
+
+	private collectConnectedBlocks(startNode: BlockNode, visited: {[coordKey: string]: boolean}): BlockNode[] {
+		const component: BlockNode[] = [];
+		const stack: BlockNode[] = [startNode];
+
+		while (stack.length > 0) {
+			const blockNode = stack.pop();
+			const coordKey = blockNode.getCoordKey();
+			if (visited[coordKey] || !this.blockNodes.containsNode(blockNode)) continue;
+
+			visited[coordKey] = true;
+			component.push(blockNode);
+			for (let link of blockNode.adjacentLinks) {
+				if (!(link.node instanceof BlockNode)) continue;
+				const adjacentBlock = link.node;
+				if (!this.blockNodes.containsNode(adjacentBlock)) continue;
+				stack.push(adjacentBlock);
+			}
+		}
+
+		return component;
+	}
+
+	private createGridComponent(component: BlockNode[]): EnergyGrid {
+		const grid = EnergyRegistry.createWireGrid(this.blockID, this.region);
+		for (let blockNode of component) {
+			this.blockNodes.removeNode(blockNode);
+			grid.blockNodes.addNode(blockNode);
+		}
+		EnergyNet.addEnergyNode(grid);
+		return grid;
+	}
+
+	private splitByComponents(): EnergyGrid[] {
+		const visited: {[coordKey: string]: boolean} = {};
+		const components: BlockNode[][] = [];
+
+		this.blockNodes.forEachNode((blockNode) => {
+			if (visited[blockNode.getCoordKey()]) return;
+			const component = this.collectConnectedBlocks(blockNode, visited);
+			if (component.length > 0) {
+				components.push(component);
+			}
+		});
+
+		if (components.length <= 1) {
+			return [this];
+		}
+
+		components.sort((a, b) => b.length - a.length);
+		const splitGrids: EnergyGrid[] = [this];
+		for (let i = 1; i < components.length; i++) {
+			const createdGrid = this.createGridComponent(components[i]);
+			splitGrids.push(createdGrid);
+		}
+		return splitGrids;
+	}
+
+	private rebuildConnectionsFromBlockGraph(): void {
+		this.resetConnections();
+		this.blockNodes.forEachNode((blockNode) => {
+			for (let link of blockNode.adjacentLinks) {
+				if (link.node instanceof EnergyTileNode) {
+					const tileNode = link.node;
+					if (tileNode.removed) continue;
+					if (link.canOutput) {
+						this.addConnection(tileNode);
+					}
+					if (link.canInput) {
+						tileNode.addConnection(this);
+					}
+					continue;
+				}
+				else if (link.node instanceof BlockNode) {
+					const adjacentGrid = link.node.parent;
+					if (adjacentGrid != this && !adjacentGrid.removed && this.isCompatible(adjacentGrid)) {
+						EnergyGridBuilder.connectNodes(this, adjacentGrid);
+					}
+				}
+			}
+		});
 	}
 }

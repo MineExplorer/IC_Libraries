@@ -1,5 +1,10 @@
 class BlockNodesSet {
+	parent: EnergyGrid;
 	data: {[coordKey: string]: BlockNode} = {};
+
+	constructor(parent: EnergyGrid) {
+		this.parent = parent;
+	}
 
 	getCoordKey(x: number, y: number, z: number): string {
 		return BlockNode.getCoordKey(x, y, z);
@@ -15,10 +20,13 @@ class BlockNodesSet {
 
 	add(x: number, y: number, z: number, tile: Tile): BlockNode {
 		const coordKey = this.getCoordKey(x, y, z);
-		return this.data[coordKey] = this.data[coordKey] || new BlockNode(x, y, z, tile);
+		const blockNode = this.data[coordKey] || new BlockNode(this.parent, x, y, z, tile);
+		blockNode.parent = this.parent;
+		return this.data[coordKey] = blockNode;
 	}
 
 	addNode(blockNode: BlockNode): BlockNode {
+		blockNode.parent = this.parent;
 		return this.data[blockNode.getCoordKey()] = blockNode;
 	}
 
@@ -28,6 +36,7 @@ class BlockNodesSet {
 		if (!blockNode) return null;
 
 		delete this.data[coordKey];
+		blockNode.parent = null;
 		return blockNode;
 	}
 
@@ -41,7 +50,9 @@ class BlockNodesSet {
 
 	mergeFrom(other: BlockNodesSet): void {
 		for (let coordKey in other.data) {
-			this.data[coordKey] = other.data[coordKey];
+			const blockNode = other.data[coordKey];
+			blockNode.parent = this.parent;
+			this.data[coordKey] = blockNode;
 		}
 	}
 
@@ -52,6 +63,9 @@ class BlockNodesSet {
 	}
 
 	clear(): void {
+		this.forEachNode((blockNode) => {
+			blockNode.parent = null;
+		});
 		this.data = {};
 	}
 }
