@@ -35,9 +35,8 @@ namespace EnergyGridBuilder {
 
 	export function buildWireGrid(region: BlockSource, x: number, y: number, z: number): EnergyGrid {
 		const blockID = region.getBlockId(x, y, z);
-		const wire = EnergyRegistry.getWireData(blockID);
-		if (wire) {
-			const grid = new wire.class(wire.type, wire.maxValue, blockID, region);
+		if (EnergyRegistry.isWire(blockID)) {
+			const grid = EnergyRegistry.createWireGrid(blockID, region);
 			EnergyNet.addEnergyNode(grid);
 			grid.rebuildRecursive(x, y, z);
 			return grid;

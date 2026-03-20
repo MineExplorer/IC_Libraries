@@ -76,7 +76,7 @@ extends EnergyNode {
 	}
 
 	private createGridComponent(component: BlockNode[]): EnergyGrid {
-		const grid = new EnergyGrid(this.energyTypes[this.baseEnergy], this.maxValue, this.blockID, this.region);
+		const grid = EnergyRegistry.createWireGrid(this.blockID, this.region);
 		for (let blockNode of component) {
 			this.blockNodes.removeNode(blockNode);
 			grid.blockNodes.addNode(blockNode);
@@ -142,7 +142,8 @@ extends EnergyNode {
 		components.sort((a, b) => b.length - a.length);
 		const splitGrids: EnergyGrid[] = [this];
 		for (let i = 1; i < components.length; i++) {
-			splitGrids.push(this.createGridComponent(components[i]));
+			const createdGrid = this.createGridComponent(components[i]);
+			splitGrids.push(createdGrid);
 		}
 		return splitGrids;
 	}

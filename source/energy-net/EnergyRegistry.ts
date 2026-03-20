@@ -60,8 +60,16 @@ namespace EnergyRegistry {
 		}
 	}
 
-	export function getWireData(blockID: number): WireData {
-		return wireData[blockID];
+	export function getWireData(blockID: number): Nullable<WireData> {
+		return wireData[blockID] || null;
+	}
+
+	export function createWireGrid(blockID: number, blockSource: BlockSource): EnergyGrid {
+		const wireData = getWireData(blockID);
+		if (wireData) {
+			return new wireData.class(wireData.type, wireData.maxValue, blockID, blockSource);
+		}
+		throw new Error(`Invalid wire ID ${blockID} for EnergyGrid`);
 	}
 
 	export function isWire(blockID: number, type?: string): boolean {
