@@ -4,10 +4,15 @@ namespace EnergyGridBuilder {
 		node2.addConnection(node1);
 	}
 
-	function connectTileToGridBlock(grid: EnergyGrid, x: number, y: number, z: number, tileNode: EnergyTileNode): void {
+	function connectTileToGridBlock(grid: EnergyGrid, x: number, y: number, z: number, side: number, tileNode: EnergyTileNode): void {
 		const blockNode = grid.blockNodes.get(x, y, z);
 		if (blockNode) {
-			blockNode.addAdjacentTileEntityNode(tileNode);
+			const energyType = grid.baseEnergy;
+			blockNode.linkTile(
+				tileNode,
+				tileNode.canExtractEnergy(side, energyType),
+				tileNode.canReceiveEnergy(side, energyType)
+			);
 		}
 	}
 
@@ -18,7 +23,7 @@ namespace EnergyGridBuilder {
 			const node = EnergyNet.getNodeOnCoords(te.blockSource, coords.x, coords.y, coords.z);
 			if (node && tileNode.isCompatible(node)) {
 				if (node instanceof EnergyGrid) {
-					connectTileToGridBlock(node, coords.x, coords.y, coords.z, tileNode);
+					connectTileToGridBlock(node, coords.x, coords.y, coords.z, side, tileNode);
 				}
 				const energyType = node.baseEnergy;
 				if (tileNode.canExtractEnergy(side, energyType) && node.canReceiveEnergy(side ^ 1, energyType)) {

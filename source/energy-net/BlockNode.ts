@@ -1,10 +1,22 @@
-class BlockNode {
+interface AdjacentNodeLink {
+	node: EnergyGraphNode;
+	canInput: boolean;
+	canOutput: boolean;
+}
+
+interface EnergyGraphNode {
+	adjacentLinks: AdjacentNodeLink[];
+	addAdjacentLink(node: EnergyGraphNode, canInput: boolean, canOutput: boolean): boolean;
+	removeAdjacentLink(node: EnergyGraphNode): boolean;
+	clearAdjacentLinks(): void;
+}
+
+class BlockNode implements EnergyGraphNode {
 	x: number;
 	y: number;
 	z: number;
 	tile: Tile;
-	adjacentBlocks: BlockNode[] = [];
-	adjacentTileEntityNodes: EnergyTileNode[] = [];
+	adjacentLinks: AdjacentNodeLink[] = [];
 
 	constructor(x: number, y: number, z: number, tile: Tile) {
 		this.x = x;
@@ -21,52 +33,50 @@ class BlockNode {
 		return BlockNode.getCoordKey(this.x, this.y, this.z);
 	}
 
-	private addAdjacentBlock(blockNode: BlockNode): boolean {
-		if (blockNode == this || this.adjacentBlocks.indexOf(blockNode) != -1) return false;
-		this.adjacentBlocks.push(blockNode);
-		return true;
-	}
-
-	private removeAdjacentBlock(blockNode: BlockNode): boolean {
-		const index = this.adjacentBlocks.indexOf(blockNode);
-		if (index == -1) return false;
-		this.adjacentBlocks.splice(index, 1);
-		return true;
-	}
-
 	linkBlock(blockNode: BlockNode): void {
-		if (this.addAdjacentBlock(blockNode)) {
-			blockNode.addAdjacentBlock(this);
+		if (this.addAdjacentLink(blockNode, true, true)) {
+			blockNode.addAdjacentLink(this, true, true);
 		}
 	}
 
 	unlinkBlock(blockNode: BlockNode): void {
-		if (this.removeAdjacentBlock(blockNode)) {
-			blockNode.removeAdjacentBlock(this);
+		if (this.removeAdjacentLink(blockNode)) {
+			blockNode.removeAdjacentLink(this);
 		}
 	}
 
-	unlinkAllBlocks(): void {
-		const adjacentBlocks = this.adjacentBlocks.slice();
-		for (let blockNode of adjacentBlocks) {
-			this.unlinkBlock(blockNode);
+	linkTile(tileNode: EnergyTileNode, canInput: boolean, canOutput: boolean): void {
+		if (this.addAdjacentLink(tileNode, canInput, canOutput)) {
+			tileNode.addAdjacentLink(this, canInput, canOutput);
 		}
 	}
 
-	addAdjacentTileEntityNode(node: EnergyTileNode): boolean {
-		if (this.adjacentTileEntityNodes.indexOf(node) != -1) return false;
-		this.adjacentTileEntityNodes.push(node);
+	unlinkTile(tileNode: EnergyTileNode): void {
+		if (this.removeAdjacentLink(tileNode)) {
+			tileNode.removeAdjacentLink(this);
+		}
+	}
+
+	addAdjacentLink(node: BlockNode | EnergyTileNode, canInput: boolean, canOutput: boolean): boolean {
+		for (let link of this.adjacentLinks) {
+			if (link.node == node) return false;
+		}
+		this.adjacentLinks.push({
+			node: node,
+			canInput: canInput,
+			canOutput: canOutput
+		});
 		return true;
 	}
 
-	removeAdjacentTileEntityNode(node: EnergyTileNode): boolean {
-		const index = this.adjacentTileEntityNodes.indexOf(node);
+	removeAdjacentLink(node: EnergyGraphNode): boolean {
+		const index = this.adjacentLinks.findIndex((link) => link.node == node);
 		if (index == -1) return false;
-		this.adjacentTileEntityNodes.splice(index, 1);
+		this.adjacentLinks.splice(index, 1);
 		return true;
 	}
 
-	clearAdjacentTileEntityNodes(): void {
-		this.adjacentTileEntityNodes = [];
+	clearAdjacentLinks(): void {
+		this.adjacentLinks = [];
 	}
 }

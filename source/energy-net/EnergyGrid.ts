@@ -49,17 +49,6 @@ extends EnergyNode {
 		return this;
 	}
 
-	private getSideForTileNode(blockNode: BlockNode, tileNode: EnergyTileNode): number {
-		const tileEntity = tileNode.getParent();
-		for (let side = 0; side < 6; side++) {
-			const coords = World.getRelativeCoords(blockNode.x, blockNode.y, blockNode.z, side);
-			if (coords.x == tileEntity.x && coords.y == tileEntity.y && coords.z == tileEntity.z) {
-				return side;
-			}
-		}
-		return -1;
-	}
-
 	private collectConnectedBlocks(startNode: BlockNode, visited: {[coordKey: string]: boolean}): BlockNode[] {
 		const component: BlockNode[] = [];
 		const stack: BlockNode[] = [startNode];
@@ -71,7 +60,9 @@ extends EnergyNode {
 
 			visited[coordKey] = true;
 			component.push(blockNode);
-			for (let adjacentBlock of blockNode.adjacentBlocks) {
+			for (let link of blockNode.adjacentLinks) {
+				if (!(link.node instanceof BlockNode)) continue;
+				const adjacentBlock = link.node;
 				if (!this.blockNodes.containsNode(adjacentBlock)) continue;
 				stack.push(adjacentBlock);
 			}
@@ -93,25 +84,26 @@ extends EnergyNode {
 	private rebuildConnectionsFromBlockGraph(): void {
 		this.resetConnections();
 		this.blockNodes.forEachNode((blockNode) => {
-			for (let tileNode of blockNode.adjacentTileEntityNodes) {
-				if (tileNode.removed) continue;
-				const side = this.getSideForTileNode(blockNode, tileNode);
-				if (side == -1) continue;
-				const tileSide = side ^ 1;
-				if (tileNode.canReceiveEnergy(tileSide, this.baseEnergy)) {
-					this.addConnection(tileNode);
+			for (let link of blockNode.adjacentLinks) {
+				if (link.node instanceof EnergyTileNode) {
+					const tileNode = link.node;
+					if (tileNode.removed) continue;
+					if (link.canOutput) {
+						this.addConnection(tileNode);
+					}
+					if (link.canInput) {
+						tileNode.addConnection(this);
+					}
+					continue;
 				}
-				if (tileNode.canExtractEnergy(tileSide, this.baseEnergy)) {
-					tileNode.addConnection(this);
-				}
-			}
+				else if (link.node instanceof BlockNode) {
+					const adjacentBlock = link.node;
+					if (this.blockNodes.containsNode(adjacentBlock)) continue;
 
-			for (let adjacentBlock of blockNode.adjacentBlocks) {
-				if (this.blockNodes.containsNode(adjacentBlock)) continue;
-
-				const adjacentNode = EnergyNet.getNodeOnCoords(this.region, adjacentBlock.x, adjacentBlock.y, adjacentBlock.z);
-				if (adjacentNode && !adjacentNode.removed && this.isCompatible(adjacentNode)) {
-					EnergyGridBuilder.connectNodes(this, adjacentNode);
+					const adjacentNode = EnergyNet.getNodeOnCoords(this.region, adjacentBlock.x, adjacentBlock.y, adjacentBlock.z);
+					if (adjacentNode && !adjacentNode.removed && this.isCompatible(adjacentNode)) {
+						EnergyGridBuilder.connectNodes(this, adjacentNode);
+					}
 				}
 			}
 		});
@@ -192,9 +184,10 @@ extends EnergyNode {
 		const blockNode = this.blockNodes.remove(x, y, z);
 		if (!blockNode) return null;
 
-		const adjacentBlocks = blockNode.adjacentBlocks.slice();
-		blockNode.unlinkAllBlocks();
-		blockNode.clearAdjacentTileEntityNodes();
+		const adjacentBlocks = blockNode.adjacentLinks
+			.filter((link) => link.node instanceof BlockNode)
+			.map((link) => link.node as BlockNode);
+		blockNode.clearAdjacentLinks();
 
 		if (Object.keys(this.blockNodes.data).length == 0) {
 			this.resetConnections();
@@ -210,12 +203,27 @@ extends EnergyNode {
 		return blockNode;
 	}
 
-	private connectBlockToNeighbor(blockNode: BlockNode, x: number, y: number, z: number): void {
+	removeTileNodeLinks(tileNode: EnergyTileNode): boolean {
+		let removed = false;
+		this.blockNodes.forEachNode((blockNode) => {
+			if (blockNode.removeAdjacentLink(tileNode)) {
+				removed = true;
+			}
+		});
+		return removed;
+	}
+
+	private connectBlockToNeighbor(blockNode: BlockNode, x: number, y: number, z: number, side: number): void {
 		const node = EnergyNet.getNodeOnCoords(this.region, x, y, z);
 		if (!node || !this.isCompatible(node)) return;
 
 		if (node instanceof EnergyTileNode) {
-			blockNode.addAdjacentTileEntityNode(node);
+			const tileSide = side ^ 1;
+			blockNode.linkTile(
+				node,
+				node.canExtractEnergy(tileSide, this.baseEnergy),
+				node.canReceiveEnergy(tileSide, this.baseEnergy)
+			);
 			return;
 		}
 
@@ -233,7 +241,7 @@ extends EnergyNode {
 			const coord2 = World.getRelativeCoords(blockNode.x, blockNode.y, blockNode.z, side);
 			if (this.canConductEnergy(coord1, coord2, side)) {
 				this.rebuildRecursive(coord2.x, coord2.y, coord2.z, side ^ 1);
-				this.connectBlockToNeighbor(blockNode, coord2.x, coord2.y, coord2.z);
+				this.connectBlockToNeighbor(blockNode, coord2.x, coord2.y, coord2.z, side);
 			}
 		}
 	}
