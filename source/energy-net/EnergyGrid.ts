@@ -1,5 +1,6 @@
 class EnergyGrid
 extends EnergyNode {
+	readonly kind: EnergyNodeKind = "grid";
 	blockNodes: BlockNodesSet = new BlockNodesSet();
 	/** @deprecated */
 	blocksMap = this.blockNodes.data;

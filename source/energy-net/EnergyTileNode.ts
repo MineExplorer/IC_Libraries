@@ -1,5 +1,6 @@
 class EnergyTileNode
 extends EnergyNode {
+	readonly kind: EnergyNodeKind = "tile";
 	tileEntity: EnergyTile;
 	initialized: boolean = false;
 

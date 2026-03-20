@@ -1,7 +1,9 @@
+type EnergyNodeKind = "grid" | "tile";
 
 abstract class EnergyNode {
 	id: number;
 	baseEnergy: string;
+	abstract readonly kind: EnergyNodeKind;
 	energyTypes: object = {};
 	dimension: number;
 	maxValue: number = 2e9;

@@ -1,25 +1,38 @@
 namespace EnergyNet {
 	export let globalNodeID = 0;
+	type EnergyNodeLists = {
+		energyTiles: EnergyTileNode[];
+		energyGrids: EnergyGrid[];
+	};
 	/**
 	 * EnergyNodes container.
 	 * @key dimension id
 	 */
-	let energyNodes: {[key: number]: EnergyNode[]} = {};
+	let energyNodes: {[key: number]: EnergyNodeLists} = {};
 	let pendingRemoval: EnergyNode[] = [];
 
-	export function getNodesByDimension(dimension: number) {
-		return energyNodes[dimension] = energyNodes[dimension] || [];
+	function getNodesByDimension(dimension: number): EnergyNodeLists {
+		return energyNodes[dimension] = energyNodes[dimension] || {
+			energyTiles: [],
+			energyGrids: []
+		};
 	}
 
 	export function addEnergyNode(node: EnergyNode): void {
-		getNodesByDimension(node.dimension).push(node);
+		const nodes = getNodesByDimension(node.dimension);
+		if (node.kind == "grid") {
+			nodes.energyGrids.push(node as EnergyGrid);
+		} else if (node.kind == "tile") {
+			nodes.energyTiles.push(node as EnergyTileNode);
+		}
 	}
 
 	export function removeEnergyNode(node: EnergyNode): void {
 		const nodes = getNodesByDimension(node.dimension);
-		const index = nodes.indexOf(node);
+		const nodeArray: EnergyNode[] = node.kind == "grid" ? nodes.energyGrids : nodes.energyTiles;
+		const index = nodeArray.indexOf(node);
 		if (index != -1) {
-			nodes.splice(index, 1);
+			nodeArray.splice(index, 1);
 		}
 	}
 
@@ -46,7 +59,7 @@ namespace EnergyNet {
 			return null;
 		}
 		const nodes = getNodesByDimension(region.getDimension());
-		for (let node of nodes) {
+		for (let node of nodes.energyGrids) {
 			if (node.removed) continue;
 			if (node.hasCoords(x, y, z)) return node;
 		}
@@ -55,7 +68,11 @@ namespace EnergyNet {
 
 	function energyNodesTick(): void {
 		for (let dimension in energyNodes) {
-			for (let node of energyNodes[dimension]) {
+			const nodes = energyNodes[dimension];
+			for (let node of nodes.energyTiles) {
+				node.tick();
+			}
+			for (let node of nodes.energyGrids) {
 				node.tick();
 			}
 		}
