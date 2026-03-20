@@ -34,8 +34,8 @@ abstract class EnergyNode {
 		this.energyTypes[energyType.name] = energyType;
 	}
 
-	addCoords(x: number, y: number, z: number): BlockNode {
-		return this.blockNodes.add(x, y, z);
+	addCoords(x: number, y: number, z: number, tile: Tile): BlockNode {
+		return this.blockNodes.add(x, y, z, tile);
 	}
 
 	removeCoords(x: number, y: number, z: number): BlockNode {

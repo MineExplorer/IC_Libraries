@@ -2,13 +2,15 @@ class BlockNode {
 	x: number;
 	y: number;
 	z: number;
+	tile: Tile;
 	adjacentBlocks: BlockNode[] = [];
 	adjacentTileEntityNodes: EnergyTileNode[] = [];
 
-	constructor(x: number, y: number, z: number) {
+	constructor(x: number, y: number, z: number, tile: Tile) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
+		this.tile = tile;
 	}
 
 	static getCoordKey(x: number, y: number, z: number): string {

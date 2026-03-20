@@ -153,7 +153,7 @@ extends EnergyNode {
 				if (node) {
 					this.mergeGrid(node);
 				} else {
-					const blockNode = this.addCoords(x, y, z);
+					const blockNode = this.addCoords(x, y, z, this.region.getBlock(x, y, z));
 					this.rebuildFor6Sides(blockNode);
 				}
 			}

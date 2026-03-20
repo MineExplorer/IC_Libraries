@@ -13,9 +13,9 @@ class BlockNodesData {
 		return this.data[this.getCoordKey(x, y, z)];
 	}
 
-	add(x: number, y: number, z: number): BlockNode {
+	add(x: number, y: number, z: number, tile: Tile): BlockNode {
 		const coordKey = this.getCoordKey(x, y, z);
-		return this.data[coordKey] = this.data[coordKey] || new BlockNode(x, y, z);
+		return this.data[coordKey] = this.data[coordKey] || new BlockNode(x, y, z, tile);
 	}
 
 	addNode(blockNode: BlockNode): BlockNode {
