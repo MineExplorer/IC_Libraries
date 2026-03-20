@@ -1,7 +1,3 @@
-/// <reference path="./BlockNode.ts" />
-/// <reference path="./BlockNodesData.ts" />
-
-let GLOBAL_NODE_ID = 0;
 
 abstract class EnergyNode {
 	id: number;
@@ -10,9 +6,6 @@ abstract class EnergyNode {
 	dimension: number;
 	maxValue: number = 2e9;
 	removed: boolean = false;
-	blockNodes: BlockNodesData = new BlockNodesData();
-	/** @deprecated */
-	blocksMap = this.blockNodes.data;
 	entries: EnergyNode[] = [];
 	receivers: EnergyNode[] = [];
 
@@ -24,7 +17,7 @@ abstract class EnergyNode {
 	currentPower: number = 0;
 
 	constructor(energyType: EnergyType, dimension: number) {
-		this.id = GLOBAL_NODE_ID++;
+		this.id = EnergyNet.globalNodeID++;
 		this.baseEnergy = energyType.name;
 		this.addEnergyType(energyType);
 		this.dimension = dimension;
@@ -32,14 +25,6 @@ abstract class EnergyNode {
 
 	addEnergyType(energyType: EnergyType): void {
 		this.energyTypes[energyType.name] = energyType;
-	}
-
-	addCoords(x: number, y: number, z: number, tile: Tile): BlockNode {
-		return this.blockNodes.add(x, y, z, tile);
-	}
-
-	removeCoords(x: number, y: number, z: number): BlockNode {
-		return this.blockNodes.remove(x, y, z);
 	}
 
 	private addEntry(node: EnergyNode): void {
@@ -224,7 +209,6 @@ abstract class EnergyNode {
 	}
 
 	toString(): string {
-		const blockCount = Object.keys(this.blockNodes.data).length;
-		return `[EnergyNode id=${this.id}, type=${this.baseEnergy}, blocks=${blockCount}, entries=${this.entries.length}, receivers=${this.receivers.length}, energyIn=${this.energyIn}, energyOut=${this.energyOut}, power=${this.energyPower}]`;
+		return `[EnergyNode id=${this.id}, type=${this.baseEnergy}, entries=${this.entries.length}, receivers=${this.receivers.length}, energyIn=${this.energyIn}, energyOut=${this.energyOut}, power=${this.energyPower}]`;
 	}
 }

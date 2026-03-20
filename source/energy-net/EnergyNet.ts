@@ -1,4 +1,5 @@
 namespace EnergyNet {
+	export let globalNodeID = 0;
 	/**
 	 * EnergyNodes container.
 	 * @key dimension id
@@ -44,7 +45,7 @@ namespace EnergyNet {
 		const nodes = getNodesByDimension(region.getDimension());
 		for (let node of nodes) {
 			if (node.removed) continue;
-			if (node.blockNodes.has(x, y, z)) return node;
+			if (node instanceof EnergyGrid && node.blockNodes.has(x, y, z)) return node;
 		}
 		return null;
 	}
@@ -59,7 +60,7 @@ namespace EnergyNet {
 
 	Callback.addCallback("LevelLeft", function() {
 		energyNodes = {};
-		GLOBAL_NODE_ID = 0;
+		globalNodeID = 0;
 	});
 
 	Callback.addCallback("tick", function() {

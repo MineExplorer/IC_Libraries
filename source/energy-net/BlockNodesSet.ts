@@ -1,4 +1,4 @@
-class BlockNodesData {
+class BlockNodesSet {
 	data: {[coordKey: string]: BlockNode} = {};
 
 	getCoordKey(x: number, y: number, z: number): string {
@@ -39,7 +39,7 @@ class BlockNodesData {
 		return this.get(blockNode.x, blockNode.y, blockNode.z) == blockNode;
 	}
 
-	mergeFrom(other: BlockNodesData): void {
+	mergeFrom(other: BlockNodesSet): void {
 		for (let coordKey in other.data) {
 			this.data[coordKey] = other.data[coordKey];
 		}

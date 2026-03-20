@@ -1,5 +1,8 @@
 class EnergyGrid
 extends EnergyNode {
+	blockNodes: BlockNodesSet = new BlockNodesSet();
+	/** @deprecated */
+	blocksMap = this.blockNodes.data;
 	blockID: number;
 	region: BlockSource;
 	idleTicks: number = 0;
@@ -18,6 +21,10 @@ extends EnergyNode {
 		return false;
 	}
 
+	addCoords(x: number, y: number, z: number, tile: Tile): BlockNode {
+		return this.blockNodes.add(x, y, z, tile);
+	}
+
 	/**
 	 * Determines whether the specified wire block can be absorbed into this grid.
 	 */
@@ -25,7 +32,7 @@ extends EnergyNode {
 		return this.blockID == tile.id;
 	}
 
-	mergeGrid(grid: EnergyNode): EnergyNode {
+	mergeGrid(grid: EnergyGrid): EnergyGrid {
 		this.blockNodes.mergeFrom(grid.blockNodes);
 		for (let node of grid.entries) {
 			node.addConnection(this);
@@ -158,7 +165,7 @@ extends EnergyNode {
 			const tile = this.region.getBlock(x, y, z);
 			if (this.isValidWire(tile)) {
 				if (node) {
-					this.mergeGrid(node);
+					this.mergeGrid(node as EnergyGrid);
 				} else {
 					const blockNode = this.addCoords(x, y, z, tile);
 					this.rebuildFor6Sides(blockNode);
@@ -236,5 +243,10 @@ extends EnergyNode {
 			this.idleTicks = 0;
 		}
 		super.tick();
+	}
+
+	toString(): string {
+		const blockCount = Object.keys(this.blockNodes.data).length;
+		return `[EnergyGrid id=${this.id}, type=${this.baseEnergy}, blocks=${blockCount}, entries=${this.entries.length}, receivers=${this.receivers.length}, energyIn=${this.energyIn}, energyOut=${this.energyOut}, power=${this.energyPower}]`;
 	}
 }

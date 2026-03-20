@@ -17,7 +17,7 @@
 		"EnergyType.ts",
 		"EnergyPacket.ts",
 		"BlockNode.ts",
-		"BlockNodesData.ts",
+		"BlockNodesSet.ts",
 		"EnergyNode.ts",
 		"EnergyGrid.ts",
 		"EnergyTileNode.ts",
