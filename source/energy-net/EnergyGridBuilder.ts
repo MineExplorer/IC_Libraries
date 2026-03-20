@@ -4,12 +4,22 @@ namespace EnergyGridBuilder {
 		node2.addConnection(node1);
 	}
 
+	function connectTileToGridBlock(grid: EnergyGrid, x: number, y: number, z: number, tileNode: EnergyTileNode): void {
+		const blockNode = grid.blockNodes.get(x, y, z);
+		if (blockNode) {
+			blockNode.addAdjacentTileEntityNode(tileNode);
+		}
+	}
+
 	export function buildGridForTile(te: EnergyTile) {
 		const tileNode = te.energyNode;
 		for (let side = 0; side < 6; side++) {
 			const coords = World.getRelativeCoords(te.x, te.y, te.z, side);
 			const node = EnergyNet.getNodeOnCoords(te.blockSource, coords.x, coords.y, coords.z);
 			if (node && tileNode.isCompatible(node)) {
+				if (node instanceof EnergyGrid) {
+					connectTileToGridBlock(node, coords.x, coords.y, coords.z, tileNode);
+				}
 				const energyType = node.baseEnergy;
 				if (tileNode.canExtractEnergy(side, energyType) && node.canReceiveEnergy(side ^ 1, energyType)) {
 					tileNode.addConnection(node);
@@ -79,9 +89,8 @@ namespace EnergyGridBuilder {
 		if (EnergyRegistry.isWire(block.id)) {
 			const region = BlockSource.getDefaultForActor(player);
 			const node = EnergyNet.getNodeOnCoords(region, coords.x, coords.y, coords.z);
-			if (node) {
-				node.destroy();
-				onWireDestroyed(region, coords.x, coords.y, coords.z, block.id);
+			if (node instanceof EnergyGrid) {
+				node.removeCoords(coords.x, coords.y, coords.z);
 			}
 		}
 	});

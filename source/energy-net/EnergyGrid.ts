@@ -2,7 +2,6 @@ class EnergyGrid
 extends EnergyNode {
 	blockID: number;
 	region: BlockSource;
-	removedCoords: Vector[] = [];
 
 	constructor(energyType: EnergyType, maxValue: number, wireID: number, region: BlockSource) {
 		super(energyType, region.getDimension());
@@ -30,12 +29,107 @@ extends EnergyNode {
 		return this;
 	}
 
-	rebuildGrid(): void {
-		this.destroy();
-		for (let coords of this.removedCoords) {
-			EnergyGridBuilder.onWireDestroyed(this.region, coords.x, coords.y, coords.z, this.blockID);
+	private getSideForTileNode(blockNode: BlockNode, tileNode: EnergyTileNode): number {
+		const tileEntity = tileNode.getParent();
+		for (let side = 0; side < 6; side++) {
+			const coords = World.getRelativeCoords(blockNode.x, blockNode.y, blockNode.z, side);
+			if (coords.x == tileEntity.x && coords.y == tileEntity.y && coords.z == tileEntity.z) {
+				return side;
+			}
 		}
-		this.removedCoords = [];
+		return -1;
+	}
+
+	private collectConnectedBlocks(startNode: BlockNode, visited: {[coordKey: string]: boolean}): BlockNode[] {
+		const component: BlockNode[] = [];
+		const stack: BlockNode[] = [startNode];
+
+		while (stack.length > 0) {
+			const blockNode = stack.pop();
+			const coordKey = blockNode.getCoordKey();
+			if (visited[coordKey] || !this.blockNodes.containsNode(blockNode)) continue;
+
+			visited[coordKey] = true;
+			component.push(blockNode);
+			for (let adjacentBlock of blockNode.adjacentBlocks) {
+				if (!this.blockNodes.containsNode(adjacentBlock)) continue;
+				stack.push(adjacentBlock);
+			}
+		}
+
+		return component;
+	}
+
+	private createGridComponent(component: BlockNode[]): EnergyGrid {
+		const grid = new EnergyGrid(this.energyTypes[this.baseEnergy], this.maxValue, this.blockID, this.region);
+		for (let blockNode of component) {
+			this.blockNodes.removeNode(blockNode);
+			grid.blockNodes.addNode(blockNode);
+		}
+		EnergyNet.addEnergyNode(grid);
+		return grid;
+	}
+
+	private rebuildConnectionsFromBlockGraph(): void {
+		this.resetConnections();
+		this.blockNodes.forEachNode((blockNode) => {
+			for (let tileNode of blockNode.adjacentTileEntityNodes) {
+				if (tileNode.removed) continue;
+				const side = this.getSideForTileNode(blockNode, tileNode);
+				if (side == -1) continue;
+				const tileSide = side ^ 1;
+				if (tileNode.canReceiveEnergy(tileSide, this.baseEnergy)) {
+					this.addConnection(tileNode);
+				}
+				if (tileNode.canExtractEnergy(tileSide, this.baseEnergy)) {
+					tileNode.addConnection(this);
+				}
+			}
+
+			for (let adjacentBlock of blockNode.adjacentBlocks) {
+				if (this.blockNodes.containsNode(adjacentBlock)) continue;
+
+				const adjacentNode = EnergyNet.getNodeOnCoords(this.region, adjacentBlock.x, adjacentBlock.y, adjacentBlock.z);
+				if (adjacentNode && !adjacentNode.removed && this.isCompatible(adjacentNode)) {
+					EnergyGridBuilder.connectNodes(this, adjacentNode);
+				}
+			}
+		});
+	}
+
+	private splitByComponents(seedNodes: BlockNode[]): EnergyGrid[] {
+		const visited: {[coordKey: string]: boolean} = {};
+		const components: BlockNode[][] = [];
+
+		for (let blockNode of seedNodes) {
+			if (!this.blockNodes.containsNode(blockNode)) continue;
+			const coordKey = blockNode.getCoordKey();
+			if (visited[coordKey]) continue;
+
+			const component = this.collectConnectedBlocks(blockNode, visited);
+			if (component.length > 0) {
+				components.push(component);
+			}
+		}
+
+		this.blockNodes.forEachNode((blockNode) => {
+			if (visited[blockNode.getCoordKey()]) return;
+			const component = this.collectConnectedBlocks(blockNode, visited);
+			if (component.length > 0) {
+				components.push(component);
+			}
+		});
+
+		if (components.length <= 1) {
+			return [this];
+		}
+
+		components.sort((a, b) => b.length - a.length);
+		const splitGrids: EnergyGrid[] = [this];
+		for (let i = 1; i < components.length; i++) {
+			splitGrids.push(this.createGridComponent(components[i]));
+		}
+		return splitGrids;
 	}
 
 	rebuildRecursive(x: number, y: number, z: number, side?: number) {
@@ -72,12 +166,26 @@ extends EnergyNode {
 	}
 
 	removeCoords(x: number, y: number, z: number): BlockNode {
+		if (this.removed) return null;
+
 		const blockNode = this.blockNodes.remove(x, y, z);
-		if (blockNode) {
-			blockNode.unlinkAllBlocks();
-			blockNode.clearAdjacentTileEntityNodes();
-			this.removedCoords.push({x: x, y: y, z: z});
+		if (!blockNode) return null;
+
+		const adjacentBlocks = blockNode.adjacentBlocks.slice();
+		blockNode.unlinkAllBlocks();
+		blockNode.clearAdjacentTileEntityNodes();
+
+		if (Object.keys(this.blockNodes.data).length == 0) {
+			this.resetConnections();
+			this.destroy();
+			return blockNode;
 		}
+
+		const splitGrids = this.splitByComponents(adjacentBlocks);
+		for (let grid of splitGrids) {
+			grid.rebuildConnectionsFromBlockGraph();
+		}
+
 		return blockNode;
 	}
 
@@ -110,10 +218,6 @@ extends EnergyNode {
 	}
 
 	tick(): void {
-		if (this.removedCoords.length > 0) {
-			this.rebuildGrid();
-		} else {
-			super.tick();
-		}
+		super.tick();
 	}
 }

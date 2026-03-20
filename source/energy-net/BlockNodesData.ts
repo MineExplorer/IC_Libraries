@@ -18,6 +18,10 @@ class BlockNodesData {
 		return this.data[coordKey] = this.data[coordKey] || new BlockNode(x, y, z);
 	}
 
+	addNode(blockNode: BlockNode): BlockNode {
+		return this.data[blockNode.getCoordKey()] = blockNode;
+	}
+
 	remove(x: number, y: number, z: number): BlockNode {
 		const coordKey = this.getCoordKey(x, y, z);
 		const blockNode = this.data[coordKey];
@@ -25,6 +29,14 @@ class BlockNodesData {
 
 		delete this.data[coordKey];
 		return blockNode;
+	}
+
+	removeNode(blockNode: BlockNode): BlockNode {
+		return this.remove(blockNode.x, blockNode.y, blockNode.z);
+	}
+
+	containsNode(blockNode: BlockNode): boolean {
+		return this.get(blockNode.x, blockNode.y, blockNode.z) == blockNode;
 	}
 
 	mergeFrom(other: BlockNodesData): void {
