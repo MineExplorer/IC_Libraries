@@ -90,7 +90,7 @@ extends EnergyNode {
 		const blockNode = this.blockNodes.remove(x, y, z);
 		if (!blockNode) return null;
 
-		blockNode.clearAdjacentLinks();
+		blockNode.resetAdjacentLinks();
 
 		if (Object.keys(this.blockNodes.data).length == 0) {
 			this.resetConnections();

@@ -8,7 +8,7 @@ interface EnergyGraphNode {
 	adjacentLinks: AdjacentNodeLink[];
 	addAdjacentLink(node: EnergyGraphNode, canInput: boolean, canOutput: boolean): boolean;
 	removeAdjacentLink(node: EnergyGraphNode): boolean;
-	clearAdjacentLinks(): void;
+	resetAdjacentLinks(): void;
 }
 
 class BlockNode implements EnergyGraphNode {
@@ -78,7 +78,10 @@ class BlockNode implements EnergyGraphNode {
 		return true;
 	}
 
-	clearAdjacentLinks(): void {
+	resetAdjacentLinks(): void {
+		for (let link of this.adjacentLinks) {
+			link.node.removeAdjacentLink(this);
+		}
 		this.adjacentLinks = [];
 	}
 }

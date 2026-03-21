@@ -49,7 +49,10 @@ implements EnergyGraphNode {
 		return true;
 	}
 
-	clearAdjacentLinks(): void {
+	resetAdjacentLinks(): void {
+		for (let link of this.adjacentLinks) {
+			link.node.removeAdjacentLink(this);
+		}
 		this.adjacentLinks = [];
 	}
 
@@ -78,10 +81,7 @@ implements EnergyGraphNode {
 	}
 
 	resetConnections(): void {
-		for (let link of this.adjacentLinks) {
-			link.node.removeAdjacentLink(this);
-		}
-		this.clearAdjacentLinks();
+		this.resetAdjacentLinks();
 		super.resetConnections();
 	}
 
