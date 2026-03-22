@@ -19,8 +19,10 @@ class EnergyPacket {
 	}
 
 	validateNode(nodeId: number): boolean {
+		if (nodeId == this.source.id) return false;
+
 		const passedMode = this.nodeList[nodeId];
-		if (passedMode == undefined || passedMode < this.transferMode) {
+		if (!passedMode || passedMode != this.transferMode) {
 			this.setNodePassed(nodeId, this.transferMode);
 			return true;
 		}
