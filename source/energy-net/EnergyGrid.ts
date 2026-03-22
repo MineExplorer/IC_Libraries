@@ -159,7 +159,7 @@ extends EnergyNode {
 		return `[EnergyGrid id=${this.id}, type=${this.baseEnergy}, blocks=${blockCount}, entries=${this.entries.length}, receivers=${this.receivers.length}, energyIn=${this.energyIn}, energyOut=${this.energyOut}, power=${this.energyPower}]`;
 	}
 
-	private connectBlockToNeighbor(blockNode: BlockNode, x: number, y: number, z: number, side: number): void {
+	protected connectBlockToNeighbor(blockNode: BlockNode, x: number, y: number, z: number, side: number): void {
 		const node = EnergyNet.getNodeOnCoords(this.region, x, y, z);
 		if (!node || !this.isCompatible(node)) return;
 
@@ -181,21 +181,21 @@ extends EnergyNode {
 		}
 	}
 
-	private collectConnectedBlocks(startNode: BlockNode, visited: {[coordKey: string]: boolean}): BlockNode[] {
+	protected collectConnectedBlocks(startNode: BlockNode, visited: {[coordKey: string]: boolean}): BlockNode[] {
 		const component: BlockNode[] = [];
 		const stack: BlockNode[] = [startNode];
 
 		while (stack.length > 0) {
 			const blockNode = stack.pop();
 			const coordKey = blockNode.getCoordKey();
-			if (visited[coordKey] || !this.blockNodes.containsNode(blockNode)) continue;
+			if (visited[coordKey] || blockNode.parent != this) continue;
 
 			visited[coordKey] = true;
 			component.push(blockNode);
 			for (let link of blockNode.adjacentLinks) {
 				if (!(link.node instanceof BlockNode)) continue;
 				const adjacentBlock = link.node;
-				if (!this.blockNodes.containsNode(adjacentBlock)) continue;
+				if (adjacentBlock.parent != this) continue;
 				stack.push(adjacentBlock);
 			}
 		}
@@ -203,8 +203,9 @@ extends EnergyNode {
 		return component;
 	}
 
-	private createGridComponent(component: BlockNode[]): EnergyGrid {
-		const grid = EnergyRegistry.createWireGrid(this.blockID, this.region);
+	protected createGridComponent(component: BlockNode[]): EnergyGrid {
+		const wireID = component[0].tile.id;
+		const grid = EnergyRegistry.createWireGrid(wireID, this.region);
 		for (let blockNode of component) {
 			this.blockNodes.removeNode(blockNode);
 			grid.blockNodes.addNode(blockNode);
@@ -213,7 +214,7 @@ extends EnergyNode {
 		return grid;
 	}
 
-	private splitByComponents(): EnergyGrid[] {
+	protected splitByComponents(): EnergyGrid[] {
 		const visited: {[coordKey: string]: boolean} = {};
 		const components: BlockNode[][] = [];
 
@@ -238,7 +239,7 @@ extends EnergyNode {
 		return splitGrids;
 	}
 
-	private rebuildConnectionsFromBlockGraph(): void {
+	protected rebuildConnectionsFromBlockGraph(): void {
 		this.resetConnections();
 		this.blockNodes.forEachNode((blockNode) => {
 			for (let link of blockNode.adjacentLinks) {

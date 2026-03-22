@@ -47,8 +47,8 @@ namespace EnergyGridBuilder {
 		const blockID = region.getBlockId(x, y, z);
 		if (EnergyRegistry.isWire(blockID)) {
 			const grid = EnergyRegistry.createWireGrid(blockID, region);
-			EnergyNet.addEnergyNode(grid);
 			grid.rebuildRecursive(x, y, z);
+			EnergyNet.addEnergyNode(grid);
 			return grid;
 		}
 		return null;
@@ -62,21 +62,13 @@ namespace EnergyGridBuilder {
 		}
 	}
 
-	export function rebuildForWire(region: BlockSource, x: number, y: number, z: number, wireID: number): EnergyGrid {
-		if (region.getBlockId(x, y, z) == wireID && !EnergyNet.getNodeOnCoords(region, x, y, z)) {
-			return buildWireGrid(region, x, y, z);
-		}
-		return null;
-	}
-
 	export function onWirePlaced(region: BlockSource, x: number, y: number, z: number): void {
-		const blockId = region.getBlockId(x, y, z);
+		const tile = region.getBlock(x, y, z);
 		const coord1 = {x: x, y: y, z: z};
 		for (let side = 0; side < 6; side++) {
 			const coord2 = World.getRelativeCoords(x, y, z, side);
-			if (region.getBlockId(coord2.x, coord2.y, coord2.z) != blockId) continue;
 			const node = EnergyNet.getNodeOnCoords(region, coord2.x, coord2.y, coord2.z);
-			if (node && node instanceof EnergyGrid && node.canConductEnergy(coord2, coord1, side ^ 1)) {
+			if (node && node instanceof EnergyGrid && node.isValidWire(tile) && node.canConductEnergy(coord2, coord1, side ^ 1)) {
 				node.rebuildRecursive(x, y, z, side ^ 1);
 				return;
 			}
