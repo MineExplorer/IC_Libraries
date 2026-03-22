@@ -6,6 +6,7 @@ extends EnergyNode {
 	blocksMap: {[coordKey: string]: BlockNode};
 	blockID: number;
 	region: BlockSource;
+	rebuild: boolean = false;
 	idleTicks: number = 0;
 
 	constructor(energyType: EnergyType, maxValue: number, wireID: number, region: BlockSource) {
@@ -92,17 +93,8 @@ extends EnergyNode {
 
 		blockNode.resetAdjacentLinks();
 
-		if (Object.keys(this.blockNodes.data).length == 0) {
-			this.resetConnections();
-			this.destroy();
-			return blockNode;
-		}
-
-		const splitGrids = this.splitByComponents();
-		for (let grid of splitGrids) {
-			grid.rebuildConnectionsFromBlockGraph();
-		}
-
+		this.rebuild = true;
+		
 		return blockNode;
 	}
 
@@ -127,7 +119,29 @@ extends EnergyNode {
 		}
 	}
 
+	/**
+	 * Validates integrity of the grid's structure and splits or removes it if necessary.
+	 */
+	checkAndRebuild(): void {
+		this.rebuild = false;
+
+		if (Object.keys(this.blockNodes.data).length == 0) {
+			this.resetConnections();
+			this.destroy();
+			return;
+		}
+
+		const splitGrids = this.splitByComponents();
+		for (let grid of splitGrids) {
+			grid.rebuildConnectionsFromBlockGraph();
+		}
+	}
+
 	tick(): void {
+		if (this.rebuild) {
+			this.checkAndRebuild();
+			if (this.removed) return;
+		}
 		if (this.entries.length == 0 && this.receivers.length == 0) {
 			this.idleTicks++;
 			if (this.idleTicks > 200) { // destroy after 10 seconds of inactivity
