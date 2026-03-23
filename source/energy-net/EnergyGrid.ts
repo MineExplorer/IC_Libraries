@@ -49,6 +49,8 @@ extends EnergyNode {
 			this.addConnection(node);
 		}
 		grid.destroy();
+		// Create connections for merge boundary
+		this.reconnectBlockGraph();
 		return this;
 	}
 
@@ -160,6 +162,12 @@ extends EnergyNode {
 	}
 
 	protected connectBlockToNeighbor(blockNode: BlockNode, x: number, y: number, z: number, side: number): void {
+		const adjacentBlockNode = this.blockNodes.get(x, y, z);
+		if (adjacentBlockNode) {
+			blockNode.linkBlock(adjacentBlockNode);
+			return;
+		}
+
 		const node = EnergyNet.getNodeOnCoords(this.region, x, y, z);
 		if (!node || !this.isCompatible(node)) return;
 
@@ -237,6 +245,19 @@ extends EnergyNode {
 			splitGrids.push(createdGrid);
 		}
 		return splitGrids;
+	}
+
+	protected reconnectBlockGraph(): void {
+		this.blockNodes.forEachNode((blockNode) => {
+			const coord1 = {x: blockNode.x, y: blockNode.y, z: blockNode.z};
+			for (let side = 0; side < 6; side++) {
+				const coord2 = World.getRelativeCoords(blockNode.x, blockNode.y, blockNode.z, side);
+				const adjacentBlockNode = this.blockNodes.get(coord2.x, coord2.y, coord2.z);
+				if (adjacentBlockNode && this.canConductEnergy(coord1, coord2, side)) {
+					blockNode.linkBlock(adjacentBlockNode);
+				}
+			}
+		});
 	}
 
 	protected rebuildConnectionsFromBlockGraph(): void {
