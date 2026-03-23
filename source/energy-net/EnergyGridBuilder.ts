@@ -46,9 +46,17 @@ namespace EnergyGridBuilder {
 	export function buildWireGrid(region: BlockSource, x: number, y: number, z: number): EnergyGrid {
 		const blockID = region.getBlockId(x, y, z);
 		if (EnergyRegistry.isWire(blockID)) {
+			const startTime = Debug.sysTime();
 			const grid = EnergyRegistry.createWireGrid(blockID, region);
-			grid.rebuildRecursive(x, y, z);
 			EnergyNet.addEnergyNode(grid);
+			grid.rebuildRecursive(x, y, z);
+
+			const spendTime = Debug.sysTime() - startTime;
+			if (EnergyNet.debugEnabled) {
+				const blockCount = Object.keys(grid.blockNodes.data).length;
+				Game.message(`§2[EnergyNet] Built wire grid id=${grid.id}, blocks=${blockCount}, entries=${grid.entries.length}, receivers=${grid.receivers.length} in ${spendTime} ms.`);
+			}
+			
 			return grid;
 		}
 		return null;

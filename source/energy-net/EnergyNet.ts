@@ -33,6 +33,9 @@ namespace EnergyNet {
 		const index = nodeArray.indexOf(node);
 		if (index != -1) {
 			nodeArray.splice(index, 1);
+			if (debugEnabled && node.kind == "grid") {
+				Game.message(`§4[EnergyNet] Removed wire grid with id ${node.id}.`);
+			}
 		}
 	}
 
@@ -78,13 +81,82 @@ namespace EnergyNet {
 		}
 	}
 
+	// Debug utilities
+	export let debugEnabled = false;
+	let debugTickCounter = 0;
+	let debugEnergyTickTime = 0;
+	let debugMaxEnergyTickTime = 0;
+	let debugWindowStart = 0;
+
+	function setDebugEnabled(enabled: boolean): void {
+		debugEnabled = enabled;
+		debugTickCounter = 0;
+		debugEnergyTickTime = 0;
+		debugMaxEnergyTickTime = 0;
+		debugWindowStart = 0;
+		Game.message(`[EnergyNet] Debug ${enabled ? "enabled" : "disabled"}.`);
+	}
+
+	function handleNativeCommand(command: Nullable<string>): void {
+		if (!command || !command.startsWith("/enet debug")) return;
+		
+		const args = command.split(" ");
+		if (args[2] == "on") {
+			setDebugEnabled(true);
+		}
+		else if (args[2] == "off") {
+			setDebugEnabled(false);
+		}
+		else {
+			Game.message("Invalid args. Usage: /enet debug <on|off>");
+		}
+		
+		Game.prevent();
+	}
+
+	function trackDebugTick(duration: number): void {
+		if (!debugEnabled) return;
+
+		if (debugTickCounter == 0) {
+			debugWindowStart = Debug.sysTime();
+		}
+
+		debugTickCounter++;
+		debugEnergyTickTime += duration;
+		debugMaxEnergyTickTime = Math.max(debugMaxEnergyTickTime, duration);
+
+		if (debugTickCounter >= 20) {
+			const elapsed = Debug.sysTime() - debugWindowStart;
+			const averageTps = elapsed > 0 ? debugTickCounter * 1000 / elapsed : 0;
+			const averageEnergyTick = debugEnergyTickTime / debugTickCounter;
+			Game.tipMessage(
+				`§2[EnergyNet] avg tps: ${averageTps.toFixed(2)}, enet tick: ${averageEnergyTick.toFixed(2)} ms avg, ${debugMaxEnergyTickTime.toFixed(2)} ms max`
+			);
+			debugTickCounter = 0;
+			debugEnergyTickTime = 0;
+			debugMaxEnergyTickTime = 0;
+			debugWindowStart = 0;
+		}
+	}
+
 	Callback.addCallback("LevelLeft", function() {
 		energyNodes = {};
 		globalNodeID = 0;
+		debugEnabled = false;
+		debugTickCounter = 0;
+		debugEnergyTickTime = 0;
+		debugMaxEnergyTickTime = 0;
+		debugWindowStart = 0;
+	});
+
+	Callback.addCallback("NativeCommand", function(command: Nullable<string>) {
+		handleNativeCommand(command);
 	});
 
 	Callback.addCallback("tick", function() {
+		const startTime = Debug.sysTime();
 		energyNodesTick();
 		flushRemovals();
+		trackDebugTick(Debug.sysTime() - startTime);
 	});
 }
