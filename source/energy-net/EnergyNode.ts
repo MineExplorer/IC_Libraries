@@ -17,6 +17,7 @@ abstract class EnergyNode {
 	currentOut: number = 0;
 	energyPower: number = 0;
 	currentPower: number = 0;
+	isFull: boolean = false;
 
 	constructor(energyType: EnergyType, dimension: number) {
 		this.id = EnergyNet.globalNodeID++;
@@ -101,11 +102,15 @@ abstract class EnergyNode {
 	}
 
 	receiveEnergy(amount: number, packet: EnergyPacket): number {
+		if (this.isFull) return 0;
+
 		const energyIn = this.transferEnergy(amount, packet);
         if (energyIn > 0) {
         	this.currentPower = Math.max(this.currentPower, packet.size);
         	this.currentIn += energyIn;
-	    }
+	    } else {
+			this.isFull = true;
+		}
         return energyIn;
 	}
 
@@ -202,6 +207,7 @@ abstract class EnergyNode {
 		this.currentOut = 0;
 		this.energyPower = this.currentPower;
 		this.currentPower = 0;
+		this.isFull = false;
 	}
 
 	destroy(): void {

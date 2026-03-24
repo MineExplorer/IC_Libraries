@@ -57,7 +57,7 @@ implements EnergyGraphNode {
 	}
 
 	receiveEnergy(amount: number, packet: EnergyPacket): number {
-		if (packet.source == this) return 0;
+		if (packet.source == this || this.isFull) return 0;
 		
 		let energyIn = this.tileEntity.energyReceive(packet.energyName, amount, packet.size);
         if (energyIn < amount && this.isConductor(packet.energyName)) {
@@ -66,7 +66,9 @@ implements EnergyGraphNode {
         if (energyIn > 0) {
         	this.currentPower = Math.max(this.currentPower, packet.size);
         	this.currentIn += energyIn;
-	    }
+	    } else {
+			this.isFull = true;
+		}
         return energyIn;
 	}
 
