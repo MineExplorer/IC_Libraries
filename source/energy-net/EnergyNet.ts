@@ -130,7 +130,7 @@ namespace EnergyNet {
 			const averageTps = elapsed > 0 ? debugTickCounter * 1000 / elapsed : 0;
 			const averageEnergyTick = debugEnergyTickTime / debugTickCounter;
 			Game.tipMessage(
-				`§2[EnergyNet] avg tps: ${averageTps.toFixed(2)}, enet tick: ${averageEnergyTick.toFixed(2)} ms avg, ${debugMaxEnergyTickTime.toFixed(2)} ms max`
+				`§2[EnergyNet] avg tps: ${+averageTps.toFixed(2)}, enet tick: ${+averageEnergyTick.toFixed(2)} ms avg, ${+debugMaxEnergyTickTime.toFixed(2)} ms max`
 			);
 			debugTickCounter = 0;
 			debugEnergyTickTime = 0;

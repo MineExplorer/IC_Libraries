@@ -57,6 +57,8 @@ implements EnergyGraphNode {
 	}
 
 	receiveEnergy(amount: number, packet: EnergyPacket): number {
+		if (packet.source == this) return 0;
+		
 		let energyIn = this.tileEntity.energyReceive(packet.energyName, amount, packet.size);
         if (energyIn < amount && this.isConductor(packet.energyName)) {
 			energyIn += this.transferEnergy(amount - energyIn, packet);

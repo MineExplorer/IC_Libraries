@@ -6,7 +6,7 @@ abstract class EnergyNode {
 	abstract readonly kind: EnergyNodeKind;
 	energyTypes: object = {};
 	dimension: number;
-	maxValue: number = 2e9;
+	maxValue: number = Number.MAX_SAFE_INTEGER;
 	removed: boolean = false;
 	entries: EnergyNode[] = [];
 	receivers: EnergyNode[] = [];
@@ -120,7 +120,7 @@ abstract class EnergyNode {
 		let leftAmount = amount;
 		let energyOut = this.transferEnergy(leftAmount, packet);
 		leftAmount -= energyOut;
-		if (leftAmount <= 0) {
+		if (leftAmount <= 0 || energyOut == 0) { // early exit if fully transferred or not transferred at all
 			return energyOut;
 		}
 		packet.transferMode = TransferMode.Full;
@@ -129,7 +129,7 @@ abstract class EnergyNode {
 	}
 
 	transferEnergy(amount: number, packet: EnergyPacket): number {
-		if (this.receivers.length == 0 || this.removed) return 0;
+		if (this.removed || this.receivers.length == 0 || !packet.validateNode(this.id)) return 0;
 
 		let leftAmount = amount;
 		if (packet.size > this.maxValue) {
@@ -137,26 +137,23 @@ abstract class EnergyNode {
 			this.onOverload(packet.size);
 		}
 
+		const receivers = this.receivers;
 		if (packet.transferMode == TransferMode.Split) {
-			for (let i = 0; i < this.receivers.length; i++) {
+			for (let i = 0; i < receivers.length; i++) {
 				if (leftAmount <= 0) break;
-				const node = this.receivers[i];
+				const node = receivers[i];
 				if (node.removed) continue;
-				if (packet.validateNode(node.id)) {
-					let receiveAmount = leftAmount;
-					if (receiveAmount > 1 && this.receivers.length - i > 1) {
-						receiveAmount = Math.ceil(receiveAmount / (this.receivers.length - i));
-					}
-					leftAmount -= node.receiveEnergy(receiveAmount, packet);
+				let receiveAmount = leftAmount;
+				if (receiveAmount > 1 && receivers.length - i > 1) {
+					receiveAmount = Math.ceil(receiveAmount / (receivers.length - i));
 				}
+				leftAmount -= node.receiveEnergy(receiveAmount, packet);
 			}
 		} else {
-			for (let node of this.receivers) {
+			for (let node of receivers) {
 				if (leftAmount <= 0) break;
 				if (node.removed) continue;
-				if (packet.validateNode(node.id)) {
-					leftAmount -= node.receiveEnergy(leftAmount, packet);
-				}
+				leftAmount -= node.receiveEnergy(leftAmount, packet);
 			}
 		}
 
