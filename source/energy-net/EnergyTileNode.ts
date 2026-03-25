@@ -4,14 +4,23 @@ implements EnergyGraphNode {
 	tileEntity: EnergyTile;
 	initialized: boolean = false;
 	adjacentLinks: AdjacentNodeLink[] = [];
+	energyAmounts: EnergyBuffer;
 
 	constructor(energyType: EnergyType, parent: EnergyTile) {
 		super(energyType, parent.dimension);
 		this.tileEntity = parent;
+		parent.data.energyAmounts ??= {}
+		this.energyAmounts = parent.data.energyAmounts;
+		this.energyAmounts[energyType.name] ??= {amount: 0, power: 0};
 	}
 
 	getParent(): EnergyTile {
 		return this.tileEntity;
+	}
+
+	addEnergyType(energyType: EnergyType): void {
+		super.addEnergyType(energyType);
+		this.energyAmounts[energyType.name] ??= {amount: 0, power: 0};
 	}
 
 	hasCoords(x: number, y: number, z: number): boolean {
@@ -87,6 +96,32 @@ implements EnergyGraphNode {
 	resetConnections(): void {
 		this.resetAdjacentLinks();
 		super.resetConnections();
+	}
+
+	addPacket(energyName: string, amount: number, power: number = amount): number {
+		let energyOut = 0;
+		let leftAmount = amount;
+		const tileReceivers = this.receivers.filter(n => n.kind == "tile");
+		if (tileReceivers.length > 0) {
+			energyOut = super.addPacket(energyName, leftAmount, power, tileReceivers);
+			leftAmount -= energyOut;
+			if (leftAmount <= 0) {
+				return energyOut;
+			}
+		}
+		energyOut += this.addToBuffer(energyName, leftAmount, amount, power);
+		return energyOut;
+	}
+
+	addToBuffer(energyType: string, amount: number, cap: number, power: number = amount) {
+		const energyBuffer = this.energyAmounts[energyType];
+		if (energyBuffer && energyBuffer.amount < cap) {
+			const energyAdd = Math.min(cap - energyBuffer.amount, amount);
+			energyBuffer.amount += energyAdd;
+			energyBuffer.power = power;
+			return energyAdd;
+		}
+		return 0;
 	}
 
 	init(): void {

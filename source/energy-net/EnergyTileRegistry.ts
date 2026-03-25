@@ -1,4 +1,7 @@
+type EnergyBuffer = {[key: string]: {amount: number, power: number}};
+
 interface EnergyTile extends TileEntity {
+	data: {energyAmounts: EnergyBuffer}
 	isEnergyTile?: boolean;
 	energyTypes?: object;
 	energyNode: EnergyTileNode;

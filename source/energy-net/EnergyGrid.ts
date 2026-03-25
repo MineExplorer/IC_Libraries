@@ -139,6 +139,39 @@ extends EnergyNode {
 		}
 	}
 
+	transferBuffer(energyName: string) {
+		if (this.entries.length == 0 || this.receivers.length == 0) return;
+
+		let energyPotential = 0;
+		let maxPower = 0;
+		const inputBuffers: {amount: number, power: number}[] = [];
+		for (let node of this.entries) {
+			if (node.kind != "tile") continue;
+
+			const buffer = (node as EnergyTileNode).energyAmounts[energyName];
+			if (buffer) {
+				energyPotential += buffer.amount;
+				if (buffer.power > maxPower) maxPower = buffer.power;
+				inputBuffers.push(buffer);
+			}
+		}
+		
+		const tileReceivers = this.receivers.filter(n => n.kind == "tile");
+		let energyAdd = this.addPacket(energyName, energyPotential, maxPower, tileReceivers);
+
+		for (let buffer of inputBuffers) {
+			if (energyAdd <= 0) break;
+
+			if (buffer.amount > energyAdd) {
+				buffer.amount -= energyAdd;
+			} else {
+				energyAdd -= buffer.amount;
+				buffer.amount = 0;
+				buffer.power = 0;
+			}
+		}
+	}
+
 	tick(): void {
 		if (this.rebuild) {
 			this.checkAndRebuild();
@@ -153,6 +186,7 @@ extends EnergyNode {
 		} else {
 			this.idleTicks = 0;
 		}
+		this.transferBuffer(this.baseEnergy);
 		super.tick();
 	}
 

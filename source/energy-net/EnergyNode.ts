@@ -120,20 +120,20 @@ abstract class EnergyNode {
 		return amount - add;
 	}
 
-	addPacket(energyName: string, amount: number, size: number = amount): number {
+	addPacket(energyName: string, amount: number, size: number = amount, receivers: EnergyNode[] = this.receivers): number {
 		const packet = new EnergyPacket(energyName, size, this, TransferMode.Split);
 		let leftAmount = amount;
-		let energyOut = this.transferEnergy(leftAmount, packet);
+		let energyOut = this.transferEnergy(leftAmount, packet, receivers);
 		leftAmount -= energyOut;
 		if (leftAmount <= 0 || energyOut == 0) { // early exit if fully transferred or not transferred at all
 			return energyOut;
 		}
 		packet.transferMode = TransferMode.Full;
-		energyOut += this.transferEnergy(leftAmount, packet);
+		energyOut += this.transferEnergy(leftAmount, packet, receivers);
 		return energyOut;
 	}
 
-	transferEnergy(amount: number, packet: EnergyPacket): number {
+	transferEnergy(amount: number, packet: EnergyPacket, receivers: EnergyNode[] = this.receivers): number {
 		if (this.removed || this.receivers.length == 0 || !packet.validateNode(this.id)) return 0;
 
 		let leftAmount = amount;
@@ -142,7 +142,6 @@ abstract class EnergyNode {
 			this.onOverload(packet.size);
 		}
 
-		const receivers = this.receivers;
 		if (packet.transferMode == TransferMode.Split) {
 			for (let i = 0; i < receivers.length; i++) {
 				if (leftAmount <= 0) break;
