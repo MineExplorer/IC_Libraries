@@ -8,6 +8,7 @@ extends EnergyNode {
 	region: BlockSource;
 	rebuild: boolean = false;
 	idleTicks: number = 0;
+	energyPotential: number = 0;
 
 	constructor(energyType: EnergyType, maxValue: number, wireID: number, region: BlockSource) {
 		super(energyType, region.getDimension());
@@ -156,8 +157,8 @@ extends EnergyNode {
 			}
 		}
 		
-		const tileReceivers = this.receivers.filter(n => n.kind == "tile");
-		let energyAdd = this.addPacket(energyName, energyPotential, maxPower, tileReceivers);
+		this.energyPotential = energyPotential;
+		let energyAdd = this.addPacket(energyName, energyPotential, maxPower);
 
 		for (let buffer of inputBuffers) {
 			if (energyAdd <= 0) break;
@@ -192,7 +193,7 @@ extends EnergyNode {
 
 	toString(): string {
 		const blockCount = Object.keys(this.blockNodes.data).length;
-		return `[EnergyGrid id=${this.id}, type=${this.baseEnergy}, blocks=${blockCount}, entries=${this.entries.length}, receivers=${this.receivers.length}, energyIn=${this.energyIn}, energyOut=${this.energyOut}, power=${this.energyPower}]`;
+		return `[EnergyGrid id=${this.id}, type=${this.baseEnergy}, blocks=${blockCount}, entries=${this.entries.length}, receivers=${this.receivers.length}, energyIn=${this.energyIn}, energyOut=${this.energyOut}, power=${this.energyPower}, buffer=${this.energyPotential}]`;
 	}
 
 	protected connectBlockToNeighbor(blockNode: BlockNode, x: number, y: number, z: number, side: number): void {

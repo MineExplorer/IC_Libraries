@@ -4,7 +4,7 @@ abstract class EnergyNode {
 	id: number;
 	baseEnergy: string;
 	abstract readonly kind: EnergyNodeKind;
-	energyTypes: object = {};
+	energyTypes: {[key: string]: EnergyType} = {};
 	dimension: number;
 	maxValue: number = Number.MAX_SAFE_INTEGER;
 	removed: boolean = false;

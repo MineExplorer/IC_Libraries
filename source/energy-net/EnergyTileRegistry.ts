@@ -3,7 +3,7 @@ type EnergyBuffer = {[key: string]: {amount: number, power: number}};
 interface EnergyTile extends TileEntity {
 	data: {energyAmounts: EnergyBuffer}
 	isEnergyTile?: boolean;
-	energyTypes?: object;
+	energyTypes?: {[key: string]: EnergyType};
 	energyNode: EnergyTileNode;
 	energyTick(type: string, node: EnergyTileNode): void;
 	energyReceive(type: string, amount: number, voltage: number): number;
@@ -64,23 +64,15 @@ namespace EnergyTileRegistry {
 	}
 };
 
-Callback.addCallback("TileEntityAdded", function(tileEntity: TileEntity) {
-    if (tileEntity.isEnergyTile) {
-		let node: EnergyNode;
-		for (let name in tileEntity.energyTypes) {
-			const type = tileEntity.energyTypes[name];
-			if (!node) {
-				node = new EnergyTileNode(type, tileEntity as EnergyTile);
-			} else {
-				node.addEnergyType(type);
-			}
-		}
+Callback.addCallback("TileEntityAdded", function(tileEntity: EnergyTile) {
+	if (tileEntity.isEnergyTile && typeof tileEntity.energyTypes == "object") {
+		const node = EnergyTileNode.createFor(tileEntity, tileEntity.energyTypes);
 		tileEntity.energyNode = node;
 		EnergyNet.addEnergyNode(node);
 	}
 });
 
-Callback.addCallback("TileEntityRemoved", function(tileEntity: TileEntity) {
+Callback.addCallback("TileEntityRemoved", function(tileEntity: EnergyTile) {
     if (tileEntity.energyNode) {
 		tileEntity.energyNode.destroy();
 	}

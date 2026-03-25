@@ -11,16 +11,24 @@ implements EnergyGraphNode {
 		this.tileEntity = parent;
 		parent.data.energyAmounts ??= {}
 		this.energyAmounts = parent.data.energyAmounts;
-		this.energyAmounts[energyType.name] ??= {amount: 0, power: 0};
+	}
+
+	static createFor(tileEntity: EnergyTile, energyTypes: {[key: string]: EnergyType}) {
+		let node: EnergyTileNode;
+		for (let name in energyTypes) {
+			const type = energyTypes[name];
+			if (!node) {
+				node = new EnergyTileNode(type, tileEntity as EnergyTile);
+			} else {
+				node.addEnergyType(type);
+			}
+			node.energyAmounts[name] ??= {amount: 0, power: 0};
+		}
+		return node;
 	}
 
 	getParent(): EnergyTile {
 		return this.tileEntity;
-	}
-
-	addEnergyType(energyType: EnergyType): void {
-		super.addEnergyType(energyType);
-		this.energyAmounts[energyType.name] ??= {amount: 0, power: 0};
 	}
 
 	hasCoords(x: number, y: number, z: number): boolean {
