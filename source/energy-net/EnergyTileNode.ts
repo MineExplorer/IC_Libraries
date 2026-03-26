@@ -3,14 +3,17 @@ implements EnergyGraphNode {
 	readonly kind: EnergyNodeKind = "tile";
 	tileEntity: EnergyTile;
 	initialized: boolean = false;
+	tileReceivers: EnergyNode[] = [];
 	adjacentLinks: AdjacentNodeLink[] = [];
-	energyAmounts: EnergyBuffer;
+	energyAmounts: EnergyBuffer = {};
 
 	constructor(energyType: EnergyType, parent: EnergyTile) {
 		super(energyType, parent.dimension);
 		this.tileEntity = parent;
-		parent.data.energyAmounts ??= {}
-		this.energyAmounts = parent.data.energyAmounts;
+		if (parent.enableEnergyBuffer) {
+			parent.data.energyNetBuffer ??= {};
+			this.energyAmounts = parent.data.energyNetBuffer;
+		}
 	}
 
 	static createFor(tileEntity: EnergyTile, energyTypes: {[key: string]: EnergyType}) {
@@ -22,7 +25,9 @@ implements EnergyGraphNode {
 			} else {
 				node.addEnergyType(type);
 			}
-			node.energyAmounts[name] ??= {amount: 0, power: 0};
+			if (tileEntity.enableEnergyBuffer) {
+				node.energyAmounts[name] ??= {amount: 0, power: 0};
+			}
 		}
 		return node;
 	}
@@ -33,6 +38,26 @@ implements EnergyGraphNode {
 
 	hasCoords(x: number, y: number, z: number): boolean {
 		return this.tileEntity.x == x && this.tileEntity.y == y && this.tileEntity.z == z;
+	}
+
+	addConnection(node: EnergyNode): boolean {
+		if (super.addConnection(node)) {
+			this.tileReceivers = this.receivers.filter(n => n.kind == "tile");
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Removes output connection to specified node
+	 * @param node receiver node
+	 */
+	removeConnection(node: EnergyNode): boolean {
+		if (super.removeConnection(node)) {
+			this.tileReceivers = this.receivers.filter(n => n.kind == "tile");
+			return true;
+		}
+		return false;
 	}
 
 	linkTile(tileNode: EnergyTileNode, canInput: boolean, canOutput: boolean): void {
@@ -103,15 +128,18 @@ implements EnergyGraphNode {
 
 	resetConnections(): void {
 		this.resetAdjacentLinks();
+		this.tileReceivers = [];
 		super.resetConnections();
 	}
 
 	addPacket(energyName: string, amount: number, power: number = amount): number {
+		if (!this.tileEntity.enableEnergyBuffer) {
+			return super.addPacket(energyName, amount, power);
+		}
 		let energyOut = 0;
 		let leftAmount = amount;
-		const tileReceivers = this.receivers.filter(n => n.kind == "tile");
-		if (tileReceivers.length > 0) {
-			energyOut = super.addPacket(energyName, leftAmount, power, tileReceivers);
+		if (this.tileReceivers.length > 0) {
+			energyOut = super.addPacket(energyName, leftAmount, power, this.tileReceivers);
 			leftAmount -= energyOut;
 			if (leftAmount <= 0) {
 				return energyOut;

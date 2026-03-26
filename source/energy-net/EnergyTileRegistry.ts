@@ -1,8 +1,9 @@
 type EnergyBuffer = {[key: string]: {amount: number, power: number}};
 
 interface EnergyTile extends TileEntity {
-	data: {energyAmounts: EnergyBuffer}
+	data: {energyNetBuffer: EnergyBuffer}
 	isEnergyTile?: boolean;
+	enableEnergyBuffer?: boolean;
 	energyTypes?: {[key: string]: EnergyType};
 	energyNode: EnergyTileNode;
 	energyTick(type: string, node: EnergyTileNode): void;
@@ -34,6 +35,8 @@ namespace EnergyTileRegistry {
 
 	export function setupAsEnergyTile(Prototype: EnergyTile): void {
 		Prototype.isEnergyTile = true;
+
+		Prototype.enableEnergyBuffer ??= true;
 
 		Prototype.energyTypes = {};
 
