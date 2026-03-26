@@ -157,8 +157,10 @@ extends EnergyNode {
 			}
 		}
 		
-		this.energyPotential = energyPotential;
 		let energyAdd = this.addPacket(energyName, energyPotential, maxPower);
+		this.energyPotential = energyPotential;
+		this.currentPower = Math.max(this.currentPower, maxPower);
+		this.currentIn += energyAdd;
 
 		for (let buffer of inputBuffers) {
 			if (energyAdd <= 0) break;
@@ -178,7 +180,7 @@ extends EnergyNode {
 			this.checkAndRebuild();
 			if (this.removed) return;
 		}
-		if (this.entries.length == 0 && this.receivers.length == 0) {
+		if (this.entries.length == 0 || this.receivers.length == 0) {
 			this.idleTicks++;
 			if (this.idleTicks > 200) { // destroy after 10 seconds of inactivity
 				this.destroy();

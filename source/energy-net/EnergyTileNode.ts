@@ -127,6 +127,8 @@ implements EnergyGraphNode {
 			const energyAdd = Math.min(cap - energyBuffer.amount, amount);
 			energyBuffer.amount += energyAdd;
 			energyBuffer.power = power;
+			this.currentPower = Math.max(this.currentPower, power);
+			this.currentOut += energyAdd;
 			return energyAdd;
 		}
 		return 0;
