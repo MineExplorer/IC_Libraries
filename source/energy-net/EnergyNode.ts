@@ -150,20 +150,20 @@ abstract class EnergyNode {
 
 		if (packet.transferMode == TransferMode.Split) {
 			for (let i = 0; i < receivers.length; i++) {
-				if (leftAmount <= 0) break;
 				const node = receivers[i];
-				if (node.removed) continue;
+				if (node.removed || !node.energyTypes[packet.energyName]) continue;
 				let receiveAmount = leftAmount;
 				if (receiveAmount > 1 && receivers.length - i > 1) {
 					receiveAmount = Math.ceil(receiveAmount / (receivers.length - i));
 				}
 				leftAmount -= node.receiveEnergy(receiveAmount, packet);
+				if (leftAmount <= 0) break;
 			}
 		} else {
 			for (let node of receivers) {
-				if (leftAmount <= 0) break;
-				if (node.removed) continue;
+				if (node.removed || !node.energyTypes[packet.energyName]) continue;
 				leftAmount -= node.receiveEnergy(leftAmount, packet);
+				if (leftAmount <= 0) break;
 			}
 		}
 
