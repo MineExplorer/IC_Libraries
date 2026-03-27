@@ -122,8 +122,8 @@ implements EnergyGraphNode {
 		return this.tileEntity.canReceiveEnergy(side, type);
 	}
 
-	canExtractEnergy(side: number, type: string): boolean {
-		return this.tileEntity.canExtractEnergy(side, type);
+	canEmitEnergy(side: number, type: string): boolean {
+		return this.tileEntity.canEmitEnergy(side, type);
 	}
 
 	resetConnections(): void {

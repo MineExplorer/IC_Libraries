@@ -66,7 +66,7 @@ extends EnergyNode {
 			if (node.canReceiveEnergy(side, this.baseEnergy)) {
 				this.addConnection(node);
 			}
-			if (node.canExtractEnergy(side, this.baseEnergy)) {
+			if (node.canEmitEnergy(side, this.baseEnergy)) {
 				node.addConnection(this);
 			}
 		} else {
@@ -212,7 +212,7 @@ extends EnergyNode {
 			const tileSide = side ^ 1;
 			blockNode.linkTile(
 				node,
-				node.canExtractEnergy(tileSide, this.baseEnergy),
+				node.canEmitEnergy(tileSide, this.baseEnergy),
 				node.canReceiveEnergy(tileSide, this.baseEnergy)
 			);
 			return;

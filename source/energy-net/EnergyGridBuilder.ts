@@ -10,7 +10,7 @@ namespace EnergyGridBuilder {
 			const energyType = grid.baseEnergy;
 			blockNode.linkTile(
 				tileNode,
-				tileNode.canExtractEnergy(side, energyType),
+				tileNode.canEmitEnergy(side, energyType),
 				tileNode.canReceiveEnergy(side, energyType)
 			);
 		}
@@ -26,8 +26,8 @@ namespace EnergyGridBuilder {
 					connectTileToGridBlock(node, coords.x, coords.y, coords.z, side, tileNode);
 				}
 				const energyType = node.baseEnergy;
-				const canOutput = tileNode.canExtractEnergy(side, energyType) && node.canReceiveEnergy(side ^ 1, energyType);
-				const canInput = tileNode.canReceiveEnergy(side, energyType) && node.canExtractEnergy(side ^ 1, energyType);
+				const canOutput = tileNode.canEmitEnergy(side, energyType) && node.canReceiveEnergy(side ^ 1, energyType);
+				const canInput = tileNode.canReceiveEnergy(side, energyType) && node.canEmitEnergy(side ^ 1, energyType);
 				if (node instanceof EnergyTileNode && (canInput || canOutput)) {
 					tileNode.linkTile(node, canInput, canOutput);
 				}

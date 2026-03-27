@@ -1,20 +1,55 @@
-type EnergyBuffer = {[key: string]: {amount: number, power: number}};
+type EnergyBuffer = {[energyName: string]: {amount: number, power: number}};
 
 interface EnergyTile extends TileEntity {
-	data: {energyNetBuffer: EnergyBuffer}
 	isEnergyTile?: boolean;
+	/**
+	 * Allows energy-net to accumulate outcoming energy packets in the buffer for optimization. True by default.
+	 */
 	enableEnergyBuffer?: boolean;
-	energyTypes?: {[key: string]: EnergyType};
+	/**
+	 * Dictionary of energy types registered for tile entity.
+	 */
+	energyTypes?: {[energyName: string]: EnergyType};
+	/**
+	 * Tile entity energy node.
+	 */
 	energyNode: EnergyTileNode;
+	/**
+	 * This method is called during energy net tick and allows to send energy packets from the tile entity node.
+	 * @param type main energy type of the node
+	 * @param node energy node reference
+	 */
 	energyTick(type: string, node: EnergyTileNode): void;
-	energyReceive(type: string, amount: number, voltage: number): number;
+	/**
+	 * This method is called when the tile entity receives an energy packet.
+	 * @param type energy type
+	 * @param amount received energy amount
+	 * @param power energy power, indicates original packet energy or the energy of an individual packet if the received amount is a sum of multiple packets.
+	 */
+	energyReceive(type: string, amount: number, power: number): number;
+	/**
+	 * If returns true, the tile node can transfer incoming energy packets to other nodes.
+	 * @param type energy type name
+	 */
 	isConductor(type: string): boolean;
+	/**
+	 * Specifies from which sides the tile entity can receive energy. The tile entity must recreate its connections if this value changes.
+	 * @param side block side
+	 * @param type energy type name
+	 */
 	canReceiveEnergy(side: number, type: string): boolean;
+	/**
+	 * Specifies from which sides the tile entity can emit energy. The tile entity must recreate its connections if this value changes.
+	 * @param side block side
+	 * @param type energy type name
+	 */
+	canEmitEnergy(side: number, type: string): boolean;
+	/** @deprecated use canEmitEnergy instead */
 	canExtractEnergy(side: number, type: string): boolean;
 }
 
 namespace EnergyTileRegistry {
-	// adds energy type for tile entity prototype
+	/** Adds energy type for tile entity prototype */ 
 	export function addEnergyType(Prototype: EnergyTile, energyType: EnergyType): void {
 		if (!Prototype.isEnergyTile) {
 			setupAsEnergyTile(Prototype);
@@ -22,7 +57,7 @@ namespace EnergyTileRegistry {
 		Prototype.energyTypes[energyType.name] = energyType;
 	}
 
-	// same as addEnergyType, but works on already created prototypes, accessing them by id
+	/** Same as addEnergyType, but works on already created prototypes, accessing them by id */ 
 	export function addEnergyTypeForId(id: number, energyType: EnergyType): void {
 		const Prototype = TileEntity.getPrototype(id);
 		if (Prototype) {
@@ -33,6 +68,10 @@ namespace EnergyTileRegistry {
 		}
 	}
 
+	/**
+	 * Adds default EnergyTile interface implementation for tile entity prototype.
+	 * @param Prototype tile entity prototype
+	 */
 	export function setupAsEnergyTile(Prototype: EnergyTile): void {
 		Prototype.isEnergyTile = true;
 
@@ -40,30 +79,27 @@ namespace EnergyTileRegistry {
 
 		Prototype.energyTypes = {};
 
-		Prototype.energyTick = Prototype.energyTick || function() {};
+		Prototype.energyTick ??= function() {};
 
-		Prototype.energyReceive = Prototype.energyReceive || function() {
+		Prototype.energyReceive ??= function() {
 			return 0;
 		}
 
-		Prototype.isConductor = Prototype.isConductor || function() {
+		Prototype.isProducer ??= function() {
+			return true;
+		}
+
+		Prototype.isConductor ??= function() {
 			return false;
 		}
 
-		Prototype.canReceiveEnergy = Prototype.canReceiveEnergy || function() {
+		Prototype.canReceiveEnergy ??= function() {
 			return true;
 		}
 
-		Prototype.canExtractEnergy = Prototype.canExtractEnergy || function() {
+		Prototype.canEmitEnergy ??= Prototype.canExtractEnergy || function() {
 			return true;
 		}
-	}
-
-	/* machine is tile entity, that uses energy */
-	export const machineIDs = {};
-
-	export function isMachine(id: number): boolean {
-		return !!machineIDs[id];
 	}
 };
 

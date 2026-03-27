@@ -190,7 +190,7 @@ abstract class EnergyNode {
 		return true;
 	}
 
-	canExtractEnergy(side: number, type: string): boolean {
+	canEmitEnergy(side: number, type: string): boolean {
 		return true;
 	}
 
