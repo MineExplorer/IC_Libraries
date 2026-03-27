@@ -147,7 +147,7 @@ extends EnergyNode {
 		let maxPower = 0;
 		const inputBuffers: {amount: number, power: number}[] = [];
 		for (let node of this.entries) {
-			if (node.kind != "tile") continue;
+			if (!node.canProduceEnergy()) continue;
 
 			const buffer = (node as EnergyTileNode).energyAmounts[energyName];
 			if (buffer) {

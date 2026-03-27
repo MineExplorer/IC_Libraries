@@ -182,6 +182,10 @@ abstract class EnergyNode {
 
 	onOverload(packetSize: number): void {}
 
+	canProduceEnergy(): boolean {
+		return false;
+	}
+
 	isConductor(type: string): boolean {
 		return true;
 	}
