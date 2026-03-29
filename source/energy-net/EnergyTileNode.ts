@@ -149,7 +149,10 @@ implements EnergyGraphNode {
 				return energyOut;
 			}
 		}
-		energyOut += this.addToBuffer(energyName, leftAmount, amount, power);
+		// if tile entity has grid connections
+		if (this.receivers.length - this.tileReceivers.length > 0) {
+			energyOut += this.addToBuffer(energyName, leftAmount, amount, power);
+		}
 		return energyOut;
 	}
 
