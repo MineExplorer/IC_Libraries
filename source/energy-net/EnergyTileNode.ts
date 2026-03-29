@@ -10,7 +10,7 @@ implements EnergyGraphNode {
 	constructor(energyType: EnergyType, parent: EnergyTile) {
 		super(energyType, parent.dimension);
 		this.tileEntity = parent;
-		if (parent.canProduceEnergy() && parent.enableEnergyBuffer) {
+		if (parent.isEnergyProducer() && parent.enableEnergyBuffer) {
 			parent.data.energyNetBuffer ??= {};
 			this.energyAmounts = parent.data.energyNetBuffer;
 		}
@@ -115,7 +115,7 @@ implements EnergyGraphNode {
 	}
 
 	canProduceEnergy(): boolean {
-		return this.tileEntity.canProduceEnergy();
+		return this.tileEntity.isEnergyProducer();
 	}
 
 	isConductor(type: string): boolean {

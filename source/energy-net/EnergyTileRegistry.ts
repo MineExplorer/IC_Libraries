@@ -30,7 +30,7 @@ interface EnergyTile extends TileEntity {
 	/**
 	 * @returns true if tile can produce energy, false otherwise
 	 */
-	canProduceEnergy(): boolean;
+	isEnergyProducer(): boolean;
 	/**
 	 * If returns true, the tile node can transfer incoming energy packets to other nodes.
 	 * @param type energy type name
@@ -90,7 +90,7 @@ namespace EnergyTileRegistry {
 		}
 
 		// Returns true for reverse compatibility
-		Prototype.canProduceEnergy ??= function() {
+		Prototype.isEnergyProducer ??= function() {
 			return true;
 		}
 
