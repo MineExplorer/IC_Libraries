@@ -10,6 +10,7 @@ abstract class EnergyNode {
 	removed: boolean = false;
 	entries: EnergyNode[] = [];
 	receivers: EnergyNode[] = [];
+	activeReceivers: EnergyNode[] = null;
 
 	energyIn: number = 0;
 	currentIn: number = 0;
@@ -18,6 +19,7 @@ abstract class EnergyNode {
 	energyPower: number = 0;
 	currentPower: number = 0;
 	isFull: boolean = false;
+	freeCapacity: number = -1;
 
 	constructor(energyType: EnergyType, dimension: number) {
 		this.id = EnergyNet.globalNodeID++;
@@ -126,7 +128,7 @@ abstract class EnergyNode {
 		return amount - add;
 	}
 
-	addPacket(energyName: string, amount: number, size: number = amount, receivers: EnergyNode[] = this.receivers): number {
+	addPacket(energyName: string, amount: number, size: number = amount, receivers?: EnergyNode[]): number {
 		const packet = new EnergyPacket(energyName, size, this, TransferMode.Split);
 		let leftAmount = amount;
 		let energyOut = this.transferEnergy(leftAmount, packet, receivers);
@@ -139,19 +141,20 @@ abstract class EnergyNode {
 		return energyOut;
 	}
 
-	transferEnergy(amount: number, packet: EnergyPacket, receivers: EnergyNode[] = this.receivers): number {
-		if (this.removed || this.receivers.length == 0 || !packet.validateNode(this.id)) return 0;
+	transferEnergy(amount: number, packet: EnergyPacket, receivers: EnergyNode[] = this.getActiveReceivers()): number {
+		if (this.removed || receivers.length == 0 || !packet.validateNode(this.id)) return 0;
 
 		let leftAmount = amount;
 		if (packet.size > this.maxValue) {
-			leftAmount = Math.min(leftAmount, packet.size);
+			// Shrink energy packet proportional to size ratio
+			leftAmount = amount = Math.floor(amount * this.maxValue / packet.size);
 			this.onOverload(packet.size);
 		}
 
 		if (packet.transferMode == TransferMode.Split) {
 			for (let i = 0; i < receivers.length; i++) {
 				const node = receivers[i];
-				if (node.removed || !node.energyTypes[packet.energyName]) continue;
+				if (node.removed) continue;
 				let receiveAmount = leftAmount;
 				if (receiveAmount > 1 && receivers.length - i > 1) {
 					receiveAmount = Math.ceil(receiveAmount / (receivers.length - i));
@@ -160,8 +163,8 @@ abstract class EnergyNode {
 				if (leftAmount <= 0) break;
 			}
 		} else {
-			for (let node of receivers) {
-				if (node.removed || !node.energyTypes[packet.energyName]) continue;
+			for (const node of receivers) {
+				if (node.removed) continue;
 				leftAmount -= node.receiveEnergy(leftAmount, packet);
 				if (leftAmount <= 0) break;
 			}
@@ -182,19 +185,21 @@ abstract class EnergyNode {
 
 	onOverload(packetSize: number): void {}
 
+	abstract getFreeCapacity(energyName: string): number;
+
 	canProduceEnergy(): boolean {
 		return false;
 	}
 
-	isConductor(type: string): boolean {
+	isConductor(energyName: string): boolean {
 		return true;
 	}
 
-	canReceiveEnergy(side: number, type: string): boolean {
+	canReceiveEnergy(side: number, energyName: string): boolean {
 		return true;
 	}
 
-	canEmitEnergy(side: number, type: string): boolean {
+	canEmitEnergy(side: number, energyName: string): boolean {
 		return true;
 	}
 
@@ -209,6 +214,21 @@ abstract class EnergyNode {
 		return false;
 	}
 
+	getActiveReceivers() {
+		if (this.activeReceivers) return this.activeReceivers;
+
+		const activeReceivers: EnergyNode[] = [];
+		for (let node of this.receivers) {
+			const freeAmount = node.getFreeCapacity(this.baseEnergy);
+			if (freeAmount == -1 || freeAmount >= 1) {
+				activeReceivers.push(node);
+			}
+		}
+		// Sorting makes energy spread more evenly by distributing leftovers from the first receivers to the next
+		this.activeReceivers = activeReceivers.sort((a, b) => a.freeCapacity - b.freeCapacity);
+		return activeReceivers;
+	}
+
 	tick(): void {
 		this.energyIn = this.currentIn;
 		this.currentIn = 0;
@@ -217,6 +237,7 @@ abstract class EnergyNode {
 		this.energyPower = this.currentPower;
 		this.currentPower = 0;
 		this.isFull = false;
+		this.activeReceivers = null;
 	}
 
 	destroy(): void {

@@ -16,40 +16,45 @@ interface EnergyTile extends TileEntity {
 	energyNode: EnergyTileNode;
 	/**
 	 * This method is called during energy net tick and allows to send energy packets from the tile entity node.
-	 * @param type main energy type of the node
+	 * @param energyName main energy type of the node
 	 * @param node energy node reference
 	 */
-	energyTick(type: string, node: EnergyTileNode): void;
+	energyTick(energyName: string, node: EnergyTileNode): void;
 	/**
 	 * This method is called when the tile entity receives an energy packet.
-	 * @param type energy type
+	 * @param energyName energy type
 	 * @param amount received energy amount
 	 * @param power energy power, indicates original packet energy or the energy of an individual packet if the received amount is a sum of multiple packets.
 	 */
-	energyReceive(type: string, amount: number, power: number): number;
+	energyReceive(energyName: string, amount: number, power: number): number;
+	/**
+	 * @returns available capacity in the tile's energy buffer or -1 if not supported
+	 * @param energyName energy type name
+	 */
+	getFreeEnergyAmount?(energyName?: string): number;
 	/**
 	 * @returns true if tile can produce energy, false otherwise
 	 */
 	isEnergyProducer(): boolean;
 	/**
 	 * If returns true, the tile node can transfer incoming energy packets to other nodes.
-	 * @param type energy type name
+	 * @param energyName energy type name
 	 */
-	isConductor(type: string): boolean;
+	isConductor(energyName: string): boolean;
 	/**
 	 * Specifies from which sides the tile entity can receive energy. The tile entity must recreate its connections if this value changes.
 	 * @param side block side
-	 * @param type energy type name
+	 * @param energyName energy type name
 	 */
-	canReceiveEnergy(side: number, type: string): boolean;
+	canReceiveEnergy(side: number, energyName: string): boolean;
 	/**
 	 * Specifies from which sides the tile entity can emit energy. The tile entity must recreate its connections if this value changes.
 	 * @param side block side
-	 * @param type energy type name
+	 * @param energyName energy type name
 	 */
-	canEmitEnergy(side: number, type: string): boolean;
+	canEmitEnergy(side: number, energyName: string): boolean;
 	/** @deprecated use canEmitEnergy instead */
-	canExtractEnergy?(side: number, type: string): boolean;
+	canExtractEnergy?(side: number, energyName: string): boolean;
 }
 
 namespace EnergyTileRegistry {
@@ -87,6 +92,21 @@ namespace EnergyTileRegistry {
 
 		Prototype.energyReceive ??= function() {
 			return 0;
+		}
+
+		// if prototype has energy buffer add method to get free amount
+		if (Prototype.defaultValues && typeof Prototype.defaultValues.energy == "number" && Prototype.getEnergyStorage) {
+			Prototype.getFreeEnergyAmount ??= function() {
+				const storage = this.getEnergyStorage();
+				if (storage > this.data.energy) {
+					return storage - this.data.energy;
+				}
+				return 0;
+			}
+		} else {
+			Prototype.getFreeEnergyAmount ??= function() {
+				return -1;
+			}
 		}
 
 		// Returns true for reverse compatibility

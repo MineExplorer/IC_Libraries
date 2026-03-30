@@ -3,7 +3,6 @@ implements EnergyGraphNode {
 	readonly kind: EnergyNodeKind = "tile";
 	tileEntity: EnergyTile;
 	initialized: boolean = false;
-	tileReceivers: EnergyNode[] = [];
 	adjacentLinks: AdjacentNodeLink[] = [];
 	energyAmounts: EnergyBuffer = {};
 
@@ -38,26 +37,6 @@ implements EnergyGraphNode {
 
 	hasCoords(x: number, y: number, z: number): boolean {
 		return this.tileEntity.x == x && this.tileEntity.y == y && this.tileEntity.z == z;
-	}
-
-	addConnection(node: EnergyNode): boolean {
-		if (super.addConnection(node)) {
-			this.tileReceivers = this.receivers.filter(n => n.kind == "tile");
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * Removes output connection to specified node
-	 * @param node receiver node
-	 */
-	removeConnection(node: EnergyNode): boolean {
-		if (super.removeConnection(node)) {
-			this.tileReceivers = this.receivers.filter(n => n.kind == "tile");
-			return true;
-		}
-		return false;
 	}
 
 	linkTile(tileNode: EnergyTileNode, canInput: boolean, canOutput: boolean): void {
@@ -114,25 +93,29 @@ implements EnergyGraphNode {
         return energyIn;
 	}
 
+	getFreeCapacity(energyName: string) {
+		const freeEnergy =  this.isFull ? 0 : this.tileEntity.getFreeEnergyAmount(energyName);
+		return this.freeCapacity = freeEnergy;
+	}
+
 	canProduceEnergy(): boolean {
 		return this.tileEntity.isEnergyProducer();
 	}
 
-	isConductor(type: string): boolean {
-		return this.tileEntity.isConductor(type);
+	isConductor(energyName: string): boolean {
+		return this.tileEntity.isConductor(energyName);
 	}
 
-	canReceiveEnergy(side: number, type: string): boolean {
-		return this.tileEntity.canReceiveEnergy(side, type);
+	canReceiveEnergy(side: number, energyName: string): boolean {
+		return this.tileEntity.canReceiveEnergy(side, energyName);
 	}
 
-	canEmitEnergy(side: number, type: string): boolean {
-		return this.tileEntity.canEmitEnergy(side, type);
+	canEmitEnergy(side: number, energyName: string): boolean {
+		return this.tileEntity.canEmitEnergy(side, energyName);
 	}
 
 	resetConnections(): void {
 		this.resetAdjacentLinks();
-		this.tileReceivers = [];
 		super.resetConnections();
 	}
 
@@ -142,15 +125,16 @@ implements EnergyGraphNode {
 		}
 		let energyOut = 0;
 		let leftAmount = amount;
-		if (this.tileReceivers.length > 0) {
-			energyOut = super.addPacket(energyName, leftAmount, power, this.tileReceivers);
+		const tileReceivers = this.getActiveReceivers().filter(n => n.kind == "tile");
+		if (tileReceivers.length > 0) {
+			energyOut = super.addPacket(energyName, leftAmount, power, tileReceivers);
 			leftAmount -= energyOut;
 			if (leftAmount <= 0) {
 				return energyOut;
 			}
 		}
-		// if tile entity has grid connections
-		if (this.receivers.length - this.tileReceivers.length > 0) {
+		// if tile entity has active grid connections
+		if (this.activeReceivers.length - tileReceivers.length > 0) {
 			energyOut += this.addToBuffer(energyName, leftAmount, amount, power);
 		}
 		return energyOut;

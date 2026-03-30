@@ -66,7 +66,7 @@ extends EnergyNode {
 			if (node.canReceiveEnergy(side, this.baseEnergy)) {
 				this.addConnection(node);
 			}
-			if (node.canEmitEnergy(side, this.baseEnergy)) {
+			if ((node.canProduceEnergy() || node.isConductor(this.baseEnergy)) && node.canEmitEnergy(side, this.baseEnergy)) {
 				node.addConnection(this);
 			}
 		} else {
@@ -140,8 +140,13 @@ extends EnergyNode {
 		}
 	}
 
+	getFreeCapacity(energyName: string): number {
+		const freeEnergy = (this.isFull || this.receivers.length == 0) ? 0 : -1;
+		return this.freeCapacity = freeEnergy;
+	}
+
 	transferBuffer(energyName: string) {
-		if (this.entries.length == 0 || this.receivers.length == 0) return;
+		if (this.isFull || this.entries.length == 0 || this.receivers.length == 0) return;
 
 		let energyPotential = 0;
 		let maxPower = 0;
