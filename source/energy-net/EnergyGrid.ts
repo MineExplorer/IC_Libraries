@@ -154,7 +154,7 @@ extends EnergyNode {
 		for (let node of this.entries) {
 			if (!node.canProduceEnergy()) continue;
 
-			const buffer = (node as EnergyTileNode).energyAmounts[energyName];
+			const buffer = (node as EnergyTileNode).getBuffer(energyName);
 			if (buffer) {
 				energyPotential += buffer.amount;
 				if (buffer.power > maxPower) maxPower = buffer.power;

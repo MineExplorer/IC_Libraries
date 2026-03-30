@@ -145,8 +145,8 @@ implements EnergyGraphNode {
 		return amount - energyOut;
 	}
 
-	addToBuffer(energyType: string, amount: number, cap: number, power: number = amount) {
-		const energyBuffer = this.energyAmounts[energyType];
+	addToBuffer(energyName: string, amount: number, cap: number, power: number = amount): number {
+		const energyBuffer = this.energyAmounts[energyName];
 		if (energyBuffer && energyBuffer.amount < cap) {
 			const energyAdd = Math.min(cap - energyBuffer.amount, amount);
 			energyBuffer.amount += energyAdd;
@@ -156,6 +156,10 @@ implements EnergyGraphNode {
 			return energyAdd;
 		}
 		return 0;
+	}
+
+	getBuffer(energyName: string) {
+		return this.energyAmounts[energyName] || null;
 	}
 
 	init(): void {
