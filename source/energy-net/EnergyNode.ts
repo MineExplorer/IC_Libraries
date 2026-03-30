@@ -129,6 +129,8 @@ abstract class EnergyNode {
 	}
 
 	addPacket(energyName: string, amount: number, size: number = amount, receivers?: EnergyNode[]): number {
+		if (amount == 0) return 0;
+		
 		const packet = new EnergyPacket(energyName, size, this, TransferMode.Split);
 		let leftAmount = amount;
 		let energyOut = this.transferEnergy(leftAmount, packet, receivers);

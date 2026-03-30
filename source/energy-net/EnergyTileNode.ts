@@ -9,7 +9,7 @@ implements EnergyGraphNode {
 	constructor(energyType: EnergyType, parent: EnergyTile) {
 		super(energyType, parent.dimension);
 		this.tileEntity = parent;
-		if (parent.isEnergyProducer() && parent.enableEnergyBuffer) {
+		if (parent.isEnergyProducer()) {
 			parent.data.energyNetBuffer ??= {};
 			this.energyAmounts = parent.data.energyNetBuffer;
 		}
@@ -24,7 +24,7 @@ implements EnergyGraphNode {
 			} else {
 				node.addEnergyType(type);
 			}
-			if (tileEntity.enableEnergyBuffer) {
+			if (tileEntity.isEnergyProducer()) {
 				node.energyAmounts[name] ??= {amount: 0, power: 0};
 			}
 		}
@@ -119,25 +119,30 @@ implements EnergyGraphNode {
 		super.resetConnections();
 	}
 
-	addPacket(energyName: string, amount: number, power: number = amount): number {
-		if (!this.tileEntity.enableEnergyBuffer) {
-			return super.addPacket(energyName, amount, power);
-		}
+	add(amount: number, power?: number): number {
+		if (amount == 0) return 0;
+
 		let energyOut = 0;
 		let leftAmount = amount;
-		const tileReceivers = this.getActiveReceivers().filter(n => n.kind == "tile");
-		if (tileReceivers.length > 0) {
-			energyOut = super.addPacket(energyName, leftAmount, power, tileReceivers);
-			leftAmount -= energyOut;
-			if (leftAmount <= 0) {
-				return energyOut;
+		const activeReceivers = this.getActiveReceivers();
+		const tileReceivers = activeReceivers.filter(n => n.kind == "tile");
+		const gridConnectionsCount = activeReceivers.length - tileReceivers.length; 
+		// try to split energy evenly between grids and direct connections
+		if (gridConnectionsCount > 0 && tileReceivers.length > 0) {
+			const energyAdd = Math.floor(leftAmount * gridConnectionsCount / activeReceivers.length);
+			if (energyAdd > 0) {
+				energyOut = this.addToBuffer(this.baseEnergy, energyAdd, amount, power);
+				leftAmount -= energyOut;
 			}
 		}
-		// if tile entity has active grid connections
-		if (this.activeReceivers.length - tileReceivers.length > 0) {
-			energyOut += this.addToBuffer(energyName, leftAmount, amount, power);
+		if (tileReceivers.length > 0) {
+			energyOut += this.addPacket(this.baseEnergy, leftAmount, power, tileReceivers);
+			leftAmount -= energyOut;
 		}
-		return energyOut;
+		if (gridConnectionsCount > 0 && leftAmount > 0) {
+			energyOut += this.addToBuffer(this.baseEnergy, leftAmount, amount, power);
+		}
+		return amount - energyOut;
 	}
 
 	addToBuffer(energyType: string, amount: number, cap: number, power: number = amount) {

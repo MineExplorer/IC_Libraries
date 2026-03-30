@@ -3,10 +3,6 @@ type EnergyBuffer = {[energyName: string]: {amount: number, power: number}};
 interface EnergyTile extends TileEntity {
 	isEnergyTile?: boolean;
 	/**
-	 * Allows energy-net to accumulate outcoming energy packets in the buffer for optimization. True by default.
-	 */
-	enableEnergyBuffer?: boolean;
-	/**
 	 * Dictionary of energy types registered for tile entity.
 	 */
 	energyTypes?: {[energyName: string]: EnergyType};
@@ -83,8 +79,6 @@ namespace EnergyTileRegistry {
 	 */
 	export function setupAsEnergyTile(Prototype: EnergyTile): void {
 		Prototype.isEnergyTile = true;
-
-		Prototype.enableEnergyBuffer ??= true;
 
 		Prototype.energyTypes = {};
 
