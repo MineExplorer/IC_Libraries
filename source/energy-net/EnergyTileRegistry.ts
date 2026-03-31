@@ -1,4 +1,4 @@
-type EnergyBuffer = {[energyName: string]: {amount: number, power: number}};
+type EnergyBuffer = {[energyName: string]: {amount: number, power: number, packetSize: number}};
 
 interface EnergyTile extends TileEntity {
 	isEnergyTile?: boolean;

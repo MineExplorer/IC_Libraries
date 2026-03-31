@@ -4,6 +4,7 @@ implements EnergyGraphNode {
 	tileEntity: EnergyTile;
 	initialized: boolean = false;
 	adjacentLinks: AdjacentNodeLink[] = [];
+	gridConnectionsCount: number = 0;
 	energyAmounts: EnergyBuffer = {};
 
 	constructor(energyType: EnergyType, parent: EnergyTile) {
@@ -34,6 +35,26 @@ implements EnergyGraphNode {
 
 	hasCoords(x: number, y: number, z: number): boolean {
 		return this.tileEntity.x == x && this.tileEntity.y == y && this.tileEntity.z == z;
+	}
+
+	addConnection(node: EnergyNode): boolean {
+		if (super.addConnection(node)) {
+			this.gridConnectionsCount = this.receivers.filter(n => n.kind == "grid").length;
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Removes output connection to specified node
+	 * @param node receiver node
+	 */
+	removeConnection(node: EnergyNode): boolean {
+		if (super.removeConnection(node)) {
+			this.gridConnectionsCount = this.receivers.filter(n => n.kind == "grid").length;
+			return true;
+		}
+		return false;
 	}
 
 	linkTile(tileNode: EnergyTileNode, canInput: boolean, canOutput: boolean): void {
@@ -144,10 +165,12 @@ implements EnergyGraphNode {
 
 	addToBuffer(energyName: string, amount: number, size: number, power: number = amount): number {
 		const energyBuffer = this.getBuffer(energyName, true);
+		size *= this.gridConnectionsCount; // reserve space for 1 packet per connected grid
 		if (energyBuffer.amount < size) {
 			const energyAdd = Math.min(size - energyBuffer.amount, amount);
 			energyBuffer.amount += energyAdd;
 			energyBuffer.power = power;
+			energyBuffer.packetSize = Math.ceil(energyBuffer.amount / this.gridConnectionsCount);
 			this.currentPower = Math.max(this.currentPower, power);
 			this.currentOut += energyAdd;
 			return energyAdd;
@@ -157,7 +180,7 @@ implements EnergyGraphNode {
 
 	getBuffer(energyName: string, createIfNotFound?: boolean) {
 		if (createIfNotFound) {
-			this.energyAmounts[energyName] ??= {amount: 0, power: 0};
+			this.energyAmounts[energyName] ??= {amount: 0, power: 0, packetSize: 0};
 		}
 		return this.energyAmounts[energyName] || null;
 	}

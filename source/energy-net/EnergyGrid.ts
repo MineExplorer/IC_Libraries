@@ -150,32 +150,36 @@ extends EnergyNode {
 
 		let energyPotential = 0;
 		let maxPower = 0;
-		const inputBuffers: {amount: number, power: number}[] = [];
+		const inputBuffers: {amount: number, power: number, packetSize: number}[] = [];
 		for (let node of this.entries) {
 			if (!node.canProduceEnergy()) continue;
 
 			const buffer = (node as EnergyTileNode).getBuffer(energyName);
-			if (buffer && buffer.amount > 0) {
-				energyPotential += buffer.amount;
-				if (buffer.power > maxPower) maxPower = buffer.power;
+			if (buffer && buffer.packetSize > 0) {
+				energyPotential += buffer.packetSize;
+				if (buffer.power > maxPower) {
+					maxPower = buffer.power;
+				}
 				inputBuffers.push(buffer);
 			}
 		}
+		this.energyPotential = energyPotential;
 		if (energyPotential <= 0) return;
 		
-		this.energyPotential = energyPotential;
 		let energyAdd = this.addPacket(energyName, energyPotential, maxPower);
-		if (energyAdd <= 0) return 0;
+		if (energyAdd <= 0) return;
 
 		this.currentPower = Math.max(this.currentPower, maxPower);
 		this.currentIn += energyAdd;
 
 		for (let buffer of inputBuffers) {
-			if (buffer.amount > energyAdd) {
-				buffer.amount -= energyAdd;
-			} else {
-				energyAdd -= buffer.amount;
-				buffer.amount = 0;
+			const energyGot = Math.min(buffer.packetSize, energyAdd);
+			buffer.amount -= energyGot;
+			energyAdd -= energyGot;
+			if (buffer.amount < buffer.packetSize) {
+				buffer.packetSize = buffer.amount;
+			}
+			if (buffer.amount == 0) {
 				buffer.power = 0;
 			}
 			if (energyAdd <= 0) break;
