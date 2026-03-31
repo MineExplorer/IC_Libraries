@@ -128,10 +128,10 @@ abstract class EnergyNode {
 		return amount - add;
 	}
 
-	addPacket(energyName: string, amount: number, size: number = amount, receivers?: EnergyNode[]): number {
+	addPacket(energyName: string, amount: number, power: number = amount, receivers?: EnergyNode[]): number {
 		if (amount == 0) return 0;
 		
-		const packet = new EnergyPacket(energyName, size, this, TransferMode.Split);
+		const packet = new EnergyPacket(energyName, power, this, TransferMode.Split);
 		let leftAmount = amount;
 		let energyOut = this.transferEnergy(leftAmount, packet, receivers);
 		leftAmount -= energyOut;

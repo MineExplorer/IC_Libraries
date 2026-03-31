@@ -24,9 +24,6 @@ implements EnergyGraphNode {
 			} else {
 				node.addEnergyType(type);
 			}
-			if (tileEntity.isEnergyProducer()) {
-				node.energyAmounts[name] ??= {amount: 0, power: 0};
-			}
 		}
 		return node;
 	}
@@ -119,7 +116,7 @@ implements EnergyGraphNode {
 		super.resetConnections();
 	}
 
-	add(amount: number, power?: number): number {
+	add(amount: number, power: number = amount): number {
 		if (amount == 0) return 0;
 
 		let energyOut = 0;
@@ -145,10 +142,10 @@ implements EnergyGraphNode {
 		return amount - energyOut;
 	}
 
-	addToBuffer(energyName: string, amount: number, cap: number, power: number = amount): number {
-		const energyBuffer = this.energyAmounts[energyName];
-		if (energyBuffer && energyBuffer.amount < cap) {
-			const energyAdd = Math.min(cap - energyBuffer.amount, amount);
+	addToBuffer(energyName: string, amount: number, size: number, power: number = amount): number {
+		const energyBuffer = this.getBuffer(energyName, true);
+		if (energyBuffer.amount < size) {
+			const energyAdd = Math.min(size - energyBuffer.amount, amount);
 			energyBuffer.amount += energyAdd;
 			energyBuffer.power = power;
 			this.currentPower = Math.max(this.currentPower, power);
@@ -158,7 +155,10 @@ implements EnergyGraphNode {
 		return 0;
 	}
 
-	getBuffer(energyName: string) {
+	getBuffer(energyName: string, createIfNotFound?: boolean) {
+		if (createIfNotFound) {
+			this.energyAmounts[energyName] ??= {amount: 0, power: 0};
+		}
 		return this.energyAmounts[energyName] || null;
 	}
 

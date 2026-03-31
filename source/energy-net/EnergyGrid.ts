@@ -155,21 +155,22 @@ extends EnergyNode {
 			if (!node.canProduceEnergy()) continue;
 
 			const buffer = (node as EnergyTileNode).getBuffer(energyName);
-			if (buffer) {
+			if (buffer && buffer.amount > 0) {
 				energyPotential += buffer.amount;
 				if (buffer.power > maxPower) maxPower = buffer.power;
 				inputBuffers.push(buffer);
 			}
 		}
+		if (energyPotential <= 0) return;
 		
-		let energyAdd = this.addPacket(energyName, energyPotential, maxPower);
 		this.energyPotential = energyPotential;
+		let energyAdd = this.addPacket(energyName, energyPotential, maxPower);
+		if (energyAdd <= 0) return 0;
+
 		this.currentPower = Math.max(this.currentPower, maxPower);
 		this.currentIn += energyAdd;
 
 		for (let buffer of inputBuffers) {
-			if (energyAdd <= 0) break;
-
 			if (buffer.amount > energyAdd) {
 				buffer.amount -= energyAdd;
 			} else {
@@ -177,6 +178,7 @@ extends EnergyNode {
 				buffer.amount = 0;
 				buffer.power = 0;
 			}
+			if (energyAdd <= 0) break;
 		}
 	}
 
