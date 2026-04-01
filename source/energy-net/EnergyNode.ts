@@ -128,18 +128,11 @@ abstract class EnergyNode {
 		return amount - add;
 	}
 
-	addPacket(energyName: string, amount: number, power: number = amount, receivers?: EnergyNode[]): number {
+	addPacket(energyName: string, amount: number, power: number = amount, receivers?: EnergyNode[], transferMode?: TransferMode): number {
 		if (amount == 0) return 0;
 		
-		const packet = new EnergyPacket(energyName, power, this, TransferMode.Split);
-		let leftAmount = amount;
-		let energyOut = this.transferEnergy(leftAmount, packet, receivers);
-		leftAmount -= energyOut;
-		if (leftAmount <= 0 || energyOut == 0) { // early exit if fully transferred or not transferred at all
-			return energyOut;
-		}
-		packet.transferMode = TransferMode.Full;
-		energyOut += this.transferEnergy(leftAmount, packet, receivers);
+		const packet = new EnergyPacket(energyName, power, this, transferMode);
+		let energyOut = this.transferEnergy(amount, packet, receivers);
 		return energyOut;
 	}
 
@@ -154,19 +147,20 @@ abstract class EnergyNode {
 			this.onOverload(packet.size);
 		}
 
+		const leftReceivers = receivers.filter(n => !packet.nodeList[n.id]);
 		if (packet.transferMode == TransferMode.Split) {
-			for (let i = 0; i < receivers.length; i++) {
-				const node = receivers[i];
+			for (let i = 0; i < leftReceivers.length; i++) {
+				const node = leftReceivers[i];
 				if (node.removed) continue;
 				let receiveAmount = leftAmount;
-				if (receiveAmount > 1 && receivers.length - i > 1) {
-					receiveAmount = Math.ceil(receiveAmount / (receivers.length - i));
+				if (receiveAmount > 1 && leftReceivers.length - i > 1) {
+					receiveAmount = Math.ceil(receiveAmount / (leftReceivers.length - i));
 				}
 				leftAmount -= node.receiveEnergy(receiveAmount, packet);
 				if (leftAmount <= 0) break;
 			}
 		} else {
-			for (const node of receivers) {
+			for (const node of leftReceivers) {
 				if (node.removed) continue;
 				leftAmount -= node.receiveEnergy(leftAmount, packet);
 				if (leftAmount <= 0) break;

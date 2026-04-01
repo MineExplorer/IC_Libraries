@@ -8,7 +8,7 @@ class EnergyPacket {
 	size: number;
 	source: EnergyNode;
 	transferMode: TransferMode;
-	nodeList: { [key: number]: TransferMode } = {};
+	nodeList: { [key: number]: true } = {};
 
 	constructor(energyName: string, size: number, source: EnergyNode, transferMode: TransferMode = TransferMode.Split) {
 		this.energyName = energyName;
@@ -18,15 +18,15 @@ class EnergyPacket {
 	}
 
 	validateNode(nodeId: number): boolean {
-		const passedMode = this.nodeList[nodeId];
-		if (!passedMode || passedMode != this.transferMode) {
-			this.setNodePassed(nodeId, this.transferMode);
+		const passed = this.nodeList[nodeId];
+		if (!passed) {
+			this.setNodePassed(nodeId);
 			return true;
 		}
 		return false;
 	}
 
-	setNodePassed(nodeId: number, mode: TransferMode = this.transferMode) {
-		this.nodeList[nodeId] = mode;
+	setNodePassed(nodeId: number) {
+		this.nodeList[nodeId] = true;
 	}
 }
