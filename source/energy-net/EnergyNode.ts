@@ -128,7 +128,7 @@ abstract class EnergyNode {
 		return amount - add;
 	}
 
-	addPacket(energyName: string, amount: number, power: number = amount, receivers?: EnergyNode[], transferMode?: TransferMode): number {
+	addPacket(energyName: string, amount: number, power: number = amount, transferMode?: TransferMode, receivers?: EnergyNode[]): number {
 		if (amount == 0) return 0;
 		
 		const packet = new EnergyPacket(energyName, power, this, transferMode);
@@ -136,9 +136,11 @@ abstract class EnergyNode {
 		return energyOut;
 	}
 
-	transferEnergy(amount: number, packet: EnergyPacket, receivers: EnergyNode[] = this.getActiveReceivers()): number {
-		if (this.removed || receivers.length == 0 || !packet.validateNode(this.id)) return 0;
-
+	transferEnergy(amount: number, packet: EnergyPacket, receivers?: EnergyNode[]): number {
+		receivers ??= packet.transferMode == TransferMode.Split ? this.getActiveReceivers() : this.receivers;
+		packet.setNodePassed(this.id);
+		if (receivers.length == 0) return 0;
+		
 		let leftAmount = amount;
 		if (packet.size > this.maxValue) {
 			// Shrink energy packet proportional to the size ratio if its amount is bigger than its size
@@ -147,8 +149,8 @@ abstract class EnergyNode {
 			this.onOverload(packet.size);
 		}
 
-		const leftReceivers = receivers.filter(n => !packet.nodeList[n.id]);
 		if (packet.transferMode == TransferMode.Split) {
+			const leftReceivers = receivers.filter(n => packet.validateNode(n.id));
 			for (let i = 0; i < leftReceivers.length; i++) {
 				const node = leftReceivers[i];
 				if (node.removed) continue;
@@ -160,8 +162,8 @@ abstract class EnergyNode {
 				if (leftAmount <= 0) break;
 			}
 		} else {
-			for (const node of leftReceivers) {
-				if (node.removed) continue;
+			for (const node of receivers) {
+				if (node.removed || !packet.validateNode(node.id)) continue;
 				leftAmount -= node.receiveEnergy(leftAmount, packet);
 				if (leftAmount <= 0) break;
 			}

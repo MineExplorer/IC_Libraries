@@ -154,7 +154,7 @@ implements EnergyGraphNode {
 			}
 		}
 		if (tileReceivers.length > 0) {
-			energyOut += this.addPacket(this.baseEnergy, leftAmount, power, tileReceivers);
+			energyOut += this.addPacket(this.baseEnergy, leftAmount, power, TransferMode.Split, tileReceivers);
 			leftAmount -= energyOut;
 		}
 		if (gridConnectionsCount > 0 && leftAmount > 0) {
