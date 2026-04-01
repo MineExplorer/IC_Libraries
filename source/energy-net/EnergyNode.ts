@@ -223,7 +223,7 @@ abstract class EnergyNode {
 		const activeReceivers: EnergyNode[] = [];
 		for (let node of this.receivers) {
 			const freeAmount = node.getFreeCapacity(this.baseEnergy);
-			if (freeAmount == -1 || freeAmount >= 1) {
+			if (freeAmount >= 1) {
 				activeReceivers.push(node);
 			}
 		}

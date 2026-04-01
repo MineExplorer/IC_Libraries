@@ -141,7 +141,7 @@ extends EnergyNode {
 	}
 
 	getFreeCapacity(energyName: string): number {
-		const freeEnergy = (this.isFull || this.receivers.length == 0) ? 0 : -1;
+		const freeEnergy = (this.isFull || this.receivers.length == 0) ? 0 : this.energyIn || 1;
 		return this.freeCapacity = freeEnergy;
 	}
 

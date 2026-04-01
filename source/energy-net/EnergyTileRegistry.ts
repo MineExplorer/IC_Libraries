@@ -99,7 +99,7 @@ namespace EnergyTileRegistry {
 			}
 		} else {
 			Prototype.getFreeEnergyAmount ??= function() {
-				return -1;
+				return (this as EnergyTile).energyNode.energyIn || 1;
 			}
 		}
 
