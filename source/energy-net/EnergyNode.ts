@@ -148,8 +148,9 @@ abstract class EnergyNode {
 
 		let leftAmount = amount;
 		if (packet.size > this.maxValue) {
-			// Shrink energy packet proportional to size ratio
-			leftAmount = amount = Math.floor(amount * this.maxValue / packet.size);
+			// Shrink energy packet proportional to the size ratio if its amount is bigger than its size
+			amount = amount > packet.size ? Math.floor(amount * this.maxValue / packet.size) : this.maxValue;
+			leftAmount = amount;
 			this.onOverload(packet.size);
 		}
 

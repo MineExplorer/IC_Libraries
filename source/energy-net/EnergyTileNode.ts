@@ -163,7 +163,7 @@ implements EnergyGraphNode {
 		return amount - energyOut;
 	}
 
-	addToBuffer(energyName: string, amount: number, size: number, power: number = amount): number {
+	addToBuffer(energyName: string, amount: number, size: number, power: number = size): number {
 		const energyBuffer = this.getBuffer(energyName, true);
 		size *= this.gridConnectionsCount; // reserve space for 1 packet per connected grid
 		if (energyBuffer.amount < size) {
