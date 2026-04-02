@@ -24,10 +24,10 @@ interface EnergyTile extends TileEntity {
 	 */
 	energyReceive(energyName: string, amount: number, power: number): number;
 	/**
-	 * @returns available capacity in the tile's energy buffer or -1 if not supported
+	 * @returns available capacity in the tile's energy buffer
 	 * @param energyName energy type name
 	 */
-	getFreeEnergyAmount?(energyName?: string): number;
+	getFreeEnergyAmount(energyName?: string): number;
 	/**
 	 * Determines whether the tile is an energy generator and enables output buffer for tile.
 	 */
@@ -36,19 +36,19 @@ interface EnergyTile extends TileEntity {
 	 * If returns true, the tile node can transfer incoming energy packets to other nodes.
 	 * @param energyName energy type name
 	 */
-	isConductor(energyName: string): boolean;
+	isConductor?(energyName: string): boolean;
 	/**
 	 * Specifies from which sides the tile entity can receive energy. The tile entity must recreate its connections if this value changes.
 	 * @param side block side
 	 * @param energyName energy type name
 	 */
-	canReceiveEnergy(side: number, energyName: string): boolean;
+	canReceiveEnergy?(side: number, energyName: string): boolean;
 	/**
 	 * Specifies from which sides the tile entity can emit energy. The tile entity must recreate its connections if this value changes.
 	 * @param side block side
 	 * @param energyName energy type name
 	 */
-	canEmitEnergy(side: number, energyName: string): boolean;
+	canEmitEnergy?(side: number, energyName: string): boolean;
 	/** @deprecated use canEmitEnergy instead */
 	canExtractEnergy?(side: number, energyName: string): boolean;
 }
@@ -112,7 +112,7 @@ namespace EnergyTileRegistry {
 		}
 
 		Prototype.canReceiveEnergy ??= function() {
-			return true;
+			return !this.isGenerator();
 		}
 
 		Prototype.canEmitEnergy ??= Prototype.canExtractEnergy || function() {
