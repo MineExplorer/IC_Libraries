@@ -7,6 +7,7 @@ abstract class EnergyNode {
 	energyTypes: {[key: string]: EnergyType} = {};
 	dimension: number;
 	maxValue: number = Number.MAX_SAFE_INTEGER;
+	defaultTransferMode = TransferMode.Split;
 	removed: boolean = false;
 	entries: EnergyNode[] = [];
 	receivers: EnergyNode[] = [];
@@ -128,7 +129,7 @@ abstract class EnergyNode {
 		return amount - add;
 	}
 
-	addPacket(energyName: string, amount: number, power: number = amount, transferMode?: TransferMode, receivers?: EnergyNode[]): number {
+	addPacket(energyName: string, amount: number, power: number = amount, transferMode: TransferMode = this.defaultTransferMode, receivers?: EnergyNode[]): number {
 		if (amount == 0) return 0;
 		
 		const packet = new EnergyPacket(energyName, power, this, transferMode);
