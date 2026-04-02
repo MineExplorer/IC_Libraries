@@ -141,12 +141,12 @@ extends EnergyNode {
 	}
 
 	getFreeCapacity(energyName: string): number {
-		const freeEnergy = (this.isFull || this.receivers.length == 0) ? 0 : this.energyIn || 1;
+		const freeEnergy = this.receivers.length == 0 ? 0 : this.energyIn || 1;
 		return this.freeCapacity = freeEnergy;
 	}
 
 	transferBuffer(energyName: string) {
-		if (this.isFull || this.entries.length == 0 || this.receivers.length == 0) return;
+		if (this.entries.length == 0 || this.receivers.length == 0) return;
 
 		let energyPotential = 0;
 		let maxPower = 0;

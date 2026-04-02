@@ -97,23 +97,21 @@ implements EnergyGraphNode {
 	}
 
 	receiveEnergy(amount: number, packet: EnergyPacket): number {
-		if (packet.source == this || this.isFull) return 0;
+		if (packet.source == this) return 0;
 		
 		let energyIn = this.tileEntity.energyReceive(packet.energyName, amount, packet.size);
-        if (energyIn < amount && this.isConductor(packet.energyName)) {
+		if (energyIn < amount && this.isConductor(packet.energyName)) {
 			energyIn += this.transferEnergy(amount - energyIn, packet);
 		}
-        if (energyIn > 0) {
-        	this.currentPower = Math.max(this.currentPower, packet.size);
-        	this.currentIn += energyIn;
-	    } else {
-			this.isFull = true;
+		if (energyIn > 0) {
+			this.currentPower = Math.max(this.currentPower, packet.size);
+			this.currentIn += energyIn;
 		}
-        return energyIn;
+		return energyIn;
 	}
 
 	getFreeCapacity(energyName: string) {
-		const freeEnergy = this.isFull ? 0 : this.tileEntity.getFreeEnergyAmount(energyName);
+		const freeEnergy = this.tileEntity.getFreeEnergyAmount(energyName);
 		return this.freeCapacity = freeEnergy;
 	}
 
