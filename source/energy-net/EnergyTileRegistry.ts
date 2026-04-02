@@ -29,9 +29,9 @@ interface EnergyTile extends TileEntity {
 	 */
 	getFreeEnergyAmount?(energyName?: string): number;
 	/**
-	 * @returns true if tile can produce energy, false otherwise
+	 * Determines whether the tile is an energy generator and enables output buffer for tile.
 	 */
-	isEnergyProducer(): boolean;
+	isGenerator(): boolean;
 	/**
 	 * If returns true, the tile node can transfer incoming energy packets to other nodes.
 	 * @param energyName energy type name
@@ -103,9 +103,8 @@ namespace EnergyTileRegistry {
 			}
 		}
 
-		// Returns true for reverse compatibility
-		Prototype.isEnergyProducer ??= function() {
-			return true;
+		Prototype.isGenerator ??= function() {
+			return false;
 		}
 
 		Prototype.isConductor ??= function() {

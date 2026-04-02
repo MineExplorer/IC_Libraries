@@ -1,6 +1,6 @@
 class EnergyTileNode extends EnergyNode
 implements EnergyGraphNode {
-	readonly kind: EnergyNodeKind = "tile";
+	readonly kind = "tile";
 	tileEntity: EnergyTile;
 	initialized: boolean = false;
 	adjacentLinks: AdjacentNodeLink[] = [];
@@ -10,9 +10,10 @@ implements EnergyGraphNode {
 	constructor(energyType: EnergyType, parent: EnergyTile) {
 		super(energyType, parent.dimension);
 		this.tileEntity = parent;
-		if (parent.isEnergyProducer()) {
+		if (parent.isGenerator()) {
 			parent.data.energyNetBuffer ??= {};
 			this.energyAmounts = parent.data.energyNetBuffer;
+			this.enableEnergyBuffer = true;
 		}
 	}
 
@@ -112,12 +113,8 @@ implements EnergyGraphNode {
 	}
 
 	getFreeCapacity(energyName: string) {
-		const freeEnergy =  this.isFull ? 0 : this.tileEntity.getFreeEnergyAmount(energyName);
+		const freeEnergy = this.isFull ? 0 : this.tileEntity.getFreeEnergyAmount(energyName);
 		return this.freeCapacity = freeEnergy;
-	}
-
-	canProduceEnergy(): boolean {
-		return this.tileEntity.isEnergyProducer();
 	}
 
 	isConductor(energyName: string): boolean {
@@ -139,6 +136,10 @@ implements EnergyGraphNode {
 
 	add(amount: number, power: number = amount): number {
 		if (amount == 0) return 0;
+
+		if (!this.enableEnergyBuffer) {
+			return super.add(amount, power);
+		}
 
 		let energyOut = 0;
 		let leftAmount = amount;

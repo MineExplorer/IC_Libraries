@@ -1,6 +1,6 @@
 class EnergyGrid
 extends EnergyNode {
-	readonly kind: EnergyNodeKind = "grid";
+	readonly kind = "grid";
 	blockNodes: BlockNodesSet;
 	/** @deprecated */
 	blocksMap: {[coordKey: string]: BlockNode};
@@ -66,7 +66,7 @@ extends EnergyNode {
 			if (node.canReceiveEnergy(side, this.baseEnergy)) {
 				this.addConnection(node);
 			}
-			if ((node.canProduceEnergy() || node.isConductor(this.baseEnergy)) && node.canEmitEnergy(side, this.baseEnergy)) {
+			if (node.canEmitEnergy(side, this.baseEnergy)) {
 				node.addConnection(this);
 			}
 		} else {
@@ -152,7 +152,7 @@ extends EnergyNode {
 		let maxPower = 0;
 		const inputBuffers: {amount: number, power: number, packetSize: number}[] = [];
 		for (let node of this.entries) {
-			if (!node.canProduceEnergy()) continue;
+			if (!node.enableEnergyBuffer) continue;
 
 			const buffer = (node as EnergyTileNode).getBuffer(energyName);
 			if (buffer && buffer.packetSize > 0) {

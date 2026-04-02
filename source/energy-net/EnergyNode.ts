@@ -21,6 +21,7 @@ abstract class EnergyNode {
 	currentPower: number = 0;
 	isFull: boolean = false;
 	freeCapacity: number = -1;
+	enableEnergyBuffer: boolean = false;
 
 	constructor(energyType: EnergyType, dimension: number) {
 		this.id = EnergyNet.globalNodeID++;
@@ -186,10 +187,6 @@ abstract class EnergyNode {
 	onOverload(packetSize: number): void {}
 
 	abstract getFreeCapacity(energyName: string): number;
-
-	canProduceEnergy(): boolean {
-		return false;
-	}
 
 	isConductor(energyName: string): boolean {
 		return true;
