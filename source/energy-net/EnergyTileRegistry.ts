@@ -42,13 +42,13 @@ interface EnergyTile extends TileEntity {
 	 * @param side block side
 	 * @param energyName energy type name
 	 */
-	canReceiveEnergy?(side: number, energyName: string): boolean;
+	canReceiveEnergy?(side: number, energyName: string, node: EnergyNode): boolean;
 	/**
 	 * Specifies from which sides the tile entity can emit energy. The tile entity must recreate its connections if this value changes.
 	 * @param side block side
 	 * @param energyName energy type name
 	 */
-	canEmitEnergy?(side: number, energyName: string): boolean;
+	canEmitEnergy?(side: number, energyName: string, node: EnergyNode): boolean;
 	/** @deprecated use canEmitEnergy instead */
 	canExtractEnergy?(side: number, energyName: string): boolean;
 }

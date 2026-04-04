@@ -187,11 +187,11 @@ abstract class EnergyNode {
 		return true;
 	}
 
-	canReceiveEnergy(side: number, energyName: string): boolean {
+	canReceiveEnergy(side: number, energyName: string, node: EnergyNode): boolean {
 		return true;
 	}
 
-	canEmitEnergy(side: number, energyName: string): boolean {
+	canEmitEnergy(side: number, energyName: string, node: EnergyNode): boolean {
 		return true;
 	}
 

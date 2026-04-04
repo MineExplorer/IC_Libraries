@@ -119,12 +119,12 @@ implements EnergyGraphNode {
 		return this.tileEntity.isConductor(energyName);
 	}
 
-	canReceiveEnergy(side: number, energyName: string): boolean {
-		return this.tileEntity.canReceiveEnergy(side, energyName);
+	canReceiveEnergy(side: number, energyName: string, node: EnergyNode): boolean {
+		return this.tileEntity.canReceiveEnergy(side, energyName, node);
 	}
 
-	canEmitEnergy(side: number, energyName: string): boolean {
-		return this.tileEntity.canEmitEnergy(side, energyName);
+	canEmitEnergy(side: number, energyName: string, node: EnergyNode): boolean {
+		return this.tileEntity.canEmitEnergy(side, energyName, node);
 	}
 
 	resetConnections(): void {

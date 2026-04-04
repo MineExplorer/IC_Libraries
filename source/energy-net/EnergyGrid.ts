@@ -63,10 +63,10 @@ extends EnergyNode {
 		const node = EnergyNet.getNodeOnCoords(this.region, x, y, z);
 		if (node && !this.isCompatible(node)) return;
 		if (node instanceof EnergyTileNode) {
-			if (node.canReceiveEnergy(side, this.baseEnergy)) {
+			if (node.canReceiveEnergy(side, this.baseEnergy, this)) {
 				this.addConnection(node);
 			}
-			if (node.canEmitEnergy(side, this.baseEnergy)) {
+			if (node.canEmitEnergy(side, this.baseEnergy, this)) {
 				node.addConnection(this);
 			}
 		} else {
@@ -223,8 +223,8 @@ extends EnergyNode {
 			const tileSide = side ^ 1;
 			blockNode.linkTile(
 				node,
-				node.canEmitEnergy(tileSide, this.baseEnergy),
-				node.canReceiveEnergy(tileSide, this.baseEnergy)
+				node.canEmitEnergy(tileSide, this.baseEnergy, this),
+				node.canReceiveEnergy(tileSide, this.baseEnergy, this)
 			);
 			return;
 		}
