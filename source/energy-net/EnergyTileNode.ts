@@ -149,6 +149,7 @@ implements EnergyGraphNode {
 			if (energyName != this.baseEnergy) {
 				const energyRatio = EnergyRegistry.getValueRatio(this.baseEnergy, energyName);
 				energyAdded = this.addToBuffer(energyName, amount * energyRatio, size * energyRatio, power * energyRatio, gridReceiversCount);
+				energyAdded /= energyRatio;
 			} else {
 				energyAdded = this.addToBuffer(energyName, amount, size, power, gridReceiversCount);
 			}

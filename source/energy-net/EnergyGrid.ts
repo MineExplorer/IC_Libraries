@@ -144,7 +144,7 @@ extends EnergyNode {
 			const energyRatio = EnergyRegistry.getValueRatio(packet.energyName, this.baseEnergy);
 			const newPacket = new EnergyPacket(this.baseEnergy, packet.size * energyRatio, packet.source, packet.transferMode);
 			newPacket.nodeList = packet.nodeList;
-			return super.receiveEnergy(amount * energyRatio, newPacket);
+			return super.receiveEnergy(amount * energyRatio, newPacket) / energyRatio;
 		}
 		return super.receiveEnergy(amount, packet);
 	}
