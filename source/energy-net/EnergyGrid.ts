@@ -19,13 +19,6 @@ extends EnergyNode {
 		this.region = region;
 	}
 
-	isCompatible(node: EnergyNode): boolean {
-		for (let energyType in this.energyTypes) {
-			if (node.energyTypes[energyType]) return true;
-		}
-		return false;
-	}
-
 	addCoords(x: number, y: number, z: number, tile: Tile): BlockNode {
 		return this.blockNodes.add(x, y, z, tile);
 	}
@@ -143,6 +136,17 @@ extends EnergyNode {
 	getFreeCapacity(energyName: string): number {
 		const freeEnergy = this.receivers.length == 0 ? 0 : this.energyIn || 1;
 		return this.freeCapacity = freeEnergy;
+	}
+
+	receiveEnergy(amount: number, packet: EnergyPacket): number {
+		// If the packet is of different energy type, convert it to this grid's energy type
+		if (packet.energyName != this.baseEnergy) {
+			const energyRatio = EnergyRegistry.getValueRatio(packet.energyName, this.baseEnergy);
+			const newPacket = new EnergyPacket(this.baseEnergy, packet.size * energyRatio, packet.source, packet.transferMode);
+			newPacket.nodeList = packet.nodeList;
+			return super.receiveEnergy(amount * energyRatio, newPacket);
+		}
+		return super.receiveEnergy(amount, packet);
 	}
 
 	transferBuffer(energyName: string) {

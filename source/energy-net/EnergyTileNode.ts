@@ -4,7 +4,6 @@ implements EnergyGraphNode {
 	tileEntity: EnergyTile;
 	initialized: boolean = false;
 	adjacentLinks: AdjacentNodeLink[] = [];
-	gridConnectionsCount: number = 0;
 	energyAmounts: EnergyBuffer = {};
 
 	constructor(energyType: EnergyType, parent: EnergyTile) {
@@ -36,26 +35,6 @@ implements EnergyGraphNode {
 
 	hasCoords(x: number, y: number, z: number): boolean {
 		return this.tileEntity.x == x && this.tileEntity.y == y && this.tileEntity.z == z;
-	}
-
-	addConnection(node: EnergyNode): boolean {
-		if (super.addConnection(node)) {
-			this.gridConnectionsCount = this.receivers.filter(n => n.kind == "grid").length;
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * Removes output connection to specified node
-	 * @param node receiver node
-	 */
-	removeConnection(node: EnergyNode): boolean {
-		if (super.removeConnection(node)) {
-			this.gridConnectionsCount = this.receivers.filter(n => n.kind == "grid").length;
-			return true;
-		}
-		return false;
 	}
 
 	linkTile(tileNode: EnergyTileNode, canInput: boolean, canOutput: boolean): void {
@@ -143,33 +122,54 @@ implements EnergyGraphNode {
 		let leftAmount = amount;
 		const activeReceivers = this.getActiveReceivers();
 		const tileReceivers = activeReceivers.filter(n => n.kind == "tile");
-		const gridConnectionsCount = activeReceivers.length - tileReceivers.length; 
+		const gridReceivers = activeReceivers.filter(n => n.kind == "grid");
 		// try to split energy evenly between grids and direct connections
-		if (gridConnectionsCount > 0 && tileReceivers.length > 0) {
-			const energyAdd = Math.floor(leftAmount * gridConnectionsCount / activeReceivers.length);
-			if (energyAdd > 0) {
-				energyOut = this.addToBuffer(this.baseEnergy, energyAdd, amount, power);
-				leftAmount -= energyOut;
-			}
+		if (gridReceivers.length > 0 && tileReceivers.length > 0) {
+			const gridEnergy = Math.floor(leftAmount * gridReceivers.length / activeReceivers.length);
+			const energyAdded = this.addToGridBuffers(gridEnergy, amount, power, gridReceivers);
+			energyOut += energyAdded
+			leftAmount -= energyAdded;
 		}
 		if (tileReceivers.length > 0) {
-			energyOut += this.addPacket(this.baseEnergy, leftAmount, power, this.defaultTransferMode, tileReceivers);
-			leftAmount -= energyOut;
+			const energyAdded = this.addPacket(this.baseEnergy, leftAmount, power, this.defaultTransferMode, tileReceivers);
+			energyOut += energyAdded
+			leftAmount -= energyAdded;
 		}
-		if (gridConnectionsCount > 0 && leftAmount > 0) {
-			energyOut += this.addToBuffer(this.baseEnergy, leftAmount, amount, power);
+		if (gridReceivers.length > 0 && leftAmount > 0) {
+			energyOut += this.addToGridBuffers(leftAmount, amount, power, gridReceivers);
 		}
 		return amount - energyOut;
 	}
 
-	addToBuffer(energyName: string, amount: number, size: number, power: number = size): number {
+	addToGridBuffers(amount: number, size: number, power: number, gridReceivers: EnergyNode[]): number {
+		let energyOut = 0;
+		for (let energyName in this.energyTypes) {
+			const gridReceiversCount = gridReceivers.reduce((count, n) =>
+				n.baseEnergy == energyName ? count + 1 : count, 0);
+			if (gridReceiversCount == 0) continue;
+
+			let energyAdded: number;
+			if (energyName != this.baseEnergy) {
+				const energyRatio = EnergyRegistry.getValueRatio(this.baseEnergy, energyName);
+				energyAdded = this.addToBuffer(energyName, amount * energyRatio, size * energyRatio, power * energyRatio, gridReceiversCount);
+			} else {
+				energyAdded = this.addToBuffer(energyName, amount, size, power, gridReceiversCount);
+			}
+			energyOut += energyAdded
+			amount -= energyAdded;
+			if (amount <= 0) break;
+		}
+		return energyOut;
+	}
+
+	addToBuffer(energyName: string, amount: number, size: number, power: number, sizeMultiplier: number): number {
 		const energyBuffer = this.getBuffer(energyName, true);
-		size *= this.gridConnectionsCount; // reserve space for 1 packet per connected grid
+		size *= sizeMultiplier // reserve space for 1 packet per connected grid
 		if (energyBuffer.amount < size) {
 			const energyAdd = Math.min(size - energyBuffer.amount, amount);
 			energyBuffer.amount += energyAdd;
 			energyBuffer.power = power;
-			energyBuffer.packetSize = Math.ceil(energyBuffer.amount / this.gridConnectionsCount);
+			energyBuffer.packetSize = Math.ceil(energyBuffer.amount / sizeMultiplier);
 			this.currentPower = Math.max(this.currentPower, power);
 			this.currentOut += energyAdd;
 			return energyAdd;

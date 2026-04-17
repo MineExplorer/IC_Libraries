@@ -121,8 +121,8 @@ abstract class EnergyNode {
 
 	add(amount: number, power?: number): number {
 		if (amount == 0) return 0;
-		const add = this.addPacket(this.baseEnergy, amount, power);
-		return amount - add;
+		const added = this.addPacket(this.baseEnergy, amount, power);
+		return amount - added;
 	}
 
 	addPacket(energyName: string, amount: number, power: number = amount, transferMode: TransferMode = this.defaultTransferMode, receivers?: EnergyNode[]): number {
