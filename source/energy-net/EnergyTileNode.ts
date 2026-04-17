@@ -121,22 +121,19 @@ implements EnergyGraphNode {
 		let energyOut = 0;
 		let leftAmount = amount;
 		const activeReceivers = this.getActiveReceivers();
+		// Send energy to nearby tiles
 		const tileReceivers = activeReceivers.filter(n => n.kind == "tile");
-		const gridReceivers = activeReceivers.filter(n => n.kind == "grid");
-		// try to split energy evenly between grids and direct connections
-		if (gridReceivers.length > 0 && tileReceivers.length > 0) {
-			const gridEnergy = Math.floor(leftAmount * gridReceivers.length / activeReceivers.length);
-			const energyAdded = this.addToGridBuffers(gridEnergy, amount, power, gridReceivers);
-			energyOut += energyAdded
-			leftAmount -= energyAdded;
-		}
 		if (tileReceivers.length > 0) {
 			const energyAdded = this.addPacket(this.baseEnergy, leftAmount, power, this.defaultTransferMode, tileReceivers);
 			energyOut += energyAdded
 			leftAmount -= energyAdded;
 		}
-		if (gridReceivers.length > 0 && leftAmount > 0) {
-			energyOut += this.addToGridBuffers(leftAmount, amount, power, gridReceivers);
+		// Add energy to active grid buffers
+		if (leftAmount > 0) {
+			const gridReceivers = activeReceivers.filter(n => n.kind == "grid");
+			if (gridReceivers.length > 0) {
+				energyOut += this.addToGridBuffers(leftAmount, amount, power, gridReceivers);
+			}
 		}
 		return amount - energyOut;
 	}
