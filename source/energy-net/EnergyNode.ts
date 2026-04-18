@@ -1,19 +1,17 @@
-/// <reference path="./BlockCoordsData.ts" />
+type EnergyNodeKind = "grid" | "tile";
 
-let GLOBAL_NODE_ID = 0;
-
-class EnergyNode {
+abstract class EnergyNode {
 	id: number;
 	baseEnergy: string;
-	energyTypes: object = {};
+	abstract readonly kind: EnergyNodeKind;
+	energyTypes: {[key: string]: EnergyType} = {};
 	dimension: number;
-	maxValue: number = 2e9;
+	maxValue: number = Number.MAX_SAFE_INTEGER;
+	defaultTransferMode = TransferMode.Split;
 	removed: boolean = false;
-	blockCoords: BlockCoordsData = new BlockCoordsData();
-	/** @deprecated */
-	blocksMap = this.blockCoords.data;
 	entries: EnergyNode[] = [];
 	receivers: EnergyNode[] = [];
+	activeReceivers: EnergyNode[] = null;
 
 	energyIn: number = 0;
 	currentIn: number = 0;
@@ -21,9 +19,11 @@ class EnergyNode {
 	currentOut: number = 0;
 	energyPower: number = 0;
 	currentPower: number = 0;
+	freeCapacity: number = -1;
+	enableEnergyBuffer: boolean = false;
 
 	constructor(energyType: EnergyType, dimension: number) {
-		this.id = GLOBAL_NODE_ID++;
+		this.id = EnergyNet.globalNodeID++;
 		this.baseEnergy = energyType.name;
 		this.addEnergyType(energyType);
 		this.dimension = dimension;
@@ -33,13 +33,7 @@ class EnergyNode {
 		this.energyTypes[energyType.name] = energyType;
 	}
 
-	addCoords(x: number, y: number, z: number): void {
-		this.blockCoords.add(x, y, z);
-	}
-
-	removeCoords(x: number, y: number, z: number): void {
-		this.blockCoords.remove(x, y, z);
-	}
+	abstract hasCoords(x: number, y: number, z: number): boolean;
 
 	private addEntry(node: EnergyNode): void {
 		if (this.entries.indexOf(node) == -1) {
@@ -82,21 +76,27 @@ class EnergyNode {
 	/**
 	 * Adds output connection to specified node
 	 * @param node receiver node
+	 * @returns — true if connection was added, false if it already exists
 	 */
-	addConnection(node: EnergyNode): void {
+	addConnection(node: EnergyNode): boolean {
 		if (this.addReceiver(node)) {
 			node.addEntry(this);
+			return true;
 		}
+		return false;
 	}
 
 	/**
 	 * Removes output connection to specified node
 	 * @param node receiver node
+	 * @returns true if connection was removed, false if it's already removed
 	 */
-	removeConnection(node: EnergyNode): void {
+	removeConnection(node: EnergyNode): boolean {
 		if (this.removeReceiver(node)) {
 			node.removeEntry(this);
+			return true;
 		}
+		return false;
 	}
 
 	resetConnections(): void {
@@ -112,55 +112,57 @@ class EnergyNode {
 
 	receiveEnergy(amount: number, packet: EnergyPacket): number {
 		const energyIn = this.transferEnergy(amount, packet);
-        if (energyIn > 0) {
-        	this.currentPower = Math.max(this.currentPower, packet.size);
-        	this.currentIn += energyIn;
-	    }
+		if (energyIn > 0) {
+			this.currentPower = Math.max(this.currentPower, packet.size);
+			this.currentIn += energyIn;
+		}
         return energyIn;
 	}
 
 	add(amount: number, power?: number): number {
 		if (amount == 0) return 0;
-		const add = this.addPacket(this.baseEnergy, amount, power);
-		return amount - add;
+		const added = this.addPacket(this.baseEnergy, amount, power);
+		return amount - added;
 	}
 
-	addPacket(energyName: string, amount: number, size: number = amount): number {
-		const packet = new EnergyPacket(energyName, size, this);
-		return this.transferEnergy(amount, packet);
+	addPacket(energyName: string, amount: number, power: number = amount, transferMode: TransferMode = this.defaultTransferMode, receivers?: EnergyNode[]): number {
+		if (amount == 0) return 0;
+		
+		const packet = new EnergyPacket(energyName, power, this, transferMode);
+		let energyOut = this.transferEnergy(amount, packet, receivers);
+		return energyOut;
 	}
 
-	transferEnergy(amount: number, packet: EnergyPacket): number {
-		if (this.receivers.length == 0) return 0;
-
+	transferEnergy(amount: number, packet: EnergyPacket, receivers?: EnergyNode[]): number {
+		receivers ??= packet.transferMode == TransferMode.Split ? this.getActiveReceivers() : this.receivers;
+		packet.setNodePassed(this.id);
+		if (receivers.length == 0) return 0;
+		
 		let leftAmount = amount;
 		if (packet.size > this.maxValue) {
-			leftAmount = Math.min(leftAmount, packet.size);
+			// Shrink energy packet proportional to the size ratio if its amount is bigger than its size
+			amount = amount > packet.size ? Math.floor(amount * this.maxValue / packet.size) : this.maxValue;
+			leftAmount = amount;
 			this.onOverload(packet.size);
 		}
 
-		const currentNodeList = {...packet.nodeList};
-		const receiversCount = this.receivers.length;
-		let k = 0;
-		for (let i = 0; i < this.receivers.length; i++) {
-			if (leftAmount <= 0) break;
-			const node = this.receivers[i];
-			if (packet.validateNode(node.id)) {
+		if (packet.transferMode == TransferMode.Split) {
+			const leftReceivers = receivers.filter(n => packet.validateNode(n.id));
+			for (let i = 0; i < leftReceivers.length; i++) {
+				const node = leftReceivers[i];
+				if (node.removed) continue;
 				let receiveAmount = leftAmount;
-				if (receiveAmount > 1 && receiversCount - k > 1) {
-					receiveAmount = Math.ceil(receiveAmount / (receiversCount - k))
+				if (receiveAmount > 1 && leftReceivers.length - i > 1) {
+					receiveAmount = Math.ceil(receiveAmount / (leftReceivers.length - i));
 				}
 				leftAmount -= node.receiveEnergy(receiveAmount, packet);
-				if (node.removed) i--;
+				if (leftAmount <= 0) break;
 			}
-			k++;
-		}
-
-		packet.nodeList = currentNodeList;
-		for (let node of this.receivers) {
-			if (leftAmount <= 0) break;
-			if (packet.validateNode(node.id)) {
+		} else {
+			for (const node of receivers) {
+				if (node.removed || !packet.validateNode(node.id)) continue;
 				leftAmount -= node.receiveEnergy(leftAmount, packet);
+				if (leftAmount <= 0) break;
 			}
 		}
 
@@ -179,15 +181,17 @@ class EnergyNode {
 
 	onOverload(packetSize: number): void {}
 
-	isConductor(type: string): boolean {
+	abstract getFreeCapacity(energyName: string): number;
+
+	isConductor(energyName: string): boolean {
 		return true;
 	}
 
-	canReceiveEnergy(side: number, type: string): boolean {
+	canReceiveEnergy(side: number, energyName: string, node: EnergyNode): boolean {
 		return true;
 	}
 
-	canExtractEnergy(side: number, type: string): boolean {
+	canEmitEnergy(side: number, energyName: string, node: EnergyNode): boolean {
 		return true;
 	}
 
@@ -202,6 +206,21 @@ class EnergyNode {
 		return false;
 	}
 
+	getActiveReceivers() {
+		if (this.activeReceivers) return this.activeReceivers;
+
+		const activeReceivers: EnergyNode[] = [];
+		for (let node of this.receivers) {
+			const freeAmount = node.getFreeCapacity(this.baseEnergy);
+			if (freeAmount >= 1) {
+				activeReceivers.push(node);
+			}
+		}
+		// Sorting makes energy spread more evenly by distributing leftovers from the first receivers to the next
+		this.activeReceivers = activeReceivers.sort((a, b) => a.freeCapacity - b.freeCapacity);
+		return activeReceivers;
+	}
+
 	tick(): void {
 		this.energyIn = this.currentIn;
 		this.currentIn = 0;
@@ -209,16 +228,15 @@ class EnergyNode {
 		this.currentOut = 0;
 		this.energyPower = this.currentPower;
 		this.currentPower = 0;
+		this.activeReceivers = null;
 	}
 
 	destroy(): void {
 		this.removed = true;
-		this.resetConnections();
-		EnergyNet.removeEnergyNode(this);
+		EnergyNet.enqueueRemoval(this);
 	}
 
 	toString(): string {
-		const blockCount = Object.keys(this.blockCoords.data).length;
-		return `[EnergyNode id=${this.id}, type=${this.baseEnergy}, blocks=${blockCount}, entries=${this.entries.length}, receivers=${this.receivers.length}, energyIn=${this.energyIn}, energyOut=${this.energyOut}, power=${this.energyPower}]`;
+		return `[EnergyNode id=${this.id}, type=${this.baseEnergy}, entries=${this.entries.length}, receivers=${this.receivers.length}, energyIn=${this.energyIn}, energyOut=${this.energyOut}, power=${this.energyPower}]`;
 	}
 }

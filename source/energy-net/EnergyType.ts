@@ -12,14 +12,10 @@ class EnergyType {
 
 		Block.registerPlaceFunction(id, function(coords, item, block, player) {
 			const region = BlockSource.getDefaultForActor(player);
-			const place = coords.relative;
-			if (region.getBlockId(place.x, place.y, place.z) == 0) {
-				region.setBlock(place.x, place.y, place.z, item.id, item.data);
-				if (Game.isItemSpendingAllowed(player)) {
-					Entity.setCarriedItem(player, item.id, item.count - 1, item.data);
-				}
-				EnergyGridBuilder.onWirePlaced(region, place.x, place.y, place.z);
-			}
+			const place = World.canTileBeReplaced(block.id, block.data) ? coords : coords.relative;
+			region.setBlock(place.x, place.y, place.z, item.id, item.data);
+			EnergyGridBuilder.onWirePlaced(region, place.x, place.y, place.z);
+			return place;
 		});
 	}
 }

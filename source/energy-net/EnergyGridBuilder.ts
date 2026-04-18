@@ -4,17 +4,37 @@ namespace EnergyGridBuilder {
 		node2.addConnection(node1);
 	}
 
+	function connectTileToGridBlock(grid: EnergyGrid, x: number, y: number, z: number, side: number, tileNode: EnergyTileNode): void {
+		const blockNode = grid.blockNodes.get(x, y, z);
+		if (blockNode) {
+			const energyType = grid.baseEnergy;
+			blockNode.linkTile(
+				tileNode,
+				tileNode.canEmitEnergy(side, energyType, grid),
+				tileNode.canReceiveEnergy(side, energyType, grid)
+			);
+		}
+	}
+
 	export function buildGridForTile(te: EnergyTile) {
 		const tileNode = te.energyNode;
 		for (let side = 0; side < 6; side++) {
 			const coords = World.getRelativeCoords(te.x, te.y, te.z, side);
 			const node = EnergyNet.getNodeOnCoords(te.blockSource, coords.x, coords.y, coords.z);
 			if (node && tileNode.isCompatible(node)) {
+				if (node instanceof EnergyGrid) {
+					connectTileToGridBlock(node, coords.x, coords.y, coords.z, side, tileNode);
+				}
 				const energyType = node.baseEnergy;
-				if (tileNode.canExtractEnergy(side, energyType) && node.canReceiveEnergy(side ^ 1, energyType)) {
+				const canOutput = tileNode.canEmitEnergy(side, energyType, node) && node.canReceiveEnergy(side ^ 1, energyType, tileNode);
+				const canInput = tileNode.canReceiveEnergy(side, energyType, node) && node.canEmitEnergy(side ^ 1, energyType, tileNode);
+				if (node instanceof EnergyTileNode && (canInput || canOutput)) {
+					tileNode.linkTile(node, canInput, canOutput);
+				}
+				if (canOutput) {
 					tileNode.addConnection(node);
 				}
-				if (tileNode.canReceiveEnergy(side, energyType) && node.canExtractEnergy(side ^ 1, energyType)) {
+				if (canInput) {
 					node.addConnection(tileNode);
 				}
 			} else {
@@ -25,11 +45,18 @@ namespace EnergyGridBuilder {
 
 	export function buildWireGrid(region: BlockSource, x: number, y: number, z: number): EnergyGrid {
 		const blockID = region.getBlockId(x, y, z);
-		const wire = EnergyRegistry.getWireData(blockID);
-		if (wire) {
-			const grid = new wire.class(wire.type, wire.maxValue, blockID, region);
+		if (EnergyRegistry.isWire(blockID)) {
+			const startTime = Debug.sysTime();
+			const grid = EnergyRegistry.createWireGrid(blockID, region);
 			EnergyNet.addEnergyNode(grid);
 			grid.rebuildRecursive(x, y, z);
+
+			const spendTime = Debug.sysTime() - startTime;
+			if (EnergyNet.debugEnabled) {
+				const blockCount = Object.keys(grid.blockNodes.data).length;
+				Game.message(`§2[EnergyNet] Built wire grid id=${grid.id}, blocks=${blockCount}, entries=${grid.entries.length}, receivers=${grid.receivers.length} in ${spendTime} ms.`);
+			}
+			
 			return grid;
 		}
 		return null;
@@ -43,21 +70,13 @@ namespace EnergyGridBuilder {
 		}
 	}
 
-	export function rebuildForWire(region: BlockSource, x: number, y: number, z: number, wireID: number): EnergyGrid {
-		if (region.getBlockId(x, y, z) == wireID && !EnergyNet.getNodeOnCoords(region, x, y, z)) {
-			return buildWireGrid(region, x, y, z);
-		}
-		return null;
-	}
-
 	export function onWirePlaced(region: BlockSource, x: number, y: number, z: number): void {
-		const blockId = region.getBlockId(x, y, z);
+		const tile = region.getBlock(x, y, z);
 		const coord1 = {x: x, y: y, z: z};
 		for (let side = 0; side < 6; side++) {
 			const coord2 = World.getRelativeCoords(x, y, z, side);
-			if (region.getBlockId(coord2.x, coord2.y, coord2.z) != blockId) continue;
 			const node = EnergyNet.getNodeOnCoords(region, coord2.x, coord2.y, coord2.z);
-			if (node && node instanceof EnergyGrid && node.canConductEnergy(coord2, coord1, side ^ 1)) {
+			if (node && node instanceof EnergyGrid && node.isValidWire(tile) && node.canConductEnergy(coord2, coord1, side ^ 1)) {
 				node.rebuildRecursive(x, y, z, side ^ 1);
 				return;
 			}
@@ -66,22 +85,12 @@ namespace EnergyGridBuilder {
 		EnergyGridBuilder.buildWireGrid(region, x, y, z);
 	}
 
-	export function onWireDestroyed(region: BlockSource, x: number, y: number, z: number, id: number): void {
-		EnergyGridBuilder.rebuildForWire(region, x - 1, y, z, id);
-		EnergyGridBuilder.rebuildForWire(region, x + 1, y, z, id);
-		EnergyGridBuilder.rebuildForWire(region, x, y - 1, z, id);
-		EnergyGridBuilder.rebuildForWire(region, x, y + 1, z, id);
-		EnergyGridBuilder.rebuildForWire(region, x, y, z - 1, id);
-		EnergyGridBuilder.rebuildForWire(region, x, y, z + 1, id);
-	}
-
 	Callback.addCallback("DestroyBlock", function(coords: BlockPosition, block: Tile, player: number) {
 		if (EnergyRegistry.isWire(block.id)) {
 			const region = BlockSource.getDefaultForActor(player);
 			const node = EnergyNet.getNodeOnCoords(region, coords.x, coords.y, coords.z);
-			if (node) {
-				node.destroy();
-				onWireDestroyed(region, coords.x, coords.y, coords.z, block.id);
+			if (node instanceof EnergyGrid) {
+				node.removeCoords(coords.x, coords.y, coords.z);
 			}
 		}
 	});
