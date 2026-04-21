@@ -90,7 +90,12 @@ implements EnergyGraphNode {
 	}
 
 	getFreeCapacity(energyName: string) {
-		const freeEnergy = this.tileEntity.getFreeEnergyAmount(energyName);
+		let freeEnergy: number;
+		if (this.isConductor(energyName)) {
+			freeEnergy = this.energyIn || 1;
+		} else {
+			freeEnergy = this.tileEntity.getFreeEnergyAmount(energyName);
+		}
 		return this.freeCapacity = freeEnergy;
 	}
 
