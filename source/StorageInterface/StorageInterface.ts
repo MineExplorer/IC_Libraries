@@ -343,6 +343,13 @@ namespace StorageInterface {
 		if (created) { // fix of TileEntity access from ItemContainer
 			tileEntity.container.setParent(tileEntity);
 		}
+		if (StorageInterface.getPrototype(tileEntity.blockID)) { // reverse compatibility
+			Object.defineProperty(tileEntity, "interface", {
+				get: function() {
+					return StorageInterfaceFactory.getTileEntityInterface(tileEntity);
+				}
+			});
+		}
 	});
 }
 
