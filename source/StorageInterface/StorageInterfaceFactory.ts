@@ -1,7 +1,7 @@
 /// <reference path="TileEntityInterface.ts" />
 
 namespace StorageInterfaceFactory {
-    export function getTileEntityInterface(tileEntity: TileEntity) {
+    export function getTileEntityInterface(tileEntity: TileEntity): StorageInterface.TileEntityInterface {
         if (tileEntity.__storageInterface) {
             return tileEntity.__storageInterface;
         }
