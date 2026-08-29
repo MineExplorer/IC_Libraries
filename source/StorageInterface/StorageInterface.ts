@@ -4,7 +4,7 @@
 
 namespace StorageInterface {
 	type ContainersMap = {[key: number]: Container};
-	type StoragesMap = {[key: number]: Storage};
+	type TileStoragesMap = {[key: number]: TileEntityInterface};
 
 	interface StorageInterfacePrototype extends StorageDescriptor {
 		classType?: typeof TileEntityInterface
@@ -85,6 +85,14 @@ namespace StorageInterface {
 			return StorageInterfaceFactory.getTileEntityInterface(storage.getParent());
 		}
 		return new NativeContainerInterface(storage);
+	}
+
+	export function getTileEntityInterface(tileEntity: TileEntity): TileEntityInterface {
+		return StorageInterfaceFactory.getTileEntityInterface(tileEntity);
+	}
+
+	export function getNativeContainerInterface(container: NativeTileEntity): NativeContainerInterface {
+		return new NativeContainerInterface(container);
 	}
 
 	/** Trasfers item to slot
@@ -173,8 +181,8 @@ namespace StorageInterface {
 	 * Returns object containing neigbour liquid storages where keys are block side numbers
 	 * @coords position from which check neighbour blocks
 	*/
-	export function getNearestLiquidStorages(coords: Vector, region: BlockSource): StoragesMap;
-	export function getNearestLiquidStorages(coords: Vector, region: any): StoragesMap {
+	export function getNearestLiquidStorages(coords: Vector, region: BlockSource): TileStoragesMap;
+	export function getNearestLiquidStorages(coords: Vector, region: any): TileStoragesMap {
 		let side = -1;
 		if (typeof region == "number") { // reverse compatibility
 			region = null;
@@ -275,17 +283,18 @@ namespace StorageInterface {
 	 * @inputSide block side of input storage which is receiving 
 	 * @returns left liquid amount
 	*/
-	export function extractLiquid(liquid: Nullable<string>, maxAmount: number, inputStorage: TileEntity | Storage, outputStorage: Storage, inputSide: number): number {
+	export function extractLiquid(liquid: Nullable<string>, maxAmount: number, inputStorage: TileEntity | TileEntityInterface, outputStorage: TileEntityInterface, inputSide: number): number {
 		if (!(inputStorage instanceof TileEntityInterface)) { // reverse compatibility
 			inputStorage = StorageInterfaceFactory.getTileEntityInterface(inputStorage as TileEntity);
 		}
 		const outputSide = inputSide ^ 1;
-		const inputTank = inputStorage.getInputTank(inputSide);
-		const outputTank = outputStorage.getOutputTank(outputSide);
+		const inputTank = inputStorage.getInputTank(inputSide, inputStorage.tileEntity);
+		const outputTank = outputStorage.getOutputTank(outputSide, outputStorage.tileEntity);
 		if (!inputTank || !outputTank) return 0;
 
 		if (!liquid) liquid = outputTank.getLiquidStored();
-		if (liquid && outputStorage.canTransportLiquid(liquid, outputSide) && inputStorage.canReceiveLiquid(liquid, inputSide) && !inputTank.isFull(liquid)) {
+		if (liquid && outputStorage.canTransportLiquid(liquid, outputSide, outputStorage.tileEntity) &&
+		  inputStorage.canReceiveLiquid(liquid, inputSide, inputStorage.tileEntity) && !inputTank.isFull(liquid)) {
 			let amount = Math.min(outputTank.getAmount(liquid) * outputStorage.liquidUnitRatio, maxAmount);
 			amount = inputStorage.receiveLiquid(inputTank, liquid, amount);
 			outputStorage.extractLiquid(outputTank, liquid, amount);
@@ -295,16 +304,16 @@ namespace StorageInterface {
 	}
 
 	/** Similar to StorageInterface.extractLiquid, but liquid must be specified */
-	export function transportLiquid(liquid: string, maxAmount: number, outputStorage: TileEntity | Storage, inputStorage: Storage, outputSide: number): number {
+	export function transportLiquid(liquid: string, maxAmount: number, outputStorage: TileEntity | TileEntityInterface, inputStorage: TileEntityInterface, outputSide: number): number {
 		if (!(outputStorage instanceof TileEntityInterface)) { // reverse compatibility
 			outputStorage = StorageInterfaceFactory.getTileEntityInterface(outputStorage as TileEntity);
 		}
 		const inputSide = outputSide ^ 1;
-		const inputTank = inputStorage.getInputTank(inputSide);
-		const outputTank = outputStorage.getOutputTank(outputSide);
+		const inputTank = inputStorage.getInputTank(inputSide, inputStorage.tileEntity);
+		const outputTank = outputStorage.getOutputTank(outputSide, outputStorage.tileEntity);
 		if (!inputTank || !outputTank) return 0;
 
-		if (inputStorage.canReceiveLiquid(liquid, inputSide) && !inputTank.isFull(liquid)) {
+		if (inputStorage.canReceiveLiquid(liquid, inputSide, inputStorage.tileEntity) && !inputTank.isFull(liquid)) {
 			let amount = Math.min(outputTank.getAmount(liquid) * outputStorage.liquidUnitRatio, maxAmount);
 			amount = inputStorage.receiveLiquid(inputTank, liquid, amount);
 			outputStorage.extractLiquid(outputTank, liquid, amount);
@@ -342,6 +351,13 @@ namespace StorageInterface {
 	Callback.addCallback("TileEntityAdded", function(tileEntity: TileEntity, created: boolean) {
 		if (created) { // fix of TileEntity access from ItemContainer
 			tileEntity.container.setParent(tileEntity);
+		}
+		if (StorageInterface.getPrototype(tileEntity.blockID)) { // reverse compatibility
+			Object.defineProperty(tileEntity, "interface", {
+				get: function() {
+					return StorageInterfaceFactory.getTileEntityInterface(tileEntity);
+				}
+			});
 		}
 	});
 }

@@ -145,11 +145,11 @@ namespace StorageInterface {
 			}
 		}
 
-		canReceiveLiquid(liquid: string, side: number): boolean {
-			return this.getInputTank(side).getLimit(liquid) < LIQUID_STORAGE_MAX_LIMIT;
+		canReceiveLiquid(liquid: string, side: number, tileEntity: TileEntity = this.tileEntity): boolean {
+			return this.getInputTank(side, tileEntity).getLimit(liquid) < LIQUID_STORAGE_MAX_LIMIT;
 		}
 
-		canTransportLiquid(liquid: string, side: number): boolean {
+		canTransportLiquid(liquid: string, side: number, tileEntity?: TileEntity): boolean {
 			return true;
 		}
 
@@ -165,12 +165,12 @@ namespace StorageInterface {
 			return liquidStorage.getLiquid(liquid, amount / this.liquidUnitRatio) * this.liquidUnitRatio;
 		}
 
-		getInputTank(side: number): ILiquidStorage {
-			return this.tileEntity.liquidStorage;
+		getInputTank(side: number, tileEntity: TileEntity = this.tileEntity): ILiquidStorage {
+			return tileEntity.liquidStorage;
 		}
 
-		getOutputTank(side: number): ILiquidStorage {
-			return this.tileEntity.liquidStorage;
+		getOutputTank(side: number, tileEntity: TileEntity = this.tileEntity): ILiquidStorage {
+			return tileEntity.liquidStorage;
 		}
 	}
 }
