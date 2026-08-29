@@ -248,10 +248,11 @@ var StorageInterface;
                 this.container.clearSlot(name);
             }
         };
-        TileEntityInterface.prototype.canReceiveLiquid = function (liquid, side) {
-            return this.getInputTank(side).getLimit(liquid) < LIQUID_STORAGE_MAX_LIMIT;
+        TileEntityInterface.prototype.canReceiveLiquid = function (liquid, side, tileEntity) {
+            if (tileEntity === void 0) { tileEntity = this.tileEntity; }
+            return this.getInputTank(side, tileEntity).getLimit(liquid) < LIQUID_STORAGE_MAX_LIMIT;
         };
-        TileEntityInterface.prototype.canTransportLiquid = function (liquid, side) {
+        TileEntityInterface.prototype.canTransportLiquid = function (liquid, side, tileEntity) {
             return true;
         };
         TileEntityInterface.prototype.receiveLiquid = function (liquidStorage, liquid, amount) {
@@ -264,11 +265,13 @@ var StorageInterface;
         TileEntityInterface.prototype.extractLiquid = function (liquidStorage, liquid, amount) {
             return liquidStorage.getLiquid(liquid, amount / this.liquidUnitRatio) * this.liquidUnitRatio;
         };
-        TileEntityInterface.prototype.getInputTank = function (side) {
-            return this.tileEntity.liquidStorage;
+        TileEntityInterface.prototype.getInputTank = function (side, tileEntity) {
+            if (tileEntity === void 0) { tileEntity = this.tileEntity; }
+            return tileEntity.liquidStorage;
         };
-        TileEntityInterface.prototype.getOutputTank = function (side) {
-            return this.tileEntity.liquidStorage;
+        TileEntityInterface.prototype.getOutputTank = function (side, tileEntity) {
+            if (tileEntity === void 0) { tileEntity = this.tileEntity; }
+            return tileEntity.liquidStorage;
         };
         return TileEntityInterface;
     }());
@@ -282,20 +285,53 @@ var StorageInterfaceFactory;
             return tileEntity.__storageInterface;
         }
         var storagePrototype = StorageInterface.getPrototype(tileEntity.blockID);
-        var interface;
+        var tileInterface;
         if (storagePrototype) {
-            interface = new storagePrototype.classType(tileEntity);
+            tileInterface = new storagePrototype.classType(tileEntity);
             for (var key in storagePrototype) {
                 if (key == "classType")
                     continue;
-                interface[key] = storagePrototype[key];
+                // Reverse compatibility with callers who do not pass tileEntity arg.
+                if (key == "canReceiveLiquid") {
+                    tileInterface["__canReceiveLiquid"] = storagePrototype[key];
+                    tileInterface[key] = function (liquid, side, tileEntity) {
+                        if (tileEntity === void 0) { tileEntity = this.tileEntity; }
+                        return this.__canReceiveLiquid(liquid, side, tileEntity);
+                    };
+                    continue;
+                }
+                if (key == "canTransportLiquid") {
+                    tileInterface["__canTransportLiquid"] = storagePrototype[key];
+                    tileInterface[key] = function (liquid, side, tileEntity) {
+                        if (tileEntity === void 0) { tileEntity = this.tileEntity; }
+                        return this.__canTransportLiquid(liquid, side, tileEntity);
+                    };
+                    continue;
+                }
+                if (key == "getInputTank") {
+                    tileInterface["__getInputTank"] = storagePrototype[key];
+                    tileInterface[key] = function (side, tileEntity) {
+                        if (tileEntity === void 0) { tileEntity = this.tileEntity; }
+                        return this.__getInputTank(side, tileEntity);
+                    };
+                    continue;
+                }
+                if (key == "getOutputTank") {
+                    tileInterface["__getOutputTank"] = storagePrototype[key];
+                    tileInterface[key] = function (side, tileEntity) {
+                        if (tileEntity === void 0) { tileEntity = this.tileEntity; }
+                        return this.__getOutputTank(side, tileEntity);
+                    };
+                    continue;
+                }
+                tileInterface[key] = storagePrototype[key];
             }
         }
         else {
-            interface = new StorageInterface.TileEntityInterface(tileEntity);
+            tileInterface = new StorageInterface.TileEntityInterface(tileEntity);
         }
-        tileEntity.__storageInterface = interface;
-        return interface;
+        tileEntity.__storageInterface = tileInterface;
+        return tileInterface;
     }
     StorageInterfaceFactory.getTileEntityInterface = getTileEntityInterface;
 })(StorageInterfaceFactory || (StorageInterfaceFactory = {}));
@@ -379,6 +415,14 @@ var StorageInterface;
         return new StorageInterface.NativeContainerInterface(storage);
     }
     StorageInterface.getInterface = getInterface;
+    function getTileEntityInterface(tileEntity) {
+        return StorageInterfaceFactory.getTileEntityInterface(tileEntity);
+    }
+    StorageInterface.getTileEntityInterface = getTileEntityInterface;
+    function getNativeContainerInterface(container) {
+        return new StorageInterface.NativeContainerInterface(container);
+    }
+    StorageInterface.getNativeContainerInterface = getNativeContainerInterface;
     /** Trasfers item to slot
      * @count amount to transfer. Default is 64.
      * @returns transfered amount
@@ -572,13 +616,14 @@ var StorageInterface;
             inputStorage = StorageInterfaceFactory.getTileEntityInterface(inputStorage);
         }
         var outputSide = inputSide ^ 1;
-        var inputTank = inputStorage.getInputTank(inputSide);
-        var outputTank = outputStorage.getOutputTank(outputSide);
+        var inputTank = inputStorage.getInputTank(inputSide, inputStorage.tileEntity);
+        var outputTank = outputStorage.getOutputTank(outputSide, outputStorage.tileEntity);
         if (!inputTank || !outputTank)
             return 0;
         if (!liquid)
             liquid = outputTank.getLiquidStored();
-        if (liquid && outputStorage.canTransportLiquid(liquid, outputSide) && inputStorage.canReceiveLiquid(liquid, inputSide) && !inputTank.isFull(liquid)) {
+        if (liquid && outputStorage.canTransportLiquid(liquid, outputSide, outputStorage.tileEntity) &&
+            inputStorage.canReceiveLiquid(liquid, inputSide, inputStorage.tileEntity) && !inputTank.isFull(liquid)) {
             var amount = Math.min(outputTank.getAmount(liquid) * outputStorage.liquidUnitRatio, maxAmount);
             amount = inputStorage.receiveLiquid(inputTank, liquid, amount);
             outputStorage.extractLiquid(outputTank, liquid, amount);
@@ -593,11 +638,11 @@ var StorageInterface;
             outputStorage = StorageInterfaceFactory.getTileEntityInterface(outputStorage);
         }
         var inputSide = outputSide ^ 1;
-        var inputTank = inputStorage.getInputTank(inputSide);
-        var outputTank = outputStorage.getOutputTank(outputSide);
+        var inputTank = inputStorage.getInputTank(inputSide, inputStorage.tileEntity);
+        var outputTank = outputStorage.getOutputTank(outputSide, outputStorage.tileEntity);
         if (!inputTank || !outputTank)
             return 0;
-        if (inputStorage.canReceiveLiquid(liquid, inputSide) && !inputTank.isFull(liquid)) {
+        if (inputStorage.canReceiveLiquid(liquid, inputSide, inputStorage.tileEntity) && !inputTank.isFull(liquid)) {
             var amount = Math.min(outputTank.getAmount(liquid) * outputStorage.liquidUnitRatio, maxAmount);
             amount = inputStorage.receiveLiquid(inputTank, liquid, amount);
             outputStorage.extractLiquid(outputTank, liquid, amount);
