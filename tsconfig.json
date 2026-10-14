@@ -4,7 +4,6 @@
 		"lib": ["ESNext"],
 		"outDir": "./declarations/",
 		"allowJs": true,
-		"downlevelIteration": true,
 		"strict": false,
 		"skipLibCheck": true,
 		"declaration": true

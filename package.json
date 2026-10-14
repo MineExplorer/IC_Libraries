@@ -1,0 +1,12 @@
+{
+  "name": "ic-libraries-tests",
+  "private": true,
+  "scripts": {
+    "build:energy-net": "tsc --project source/energy-net/tsconfig.json",
+    "test:energy-net": "npm run build:energy-net && node --test tests/energy-net/*.test.js",
+    "test": "npm run test:energy-net"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

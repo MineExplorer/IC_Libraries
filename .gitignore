@@ -48,3 +48,4 @@ Temporary Items
 
 # Project files
 build/
+node_modules/
